@@ -10,6 +10,7 @@ from .alns import (
     construct_regret_initial,
     destroy_solution,
     solve_alns,
+    solve_alns_core,
 )
 from .model import Point, Problem, Score, SolutionEvaluation, Task
 from .search import InsertionResult, SolverResult, insert_task_best
@@ -34,4 +35,5 @@ __all__ = [
     "load_tasks_csv",
     "solve_exact",
     "solve_alns",
+    "solve_alns_core",
 ]

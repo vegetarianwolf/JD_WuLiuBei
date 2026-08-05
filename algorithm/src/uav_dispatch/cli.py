@@ -15,6 +15,7 @@ from .alns import (
     construct_nearest_adjacent,
     construct_regret_initial,
     solve_alns,
+    solve_alns_core,
 )
 from .exact import solve_exact
 from .io import load_tasks_csv
@@ -123,6 +124,7 @@ def _parser() -> argparse.ArgumentParser:
         "nearest",
         "greedy",
         "regret2",
+        "alns-core",
         "basic-alns",
         "halns",
     ), default="halns")
@@ -176,10 +178,11 @@ def _solve(args: argparse.Namespace) -> SolverResult:
             time_limit_seconds=args.time_limit,
             seed=args.seed,
             candidate_limit=candidate_limit,
-            enable_route_pool=args.method == "halns",
-            enable_ejection=args.method == "halns",
         )
-        result = solve_alns(problem, config=config)
+        if args.method in {"alns-core", "basic-alns"}:
+            result = solve_alns_core(problem, config=config)
+        else:
+            result = solve_alns(problem, config=config)
     payload = result_payload(problem, result, source=args.input)
     rendered = json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
     if args.output:

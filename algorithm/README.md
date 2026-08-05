@@ -20,7 +20,8 @@ src/uav_dispatch/
 ├── alns.py           基线、ALNS、驱逐交换与路线池集合划分强化
 └── cli.py            求解与 JSON 结果输出
 experiments/
-└── run_benchmarks.py 多规模、多随机种子可复现实验
+├── run_benchmarks.py            多规模、多随机种子可复现实验
+└── run_alns_core_comparison.py ALNS Core/HALNS 配对对比
 results/              原始运行、汇总统计与两类最终路线
 tests/                行为测试、随机交叉验证与 CLI 测试
 ```
@@ -54,7 +55,7 @@ PYTHONPATH=algorithm/src python3 -m uav_dispatch solve \
   --output algorithm/results/solution.json
 ```
 
-`--method` 还支持 `exact`、`edd`、`nearest`、`greedy`、`regret2` 和 `basic-alns`。将 `--candidate-limit` 设为 `0` 可关闭候选位置剪枝；固定迭代数适合复现比较，`--time-limit` 适合墙钟预算控制。小规模精确求解默认最多 10 个任务，可通过 `--exact-max-tasks` 调整，但状态空间指数增长。
+`--method` 还支持 `exact`、`edd`、`nearest`、`greedy`、`regret2` 和 `alns-core`；`basic-alns` 作为 `alns-core` 的兼容别名保留。ALNS Core 只运行自适应大邻域搜索主循环，不启用驱逐交换或路线池重组。将 `--candidate-limit` 设为 `0` 可关闭候选位置剪枝；固定迭代数适合复现比较，`--time-limit` 适合墙钟预算控制。小规模精确求解默认最多 10 个任务，可通过 `--exact-max-tasks` 调整，但状态空间指数增长。
 
 ## 复现实验
 
@@ -69,3 +70,18 @@ PYTHONPATH=algorithm/src python3 algorithm/experiments/run_benchmarks.py \
 ```
 
 快速冒烟实验可增加 `--quick`。完整数值结论、限制与复现环境见 [RESULTS_REPORT.md](RESULTS_REPORT.md)。`results/best_fleet_solution_compliant.json` 是四分钟内的最好路线；`results/best_fleet_solution.json` 是超时离线扩展路线，二者不可混为竞赛成绩。
+
+## ALNS Core 对比实验
+
+为分别回答“每轮搜索质量”和“固定墙钟内的实用性能”，专项实验同时运行 5 个种子的 400 轮对比和 3 个种子的 240 秒配对对比：
+
+```bash
+PYTHONPATH=algorithm/src python3 \
+  algorithm/experiments/run_alns_core_comparison.py \
+  --output-dir algorithm/results/alns_core_comparison \
+  --equal-seed-count 5 --equal-iterations 400 \
+  --wall-seed-count 3 --wall-time-limit 240 \
+  --wall-safety-margin 2
+```
+
+断点续跑可增加 `--resume`；脚本会核对输入与参数签名，并为新运行持久化完整路线。结论、逐种子得分和统计限制见 [ALNS_CORE_COMPARISON_REPORT.md](ALNS_CORE_COMPARISON_REPORT.md)，原始记录位于 `results/alns_core_comparison/`。

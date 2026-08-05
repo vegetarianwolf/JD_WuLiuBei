@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from math import exp, isfinite
 from random import Random
 from time import perf_counter
@@ -516,8 +516,15 @@ class _RoutePool:
             ):
                 self.columns[tasks] = column
 
-    def recombine(self, incumbent: Routes, node_limit: int) -> Routes:
+    def recombine(
+        self,
+        incumbent: Routes,
+        node_limit: int,
+        deadline: float | None = None,
+    ) -> Routes:
         self.add(incumbent)
+        if deadline is not None and perf_counter() >= deadline:
+            return incumbent
         columns = tuple(
             sorted(self.columns.values(), key=lambda col: (col.score, col.route))
         )
@@ -539,7 +546,9 @@ class _RoutePool:
             partial_score: Score,
         ) -> None:
             nonlocal best_score, best_routes, nodes
-            if nodes >= node_limit:
+            if nodes >= node_limit or (
+                deadline is not None and perf_counter() >= deadline
+            ):
                 return
             nodes += 1
             if not uncovered:
@@ -577,7 +586,9 @@ class _RoutePool:
                     selected + (column,),
                     partial_score + column.score,
                 )
-                if nodes >= node_limit:
+                if nodes >= node_limit or (
+                    deadline is not None and perf_counter() >= deadline
+                ):
                     break
 
         dfs(frozenset(self.problem.task_ids), (), Score(0, 0.0, 0.0))
@@ -592,6 +603,7 @@ def _ejection_swap_improve(
     candidate_limit: int | None,
     rng: Random,
     max_trials: int,
+    deadline: float | None = None,
 ) -> Routes:
     current_score = routes_score(evaluator, routes)
     best_routes = routes
@@ -611,12 +623,16 @@ def _ejection_swap_improve(
     late_tasks.sort(reverse=True)
     trials = 0
     for _, urgent_task in late_tasks:
+        if deadline is not None and perf_counter() >= deadline:
+            return best_routes
         source_index = route_by_task[urgent_task]
         target_indices = [
             index for index in range(len(routes)) if index != source_index
         ]
         rng.shuffle(target_indices)
         for target_index in target_indices:
+            if deadline is not None and perf_counter() >= deadline:
+                return best_routes
             ejectable = [visit for visit in routes[target_index] if visit > 0]
             ejectable.sort(
                 key=lambda task_id: (
@@ -626,6 +642,8 @@ def _ejection_swap_improve(
                 reverse=True,
             )
             for ejected_task in ejectable[:6]:
+                if deadline is not None and perf_counter() >= deadline:
+                    return best_routes
                 trials += 1
                 source = tuple(
                     visit
@@ -708,6 +726,11 @@ def solve_alns(
 
     cfg = config or ALNSConfig()
     started = perf_counter()
+    deadline = (
+        None
+        if cfg.time_limit_seconds is None
+        else started + cfg.time_limit_seconds
+    )
     rng = Random(cfg.seed)
     evaluator = RouteEvaluator(problem)
     if initial_routes is None:
@@ -738,15 +761,13 @@ def solve_alns(
     segment_rewards = {key: 0.0 for key in total_uses}
     accepted_count = 0
     temperature = cfg.initial_temperature
-    route_pool = _RoutePool(problem, evaluator)
-    route_pool.add(best)
+    route_pool = _RoutePool(problem, evaluator) if cfg.enable_route_pool else None
+    if route_pool is not None:
+        route_pool.add(best)
     completed_iterations = 0
 
     for iteration in range(1, cfg.max_iterations + 1):
-        if (
-            cfg.time_limit_seconds is not None
-            and perf_counter() - started >= cfg.time_limit_seconds
-        ):
+        if deadline is not None and perf_counter() >= deadline:
             break
         destroy_name = _roulette(destroy_weights, rng)
         repair_name = _roulette(repair_weights, rng)
@@ -765,6 +786,8 @@ def solve_alns(
             remove_count,
             rng,
         )
+        if deadline is not None and perf_counter() >= deadline:
+            break
         candidate = _repair(
             problem,
             evaluator,
@@ -773,6 +796,8 @@ def solve_alns(
             repair_name,
             cfg.candidate_limit,
         )
+        if deadline is not None and perf_counter() >= deadline:
+            break
         if (
             cfg.enable_ejection
             and cfg.ejection_interval > 0
@@ -785,8 +810,13 @@ def solve_alns(
                 cfg.candidate_limit,
                 rng,
                 cfg.ejection_trials,
+                deadline,
             )
+        if deadline is not None and perf_counter() >= deadline:
+            break
         candidate_score = routes_score(evaluator, candidate)
+        if deadline is not None and perf_counter() >= deadline:
+            break
         improved_current = candidate_score < current_score
         accepted = _accept_worse(
             candidate_score, current_score, problem, temperature, rng
@@ -797,13 +827,15 @@ def solve_alns(
             current_score = candidate_score
             accepted_count += 1
             reward = 4.0 if improved_current else 1.0
-            route_pool.add(current)
+            if route_pool is not None:
+                route_pool.add(current)
         if candidate_score < best_score:
             best = candidate
             best_score = candidate_score
             time_to_best = perf_counter() - started
             reward = 8.0
-            route_pool.add(best)
+            if route_pool is not None:
+                route_pool.add(best)
 
         destroy_key = f"destroy:{destroy_name}"
         repair_key = f"repair:{repair_name}"
@@ -813,11 +845,18 @@ def solve_alns(
             segment_rewards[key] += reward
 
         if (
-            cfg.enable_route_pool
+            route_pool is not None
             and cfg.route_pool_interval > 0
             and iteration % cfg.route_pool_interval == 0
         ):
-            recombined = route_pool.recombine(best, cfg.route_pool_node_limit)
+            recombined = route_pool.recombine(
+                best,
+                cfg.route_pool_node_limit,
+                deadline,
+            )
+            if deadline is not None and perf_counter() >= deadline:
+                completed_iterations = iteration
+                break
             recombined_score = routes_score(evaluator, recombined)
             if recombined_score < best_score:
                 best = recombined
@@ -865,8 +904,15 @@ def solve_alns(
         raise RuntimeError("ALNS 算子权重出现非法数值")
     metadata = MappingProxyType(
         {
-            "method": "C2-Lex-HALNS",
+            "method": (
+                "C2-Lex-ALNS-Core"
+                if not cfg.enable_route_pool and not cfg.enable_ejection
+                else "C2-Lex-HALNS"
+            ),
             "seed": cfg.seed,
+            "enable_route_pool": cfg.enable_route_pool,
+            "enable_ejection": cfg.enable_ejection,
+            "time_limit_seconds": cfg.time_limit_seconds,
             "initial_score": (
                 initial_score.late_count,
                 initial_score.total_lateness_min,
@@ -876,8 +922,8 @@ def solve_alns(
             "accepted_solutions": accepted_count,
             "operator_uses": MappingProxyType(dict(total_uses)),
             "operator_weights": MappingProxyType(all_weights),
-            "route_pool_columns": len(route_pool.columns),
-            "route_pool_last_nodes": route_pool.last_nodes,
+            "route_pool_columns": len(route_pool.columns) if route_pool else 0,
+            "route_pool_last_nodes": route_pool.last_nodes if route_pool else 0,
         }
     )
     return SolverResult(
@@ -886,4 +932,24 @@ def solve_alns(
         runtime_seconds=perf_counter() - started,
         iterations=completed_iterations,
         metadata=metadata,
+    )
+
+
+def solve_alns_core(
+    problem: Problem,
+    *,
+    config: ALNSConfig | None = None,
+    initial_routes: Sequence[Sequence[int]] | None = None,
+) -> SolverResult:
+    """Run the adaptive LNS core without route-pool or ejection reinforcement."""
+
+    core_config = replace(
+        config or ALNSConfig(),
+        enable_route_pool=False,
+        enable_ejection=False,
+    )
+    return solve_alns(
+        problem,
+        config=core_config,
+        initial_routes=initial_routes,
     )

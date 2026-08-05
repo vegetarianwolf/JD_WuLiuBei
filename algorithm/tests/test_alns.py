@@ -8,6 +8,7 @@ from uav_dispatch import (
     construct_regret_initial,
     evaluate_solution,
     solve_alns,
+    solve_alns_core,
 )
 
 
@@ -78,3 +79,40 @@ def test_warm_start_with_unused_drones_is_padded_with_empty_routes():
     assert len(result.routes) == 2
     assert result.routes[1] == ()
     assert result.evaluation.valid
+
+
+def test_alns_core_public_solver_disables_hybrid_reinforcement():
+    problem = _fleet_problem()
+    config = ALNSConfig(
+        max_iterations=20,
+        seed=20260805,
+        candidate_limit=None,
+        enable_route_pool=True,
+        enable_ejection=True,
+    )
+
+    result = solve_alns_core(problem, config=config)
+
+    assert result.evaluation.valid
+    assert result.metadata["method"] == "C2-Lex-ALNS-Core"
+    assert result.metadata["enable_route_pool"] is False
+    assert result.metadata["enable_ejection"] is False
+    assert result.metadata["route_pool_columns"] == 0
+
+
+def test_expired_search_budget_does_not_start_an_iteration():
+    problem = _fleet_problem()
+    initial = construct_regret_initial(problem, candidate_limit=None)
+
+    result = solve_alns(
+        problem,
+        config=ALNSConfig(
+            max_iterations=100,
+            time_limit_seconds=1e-9,
+            candidate_limit=None,
+        ),
+        initial_routes=initial.routes,
+    )
+
+    assert result.evaluation.valid
+    assert result.iterations == 0
