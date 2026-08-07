@@ -1,0 +1,2415 @@
+{
+  "source": "/Users/vegetarianwolf/Projects/JD_WuLiuBei/algorithm/命题1-低空经济场景下的物流无人机调度算法数据.csv",
+  "problem": {
+    "task_count": 200,
+    "drone_count": 8,
+    "max_tasks_per_drone": 25,
+    "capacity": 2,
+    "speed_km_per_min": 0.9,
+    "depot_km": [
+      0.0,
+      0.0
+    ],
+    "open_routes": true,
+    "service_time_min": 0.0,
+    "objective_order": [
+      "late_count",
+      "total_lateness_min",
+      "distance_km"
+    ]
+  },
+  "valid": true,
+  "violations": [],
+  "score": {
+    "late_count": 75,
+    "total_lateness_min": 2496.7865568052357,
+    "distance_km": 652.2390659016819
+  },
+  "on_time_rate": 0.625,
+  "max_lateness_min": 61.7714817348938,
+  "max_route_distance_km": 85.13430158583463,
+  "max_route_completion_min": 94.59366842870514,
+  "runtime_seconds": 238.00070816703374,
+  "iterations": 1044,
+  "metadata": {
+    "method": "C2-Lex-ALNS-Core",
+    "seed": 2026080502,
+    "enable_route_pool": false,
+    "enable_ejection": false,
+    "enable_assignment_destroy": true,
+    "enable_deadline_risk": true,
+    "enable_vnd": true,
+    "enable_cluster_repair": true,
+    "vnd_calls": 1044,
+    "vnd_improved_iterations": 811,
+    "time_limit_seconds": 233.9162910829764,
+    "initial_score": [
+      108,
+      4464.183540734935,
+      775.7731679286859
+    ],
+    "time_to_best_seconds": 235.92281466705026,
+    "accepted_solutions": 564,
+    "operator_uses": {
+      "destroy:random": 129,
+      "destroy:worst_distance": 158,
+      "destroy:worst_lex": 174,
+      "destroy:spatial_related": 82,
+      "destroy:deadline_related": 97,
+      "destroy:late_critical": 158,
+      "destroy:route_segment": 32,
+      "destroy:capacity_conflict": 76,
+      "destroy:assignment_destroy": 138,
+      "repair:greedy": 293,
+      "repair:regret2": 215,
+      "repair:regret3": 314,
+      "repair:deadline": 71,
+      "repair:slack": 68,
+      "repair:cluster_regret": 83
+    },
+    "operator_weights": {
+      "destroy:random": 1.145698398124795,
+      "destroy:worst_distance": 1.776809304731568,
+      "destroy:worst_lex": 2.102468739579483,
+      "destroy:spatial_related": 1.697128928105447,
+      "destroy:deadline_related": 0.5958183128960439,
+      "destroy:late_critical": 1.52214649622033,
+      "destroy:route_segment": 0.07004347198778031,
+      "destroy:capacity_conflict": 0.356344212485169,
+      "destroy:assignment_destroy": 1.0062513426200983,
+      "repair:greedy": 2.1127614099318786,
+      "repair:regret2": 1.0610956245375758,
+      "repair:regret3": 1.564137558025646,
+      "repair:deadline": 0.09847380794999867,
+      "repair:slack": 0.4934524759977672,
+      "repair:cluster_regret": 0.12688517703492067
+    },
+    "route_pool_columns": 0,
+    "route_pool_last_nodes": 0,
+    "search_runtime_seconds": 233.91699925001012,
+    "initial_construction_seconds": 4.083708917023614
+  },
+  "delivery_times_min": {
+    "1": 20.710160825973652,
+    "2": 77.72806656845432,
+    "3": 85.6792585176533,
+    "4": 11.845242292584233,
+    "5": 34.03220793714206,
+    "6": 61.647455215442804,
+    "7": 35.72401050959427,
+    "8": 62.22211627651296,
+    "9": 12.881819051749282,
+    "10": 20.49598189537178,
+    "11": 36.73594244504545,
+    "12": 76.40268442469184,
+    "13": 67.05070248315086,
+    "14": 45.48563537436329,
+    "15": 75.51986122746399,
+    "16": 93.0714817348938,
+    "17": 75.33874114206726,
+    "18": 11.536373110506142,
+    "19": 31.909431622326668,
+    "20": 53.90582977708419,
+    "21": 45.169667017158574,
+    "22": 61.71163158649654,
+    "23": 40.65737250399641,
+    "24": 92.72077507467417,
+    "25": 90.58748256670039,
+    "26": 68.43890810303424,
+    "27": 7.927426754053629,
+    "28": 13.358830218566165,
+    "29": 25.314918798829083,
+    "30": 58.094295040679185,
+    "31": 53.58699245921357,
+    "32": 78.18537516880636,
+    "33": 21.457878247774076,
+    "34": 14.80538025383212,
+    "35": 10.245188184337971,
+    "36": 20.44686419053521,
+    "37": 79.92036509728341,
+    "38": 48.87269827302278,
+    "39": 66.04438500035612,
+    "40": 45.990728254842836,
+    "41": 85.13109949530774,
+    "42": 8.01977861365545,
+    "43": 30.26990606255314,
+    "44": 38.57151013690138,
+    "45": 93.24136395435755,
+    "46": 16.20545377406036,
+    "47": 16.634598518731703,
+    "48": 74.18977258287329,
+    "49": 18.533904044284274,
+    "50": 46.8009256092488,
+    "51": 12.885010059205529,
+    "52": 85.8538182310525,
+    "53": 53.47961124295286,
+    "54": 24.12009009199579,
+    "55": 38.113298842567886,
+    "56": 30.517745550162118,
+    "57": 72.29017256815733,
+    "58": 35.33265811819087,
+    "59": 8.994688382693736,
+    "60": 25.0573152377305,
+    "61": 58.90076973906803,
+    "62": 35.633614421602665,
+    "63": 80.55160698574736,
+    "64": 15.788250976252671,
+    "65": 44.051558103448,
+    "66": 29.47239842440092,
+    "67": 60.36476869633918,
+    "68": 83.41332726440565,
+    "69": 27.847412905124074,
+    "70": 42.83421824065879,
+    "71": 77.65073249165845,
+    "72": 89.59916580308932,
+    "73": 24.72991306897163,
+    "74": 26.15038533294773,
+    "75": 7.452650035289807,
+    "76": 52.29195428721232,
+    "77": 42.29018698684216,
+    "78": 64.61057497054817,
+    "79": 69.38037558737403,
+    "80": 51.82650718061878,
+    "81": 21.70482648559912,
+    "82": 57.08969374601166,
+    "83": 45.766156622000594,
+    "84": 38.46875466468187,
+    "85": 51.41512877390739,
+    "86": 13.270070580342495,
+    "87": 88.69174927974413,
+    "88": 86.27933088319617,
+    "89": 43.808919643627405,
+    "90": 77.85199060491132,
+    "91": 21.62772503347581,
+    "92": 6.459428858624646,
+    "93": 63.6449017258103,
+    "94": 47.69606301113204,
+    "95": 36.82176243929976,
+    "96": 82.82691216878219,
+    "97": 32.30931890906203,
+    "98": 55.253002423678296,
+    "99": 30.49393236850835,
+    "100": 50.002993536289075,
+    "101": 54.17430865484788,
+    "102": 90.37380698050295,
+    "103": 17.654986434403753,
+    "104": 72.23311983212378,
+    "105": 41.204720264913064,
+    "106": 47.18091363228629,
+    "107": 43.34205057735299,
+    "108": 54.9286616239971,
+    "109": 72.46289508371888,
+    "110": 23.307993280449583,
+    "111": 25.367920125202943,
+    "112": 11.30813117770085,
+    "113": 82.86182196688226,
+    "114": 32.80258744538223,
+    "115": 23.696017061928845,
+    "116": 29.358282272910667,
+    "117": 61.77458366688529,
+    "118": 4.445540006559805,
+    "119": 11.4640709028274,
+    "120": 69.57451735075183,
+    "121": 13.475062169638123,
+    "122": 13.099767466501952,
+    "123": 88.86566567799412,
+    "124": 60.533337040306535,
+    "125": 18.785202532470155,
+    "126": 56.39630546172809,
+    "127": 24.979031236314054,
+    "128": 28.926695773694828,
+    "129": 5.3510799639049935,
+    "130": 30.02721461741352,
+    "131": 61.74733625034236,
+    "132": 19.11092837929998,
+    "133": 64.40929130666305,
+    "134": 5.834955665807629,
+    "135": 54.78377192413274,
+    "136": 84.04913439100442,
+    "137": 51.99322500620715,
+    "138": 27.40060340997378,
+    "139": 15.923405160112448,
+    "140": 26.329550872269316,
+    "141": 19.078685019346324,
+    "142": 21.011025950427513,
+    "143": 25.21958923586648,
+    "144": 70.3030002395875,
+    "145": 94.59366842870514,
+    "146": 22.528473141358575,
+    "147": 59.394163634693996,
+    "148": 14.188230390455038,
+    "149": 24.836416278225332,
+    "150": 69.38853371416212,
+    "151": 24.792938305827647,
+    "152": 44.818579594443285,
+    "153": 7.818008156483408,
+    "154": 41.62868608671192,
+    "155": 39.556750501102336,
+    "156": 36.223768995884875,
+    "157": 28.288871851266286,
+    "158": 50.21964930321635,
+    "159": 20.306925877767092,
+    "160": 40.37580633369265,
+    "161": 30.954222458871886,
+    "162": 17.894363314010576,
+    "163": 53.99379885081171,
+    "164": 70.40529737788356,
+    "165": 75.4152939362068,
+    "166": 34.964016751682095,
+    "167": 14.207553268475879,
+    "168": 41.469904461415496,
+    "169": 9.191749326455527,
+    "170": 64.55495140015854,
+    "171": 14.251373363321363,
+    "172": 19.789944376348227,
+    "173": 19.673084274870202,
+    "174": 16.505207765063037,
+    "175": 7.5360962591869445,
+    "176": 72.4385092746823,
+    "177": 84.0019973919814,
+    "178": 71.34794883154463,
+    "179": 45.657296270687105,
+    "180": 52.314450834928266,
+    "181": 8.929944092280163,
+    "182": 73.96978436036811,
+    "183": 28.35279804514292,
+    "184": 27.554100541430355,
+    "185": 35.92095929745024,
+    "186": 8.858714516336821,
+    "187": 62.93644346931622,
+    "188": 53.17878388632846,
+    "189": 11.07825026321529,
+    "190": 70.22535568242361,
+    "191": 35.32349249276776,
+    "192": 59.899426660975365,
+    "193": 10.05002613278634,
+    "194": 12.802914242443563,
+    "195": 79.11714564835486,
+    "196": 35.65838146602163,
+    "197": 87.8413139809817,
+    "198": 42.226179749795726,
+    "199": 33.749697802973174,
+    "200": 17.76634837841689
+  },
+  "routes": [
+    {
+      "drone_id": 1,
+      "task_count": 25,
+      "distance_km": 79.9790991101947,
+      "completion_time_min": 88.86566567799412,
+      "late_count": 10,
+      "total_lateness_min": 284.8747942271074,
+      "on_time_task_count": 15,
+      "encoded_visits": [
+        181,
+        118,
+        -118,
+        134,
+        -134,
+        4,
+        -181,
+        28,
+        -4,
+        103,
+        -28,
+        91,
+        -103,
+        127,
+        -91,
+        111,
+        -127,
+        -111,
+        43,
+        70,
+        -43,
+        5,
+        -5,
+        84,
+        -84,
+        21,
+        -70,
+        -21,
+        100,
+        76,
+        -100,
+        135,
+        -76,
+        93,
+        -135,
+        61,
+        -61,
+        26,
+        -93,
+        57,
+        -26,
+        165,
+        -57,
+        63,
+        -165,
+        123,
+        -63,
+        87,
+        -87,
+        -123
+      ],
+      "visits": [
+        {
+          "task_id": 181,
+          "action": "pickup"
+        },
+        {
+          "task_id": 118,
+          "action": "pickup"
+        },
+        {
+          "task_id": 118,
+          "action": "delivery"
+        },
+        {
+          "task_id": 134,
+          "action": "pickup"
+        },
+        {
+          "task_id": 134,
+          "action": "delivery"
+        },
+        {
+          "task_id": 4,
+          "action": "pickup"
+        },
+        {
+          "task_id": 181,
+          "action": "delivery"
+        },
+        {
+          "task_id": 28,
+          "action": "pickup"
+        },
+        {
+          "task_id": 4,
+          "action": "delivery"
+        },
+        {
+          "task_id": 103,
+          "action": "pickup"
+        },
+        {
+          "task_id": 28,
+          "action": "delivery"
+        },
+        {
+          "task_id": 91,
+          "action": "pickup"
+        },
+        {
+          "task_id": 103,
+          "action": "delivery"
+        },
+        {
+          "task_id": 127,
+          "action": "pickup"
+        },
+        {
+          "task_id": 91,
+          "action": "delivery"
+        },
+        {
+          "task_id": 111,
+          "action": "pickup"
+        },
+        {
+          "task_id": 127,
+          "action": "delivery"
+        },
+        {
+          "task_id": 111,
+          "action": "delivery"
+        },
+        {
+          "task_id": 43,
+          "action": "pickup"
+        },
+        {
+          "task_id": 70,
+          "action": "pickup"
+        },
+        {
+          "task_id": 43,
+          "action": "delivery"
+        },
+        {
+          "task_id": 5,
+          "action": "pickup"
+        },
+        {
+          "task_id": 5,
+          "action": "delivery"
+        },
+        {
+          "task_id": 84,
+          "action": "pickup"
+        },
+        {
+          "task_id": 84,
+          "action": "delivery"
+        },
+        {
+          "task_id": 21,
+          "action": "pickup"
+        },
+        {
+          "task_id": 70,
+          "action": "delivery"
+        },
+        {
+          "task_id": 21,
+          "action": "delivery"
+        },
+        {
+          "task_id": 100,
+          "action": "pickup"
+        },
+        {
+          "task_id": 76,
+          "action": "pickup"
+        },
+        {
+          "task_id": 100,
+          "action": "delivery"
+        },
+        {
+          "task_id": 135,
+          "action": "pickup"
+        },
+        {
+          "task_id": 76,
+          "action": "delivery"
+        },
+        {
+          "task_id": 93,
+          "action": "pickup"
+        },
+        {
+          "task_id": 135,
+          "action": "delivery"
+        },
+        {
+          "task_id": 61,
+          "action": "pickup"
+        },
+        {
+          "task_id": 61,
+          "action": "delivery"
+        },
+        {
+          "task_id": 26,
+          "action": "pickup"
+        },
+        {
+          "task_id": 93,
+          "action": "delivery"
+        },
+        {
+          "task_id": 57,
+          "action": "pickup"
+        },
+        {
+          "task_id": 26,
+          "action": "delivery"
+        },
+        {
+          "task_id": 165,
+          "action": "pickup"
+        },
+        {
+          "task_id": 57,
+          "action": "delivery"
+        },
+        {
+          "task_id": 63,
+          "action": "pickup"
+        },
+        {
+          "task_id": 165,
+          "action": "delivery"
+        },
+        {
+          "task_id": 123,
+          "action": "pickup"
+        },
+        {
+          "task_id": 63,
+          "action": "delivery"
+        },
+        {
+          "task_id": 87,
+          "action": "pickup"
+        },
+        {
+          "task_id": 87,
+          "action": "delivery"
+        },
+        {
+          "task_id": 123,
+          "action": "delivery"
+        }
+      ]
+    },
+    {
+      "drone_id": 2,
+      "task_count": 25,
+      "distance_km": 79.05718258288354,
+      "completion_time_min": 87.8413139809817,
+      "late_count": 7,
+      "total_lateness_min": 219.7671547840384,
+      "on_time_task_count": 18,
+      "encoded_visits": [
+        186,
+        129,
+        -129,
+        51,
+        -186,
+        86,
+        -51,
+        -86,
+        148,
+        -148,
+        173,
+        47,
+        -47,
+        10,
+        -173,
+        -10,
+        138,
+        60,
+        -60,
+        19,
+        -138,
+        56,
+        -56,
+        -19,
+        185,
+        11,
+        -185,
+        -11,
+        160,
+        179,
+        -160,
+        65,
+        -65,
+        -179,
+        82,
+        31,
+        -31,
+        131,
+        -82,
+        39,
+        -131,
+        144,
+        -39,
+        17,
+        -144,
+        12,
+        -17,
+        -12,
+        197,
+        -197
+      ],
+      "visits": [
+        {
+          "task_id": 186,
+          "action": "pickup"
+        },
+        {
+          "task_id": 129,
+          "action": "pickup"
+        },
+        {
+          "task_id": 129,
+          "action": "delivery"
+        },
+        {
+          "task_id": 51,
+          "action": "pickup"
+        },
+        {
+          "task_id": 186,
+          "action": "delivery"
+        },
+        {
+          "task_id": 86,
+          "action": "pickup"
+        },
+        {
+          "task_id": 51,
+          "action": "delivery"
+        },
+        {
+          "task_id": 86,
+          "action": "delivery"
+        },
+        {
+          "task_id": 148,
+          "action": "pickup"
+        },
+        {
+          "task_id": 148,
+          "action": "delivery"
+        },
+        {
+          "task_id": 173,
+          "action": "pickup"
+        },
+        {
+          "task_id": 47,
+          "action": "pickup"
+        },
+        {
+          "task_id": 47,
+          "action": "delivery"
+        },
+        {
+          "task_id": 10,
+          "action": "pickup"
+        },
+        {
+          "task_id": 173,
+          "action": "delivery"
+        },
+        {
+          "task_id": 10,
+          "action": "delivery"
+        },
+        {
+          "task_id": 138,
+          "action": "pickup"
+        },
+        {
+          "task_id": 60,
+          "action": "pickup"
+        },
+        {
+          "task_id": 60,
+          "action": "delivery"
+        },
+        {
+          "task_id": 19,
+          "action": "pickup"
+        },
+        {
+          "task_id": 138,
+          "action": "delivery"
+        },
+        {
+          "task_id": 56,
+          "action": "pickup"
+        },
+        {
+          "task_id": 56,
+          "action": "delivery"
+        },
+        {
+          "task_id": 19,
+          "action": "delivery"
+        },
+        {
+          "task_id": 185,
+          "action": "pickup"
+        },
+        {
+          "task_id": 11,
+          "action": "pickup"
+        },
+        {
+          "task_id": 185,
+          "action": "delivery"
+        },
+        {
+          "task_id": 11,
+          "action": "delivery"
+        },
+        {
+          "task_id": 160,
+          "action": "pickup"
+        },
+        {
+          "task_id": 179,
+          "action": "pickup"
+        },
+        {
+          "task_id": 160,
+          "action": "delivery"
+        },
+        {
+          "task_id": 65,
+          "action": "pickup"
+        },
+        {
+          "task_id": 65,
+          "action": "delivery"
+        },
+        {
+          "task_id": 179,
+          "action": "delivery"
+        },
+        {
+          "task_id": 82,
+          "action": "pickup"
+        },
+        {
+          "task_id": 31,
+          "action": "pickup"
+        },
+        {
+          "task_id": 31,
+          "action": "delivery"
+        },
+        {
+          "task_id": 131,
+          "action": "pickup"
+        },
+        {
+          "task_id": 82,
+          "action": "delivery"
+        },
+        {
+          "task_id": 39,
+          "action": "pickup"
+        },
+        {
+          "task_id": 131,
+          "action": "delivery"
+        },
+        {
+          "task_id": 144,
+          "action": "pickup"
+        },
+        {
+          "task_id": 39,
+          "action": "delivery"
+        },
+        {
+          "task_id": 17,
+          "action": "pickup"
+        },
+        {
+          "task_id": 144,
+          "action": "delivery"
+        },
+        {
+          "task_id": 12,
+          "action": "pickup"
+        },
+        {
+          "task_id": 17,
+          "action": "delivery"
+        },
+        {
+          "task_id": 12,
+          "action": "delivery"
+        },
+        {
+          "task_id": 197,
+          "action": "pickup"
+        },
+        {
+          "task_id": 197,
+          "action": "delivery"
+        }
+      ]
+    },
+    {
+      "drone_id": 3,
+      "task_count": 25,
+      "distance_km": 75.60179765278326,
+      "completion_time_min": 84.0019973919814,
+      "late_count": 9,
+      "total_lateness_min": 294.24198744964474,
+      "on_time_task_count": 16,
+      "encoded_visits": [
+        75,
+        193,
+        -75,
+        119,
+        -193,
+        167,
+        -119,
+        121,
+        -121,
+        -167,
+        132,
+        159,
+        -132,
+        33,
+        -159,
+        -33,
+        143,
+        157,
+        -143,
+        128,
+        -157,
+        44,
+        -128,
+        58,
+        -58,
+        105,
+        -44,
+        152,
+        -105,
+        85,
+        -152,
+        53,
+        -85,
+        30,
+        -53,
+        22,
+        -30,
+        170,
+        -22,
+        150,
+        -170,
+        109,
+        -150,
+        71,
+        -109,
+        177,
+        -71,
+        113,
+        -113,
+        -177
+      ],
+      "visits": [
+        {
+          "task_id": 75,
+          "action": "pickup"
+        },
+        {
+          "task_id": 193,
+          "action": "pickup"
+        },
+        {
+          "task_id": 75,
+          "action": "delivery"
+        },
+        {
+          "task_id": 119,
+          "action": "pickup"
+        },
+        {
+          "task_id": 193,
+          "action": "delivery"
+        },
+        {
+          "task_id": 167,
+          "action": "pickup"
+        },
+        {
+          "task_id": 119,
+          "action": "delivery"
+        },
+        {
+          "task_id": 121,
+          "action": "pickup"
+        },
+        {
+          "task_id": 121,
+          "action": "delivery"
+        },
+        {
+          "task_id": 167,
+          "action": "delivery"
+        },
+        {
+          "task_id": 132,
+          "action": "pickup"
+        },
+        {
+          "task_id": 159,
+          "action": "pickup"
+        },
+        {
+          "task_id": 132,
+          "action": "delivery"
+        },
+        {
+          "task_id": 33,
+          "action": "pickup"
+        },
+        {
+          "task_id": 159,
+          "action": "delivery"
+        },
+        {
+          "task_id": 33,
+          "action": "delivery"
+        },
+        {
+          "task_id": 143,
+          "action": "pickup"
+        },
+        {
+          "task_id": 157,
+          "action": "pickup"
+        },
+        {
+          "task_id": 143,
+          "action": "delivery"
+        },
+        {
+          "task_id": 128,
+          "action": "pickup"
+        },
+        {
+          "task_id": 157,
+          "action": "delivery"
+        },
+        {
+          "task_id": 44,
+          "action": "pickup"
+        },
+        {
+          "task_id": 128,
+          "action": "delivery"
+        },
+        {
+          "task_id": 58,
+          "action": "pickup"
+        },
+        {
+          "task_id": 58,
+          "action": "delivery"
+        },
+        {
+          "task_id": 105,
+          "action": "pickup"
+        },
+        {
+          "task_id": 44,
+          "action": "delivery"
+        },
+        {
+          "task_id": 152,
+          "action": "pickup"
+        },
+        {
+          "task_id": 105,
+          "action": "delivery"
+        },
+        {
+          "task_id": 85,
+          "action": "pickup"
+        },
+        {
+          "task_id": 152,
+          "action": "delivery"
+        },
+        {
+          "task_id": 53,
+          "action": "pickup"
+        },
+        {
+          "task_id": 85,
+          "action": "delivery"
+        },
+        {
+          "task_id": 30,
+          "action": "pickup"
+        },
+        {
+          "task_id": 53,
+          "action": "delivery"
+        },
+        {
+          "task_id": 22,
+          "action": "pickup"
+        },
+        {
+          "task_id": 30,
+          "action": "delivery"
+        },
+        {
+          "task_id": 170,
+          "action": "pickup"
+        },
+        {
+          "task_id": 22,
+          "action": "delivery"
+        },
+        {
+          "task_id": 150,
+          "action": "pickup"
+        },
+        {
+          "task_id": 170,
+          "action": "delivery"
+        },
+        {
+          "task_id": 109,
+          "action": "pickup"
+        },
+        {
+          "task_id": 150,
+          "action": "delivery"
+        },
+        {
+          "task_id": 71,
+          "action": "pickup"
+        },
+        {
+          "task_id": 109,
+          "action": "delivery"
+        },
+        {
+          "task_id": 177,
+          "action": "pickup"
+        },
+        {
+          "task_id": 71,
+          "action": "delivery"
+        },
+        {
+          "task_id": 113,
+          "action": "pickup"
+        },
+        {
+          "task_id": 113,
+          "action": "delivery"
+        },
+        {
+          "task_id": 177,
+          "action": "delivery"
+        }
+      ]
+    },
+    {
+      "drone_id": 4,
+      "task_count": 25,
+      "distance_km": 83.44869756720678,
+      "completion_time_min": 92.72077507467417,
+      "late_count": 11,
+      "total_lateness_min": 396.1462476907037,
+      "on_time_task_count": 14,
+      "encoded_visits": [
+        112,
+        27,
+        -27,
+        9,
+        -112,
+        171,
+        -9,
+        -171,
+        46,
+        -46,
+        1,
+        74,
+        -1,
+        54,
+        -54,
+        -74,
+        116,
+        166,
+        -116,
+        62,
+        -166,
+        40,
+        -62,
+        154,
+        -154,
+        50,
+        -40,
+        -50,
+        108,
+        80,
+        -80,
+        67,
+        -108,
+        192,
+        -192,
+        -67,
+        190,
+        104,
+        -190,
+        90,
+        -104,
+        195,
+        -90,
+        -195,
+        88,
+        72,
+        -88,
+        24,
+        -72,
+        -24
+      ],
+      "visits": [
+        {
+          "task_id": 112,
+          "action": "pickup"
+        },
+        {
+          "task_id": 27,
+          "action": "pickup"
+        },
+        {
+          "task_id": 27,
+          "action": "delivery"
+        },
+        {
+          "task_id": 9,
+          "action": "pickup"
+        },
+        {
+          "task_id": 112,
+          "action": "delivery"
+        },
+        {
+          "task_id": 171,
+          "action": "pickup"
+        },
+        {
+          "task_id": 9,
+          "action": "delivery"
+        },
+        {
+          "task_id": 171,
+          "action": "delivery"
+        },
+        {
+          "task_id": 46,
+          "action": "pickup"
+        },
+        {
+          "task_id": 46,
+          "action": "delivery"
+        },
+        {
+          "task_id": 1,
+          "action": "pickup"
+        },
+        {
+          "task_id": 74,
+          "action": "pickup"
+        },
+        {
+          "task_id": 1,
+          "action": "delivery"
+        },
+        {
+          "task_id": 54,
+          "action": "pickup"
+        },
+        {
+          "task_id": 54,
+          "action": "delivery"
+        },
+        {
+          "task_id": 74,
+          "action": "delivery"
+        },
+        {
+          "task_id": 116,
+          "action": "pickup"
+        },
+        {
+          "task_id": 166,
+          "action": "pickup"
+        },
+        {
+          "task_id": 116,
+          "action": "delivery"
+        },
+        {
+          "task_id": 62,
+          "action": "pickup"
+        },
+        {
+          "task_id": 166,
+          "action": "delivery"
+        },
+        {
+          "task_id": 40,
+          "action": "pickup"
+        },
+        {
+          "task_id": 62,
+          "action": "delivery"
+        },
+        {
+          "task_id": 154,
+          "action": "pickup"
+        },
+        {
+          "task_id": 154,
+          "action": "delivery"
+        },
+        {
+          "task_id": 50,
+          "action": "pickup"
+        },
+        {
+          "task_id": 40,
+          "action": "delivery"
+        },
+        {
+          "task_id": 50,
+          "action": "delivery"
+        },
+        {
+          "task_id": 108,
+          "action": "pickup"
+        },
+        {
+          "task_id": 80,
+          "action": "pickup"
+        },
+        {
+          "task_id": 80,
+          "action": "delivery"
+        },
+        {
+          "task_id": 67,
+          "action": "pickup"
+        },
+        {
+          "task_id": 108,
+          "action": "delivery"
+        },
+        {
+          "task_id": 192,
+          "action": "pickup"
+        },
+        {
+          "task_id": 192,
+          "action": "delivery"
+        },
+        {
+          "task_id": 67,
+          "action": "delivery"
+        },
+        {
+          "task_id": 190,
+          "action": "pickup"
+        },
+        {
+          "task_id": 104,
+          "action": "pickup"
+        },
+        {
+          "task_id": 190,
+          "action": "delivery"
+        },
+        {
+          "task_id": 90,
+          "action": "pickup"
+        },
+        {
+          "task_id": 104,
+          "action": "delivery"
+        },
+        {
+          "task_id": 195,
+          "action": "pickup"
+        },
+        {
+          "task_id": 90,
+          "action": "delivery"
+        },
+        {
+          "task_id": 195,
+          "action": "delivery"
+        },
+        {
+          "task_id": 88,
+          "action": "pickup"
+        },
+        {
+          "task_id": 72,
+          "action": "pickup"
+        },
+        {
+          "task_id": 88,
+          "action": "delivery"
+        },
+        {
+          "task_id": 24,
+          "action": "pickup"
+        },
+        {
+          "task_id": 72,
+          "action": "delivery"
+        },
+        {
+          "task_id": 24,
+          "action": "delivery"
+        }
+      ]
+    },
+    {
+      "drone_id": 5,
+      "task_count": 25,
+      "distance_km": 83.9172275589218,
+      "completion_time_min": 93.24136395435755,
+      "late_count": 11,
+      "total_lateness_min": 415.7022506382209,
+      "on_time_task_count": 14,
+      "encoded_visits": [
+        169,
+        151,
+        -169,
+        194,
+        -194,
+        139,
+        -139,
+        141,
+        -141,
+        110,
+        -110,
+        -151,
+        140,
+        7,
+        -140,
+        183,
+        -183,
+        114,
+        -114,
+        168,
+        -7,
+        95,
+        -95,
+        89,
+        -168,
+        106,
+        -89,
+        180,
+        -106,
+        188,
+        -180,
+        124,
+        -188,
+        8,
+        -124,
+        -8,
+        178,
+        120,
+        -120,
+        2,
+        -178,
+        37,
+        -2,
+        -37,
+        25,
+        52,
+        -52,
+        45,
+        -25,
+        -45
+      ],
+      "visits": [
+        {
+          "task_id": 169,
+          "action": "pickup"
+        },
+        {
+          "task_id": 151,
+          "action": "pickup"
+        },
+        {
+          "task_id": 169,
+          "action": "delivery"
+        },
+        {
+          "task_id": 194,
+          "action": "pickup"
+        },
+        {
+          "task_id": 194,
+          "action": "delivery"
+        },
+        {
+          "task_id": 139,
+          "action": "pickup"
+        },
+        {
+          "task_id": 139,
+          "action": "delivery"
+        },
+        {
+          "task_id": 141,
+          "action": "pickup"
+        },
+        {
+          "task_id": 141,
+          "action": "delivery"
+        },
+        {
+          "task_id": 110,
+          "action": "pickup"
+        },
+        {
+          "task_id": 110,
+          "action": "delivery"
+        },
+        {
+          "task_id": 151,
+          "action": "delivery"
+        },
+        {
+          "task_id": 140,
+          "action": "pickup"
+        },
+        {
+          "task_id": 7,
+          "action": "pickup"
+        },
+        {
+          "task_id": 140,
+          "action": "delivery"
+        },
+        {
+          "task_id": 183,
+          "action": "pickup"
+        },
+        {
+          "task_id": 183,
+          "action": "delivery"
+        },
+        {
+          "task_id": 114,
+          "action": "pickup"
+        },
+        {
+          "task_id": 114,
+          "action": "delivery"
+        },
+        {
+          "task_id": 168,
+          "action": "pickup"
+        },
+        {
+          "task_id": 7,
+          "action": "delivery"
+        },
+        {
+          "task_id": 95,
+          "action": "pickup"
+        },
+        {
+          "task_id": 95,
+          "action": "delivery"
+        },
+        {
+          "task_id": 89,
+          "action": "pickup"
+        },
+        {
+          "task_id": 168,
+          "action": "delivery"
+        },
+        {
+          "task_id": 106,
+          "action": "pickup"
+        },
+        {
+          "task_id": 89,
+          "action": "delivery"
+        },
+        {
+          "task_id": 180,
+          "action": "pickup"
+        },
+        {
+          "task_id": 106,
+          "action": "delivery"
+        },
+        {
+          "task_id": 188,
+          "action": "pickup"
+        },
+        {
+          "task_id": 180,
+          "action": "delivery"
+        },
+        {
+          "task_id": 124,
+          "action": "pickup"
+        },
+        {
+          "task_id": 188,
+          "action": "delivery"
+        },
+        {
+          "task_id": 8,
+          "action": "pickup"
+        },
+        {
+          "task_id": 124,
+          "action": "delivery"
+        },
+        {
+          "task_id": 8,
+          "action": "delivery"
+        },
+        {
+          "task_id": 178,
+          "action": "pickup"
+        },
+        {
+          "task_id": 120,
+          "action": "pickup"
+        },
+        {
+          "task_id": 120,
+          "action": "delivery"
+        },
+        {
+          "task_id": 2,
+          "action": "pickup"
+        },
+        {
+          "task_id": 178,
+          "action": "delivery"
+        },
+        {
+          "task_id": 37,
+          "action": "pickup"
+        },
+        {
+          "task_id": 2,
+          "action": "delivery"
+        },
+        {
+          "task_id": 37,
+          "action": "delivery"
+        },
+        {
+          "task_id": 25,
+          "action": "pickup"
+        },
+        {
+          "task_id": 52,
+          "action": "pickup"
+        },
+        {
+          "task_id": 52,
+          "action": "delivery"
+        },
+        {
+          "task_id": 45,
+          "action": "pickup"
+        },
+        {
+          "task_id": 25,
+          "action": "delivery"
+        },
+        {
+          "task_id": 45,
+          "action": "delivery"
+        }
+      ]
+    },
+    {
+      "drone_id": 6,
+      "task_count": 25,
+      "distance_km": 83.76433356140441,
+      "completion_time_min": 93.0714817348938,
+      "late_count": 11,
+      "total_lateness_min": 328.37829918650266,
+      "on_time_task_count": 14,
+      "encoded_visits": [
+        59,
+        175,
+        -175,
+        64,
+        -59,
+        34,
+        -34,
+        172,
+        -64,
+        125,
+        -125,
+        -172,
+        184,
+        149,
+        -149,
+        130,
+        -184,
+        199,
+        -130,
+        97,
+        -97,
+        -199,
+        196,
+        -196,
+        77,
+        83,
+        -77,
+        38,
+        -83,
+        158,
+        -38,
+        20,
+        -158,
+        126,
+        -20,
+        -126,
+        6,
+        78,
+        -6,
+        164,
+        -78,
+        176,
+        -164,
+        -176,
+        96,
+        136,
+        -96,
+        -136,
+        16,
+        -16
+      ],
+      "visits": [
+        {
+          "task_id": 59,
+          "action": "pickup"
+        },
+        {
+          "task_id": 175,
+          "action": "pickup"
+        },
+        {
+          "task_id": 175,
+          "action": "delivery"
+        },
+        {
+          "task_id": 64,
+          "action": "pickup"
+        },
+        {
+          "task_id": 59,
+          "action": "delivery"
+        },
+        {
+          "task_id": 34,
+          "action": "pickup"
+        },
+        {
+          "task_id": 34,
+          "action": "delivery"
+        },
+        {
+          "task_id": 172,
+          "action": "pickup"
+        },
+        {
+          "task_id": 64,
+          "action": "delivery"
+        },
+        {
+          "task_id": 125,
+          "action": "pickup"
+        },
+        {
+          "task_id": 125,
+          "action": "delivery"
+        },
+        {
+          "task_id": 172,
+          "action": "delivery"
+        },
+        {
+          "task_id": 184,
+          "action": "pickup"
+        },
+        {
+          "task_id": 149,
+          "action": "pickup"
+        },
+        {
+          "task_id": 149,
+          "action": "delivery"
+        },
+        {
+          "task_id": 130,
+          "action": "pickup"
+        },
+        {
+          "task_id": 184,
+          "action": "delivery"
+        },
+        {
+          "task_id": 199,
+          "action": "pickup"
+        },
+        {
+          "task_id": 130,
+          "action": "delivery"
+        },
+        {
+          "task_id": 97,
+          "action": "pickup"
+        },
+        {
+          "task_id": 97,
+          "action": "delivery"
+        },
+        {
+          "task_id": 199,
+          "action": "delivery"
+        },
+        {
+          "task_id": 196,
+          "action": "pickup"
+        },
+        {
+          "task_id": 196,
+          "action": "delivery"
+        },
+        {
+          "task_id": 77,
+          "action": "pickup"
+        },
+        {
+          "task_id": 83,
+          "action": "pickup"
+        },
+        {
+          "task_id": 77,
+          "action": "delivery"
+        },
+        {
+          "task_id": 38,
+          "action": "pickup"
+        },
+        {
+          "task_id": 83,
+          "action": "delivery"
+        },
+        {
+          "task_id": 158,
+          "action": "pickup"
+        },
+        {
+          "task_id": 38,
+          "action": "delivery"
+        },
+        {
+          "task_id": 20,
+          "action": "pickup"
+        },
+        {
+          "task_id": 158,
+          "action": "delivery"
+        },
+        {
+          "task_id": 126,
+          "action": "pickup"
+        },
+        {
+          "task_id": 20,
+          "action": "delivery"
+        },
+        {
+          "task_id": 126,
+          "action": "delivery"
+        },
+        {
+          "task_id": 6,
+          "action": "pickup"
+        },
+        {
+          "task_id": 78,
+          "action": "pickup"
+        },
+        {
+          "task_id": 6,
+          "action": "delivery"
+        },
+        {
+          "task_id": 164,
+          "action": "pickup"
+        },
+        {
+          "task_id": 78,
+          "action": "delivery"
+        },
+        {
+          "task_id": 176,
+          "action": "pickup"
+        },
+        {
+          "task_id": 164,
+          "action": "delivery"
+        },
+        {
+          "task_id": 176,
+          "action": "delivery"
+        },
+        {
+          "task_id": 96,
+          "action": "pickup"
+        },
+        {
+          "task_id": 136,
+          "action": "pickup"
+        },
+        {
+          "task_id": 96,
+          "action": "delivery"
+        },
+        {
+          "task_id": 136,
+          "action": "delivery"
+        },
+        {
+          "task_id": 16,
+          "action": "pickup"
+        },
+        {
+          "task_id": 16,
+          "action": "delivery"
+        }
+      ]
+    },
+    {
+      "drone_id": 7,
+      "task_count": 25,
+      "distance_km": 81.33642628245268,
+      "completion_time_min": 90.37380698050295,
+      "late_count": 7,
+      "total_lateness_min": 236.6710486963694,
+      "on_time_task_count": 18,
+      "encoded_visits": [
+        42,
+        92,
+        -92,
+        -42,
+        35,
+        174,
+        -35,
+        122,
+        -122,
+        36,
+        -174,
+        200,
+        -200,
+        81,
+        -36,
+        -81,
+        115,
+        73,
+        -115,
+        99,
+        -73,
+        69,
+        -69,
+        156,
+        -99,
+        23,
+        -156,
+        55,
+        -55,
+        107,
+        -23,
+        163,
+        -107,
+        137,
+        -137,
+        187,
+        -163,
+        147,
+        -147,
+        79,
+        -187,
+        182,
+        -79,
+        32,
+        -182,
+        41,
+        -32,
+        -41,
+        102,
+        -102
+      ],
+      "visits": [
+        {
+          "task_id": 42,
+          "action": "pickup"
+        },
+        {
+          "task_id": 92,
+          "action": "pickup"
+        },
+        {
+          "task_id": 92,
+          "action": "delivery"
+        },
+        {
+          "task_id": 42,
+          "action": "delivery"
+        },
+        {
+          "task_id": 35,
+          "action": "pickup"
+        },
+        {
+          "task_id": 174,
+          "action": "pickup"
+        },
+        {
+          "task_id": 35,
+          "action": "delivery"
+        },
+        {
+          "task_id": 122,
+          "action": "pickup"
+        },
+        {
+          "task_id": 122,
+          "action": "delivery"
+        },
+        {
+          "task_id": 36,
+          "action": "pickup"
+        },
+        {
+          "task_id": 174,
+          "action": "delivery"
+        },
+        {
+          "task_id": 200,
+          "action": "pickup"
+        },
+        {
+          "task_id": 200,
+          "action": "delivery"
+        },
+        {
+          "task_id": 81,
+          "action": "pickup"
+        },
+        {
+          "task_id": 36,
+          "action": "delivery"
+        },
+        {
+          "task_id": 81,
+          "action": "delivery"
+        },
+        {
+          "task_id": 115,
+          "action": "pickup"
+        },
+        {
+          "task_id": 73,
+          "action": "pickup"
+        },
+        {
+          "task_id": 115,
+          "action": "delivery"
+        },
+        {
+          "task_id": 99,
+          "action": "pickup"
+        },
+        {
+          "task_id": 73,
+          "action": "delivery"
+        },
+        {
+          "task_id": 69,
+          "action": "pickup"
+        },
+        {
+          "task_id": 69,
+          "action": "delivery"
+        },
+        {
+          "task_id": 156,
+          "action": "pickup"
+        },
+        {
+          "task_id": 99,
+          "action": "delivery"
+        },
+        {
+          "task_id": 23,
+          "action": "pickup"
+        },
+        {
+          "task_id": 156,
+          "action": "delivery"
+        },
+        {
+          "task_id": 55,
+          "action": "pickup"
+        },
+        {
+          "task_id": 55,
+          "action": "delivery"
+        },
+        {
+          "task_id": 107,
+          "action": "pickup"
+        },
+        {
+          "task_id": 23,
+          "action": "delivery"
+        },
+        {
+          "task_id": 163,
+          "action": "pickup"
+        },
+        {
+          "task_id": 107,
+          "action": "delivery"
+        },
+        {
+          "task_id": 137,
+          "action": "pickup"
+        },
+        {
+          "task_id": 137,
+          "action": "delivery"
+        },
+        {
+          "task_id": 187,
+          "action": "pickup"
+        },
+        {
+          "task_id": 163,
+          "action": "delivery"
+        },
+        {
+          "task_id": 147,
+          "action": "pickup"
+        },
+        {
+          "task_id": 147,
+          "action": "delivery"
+        },
+        {
+          "task_id": 79,
+          "action": "pickup"
+        },
+        {
+          "task_id": 187,
+          "action": "delivery"
+        },
+        {
+          "task_id": 182,
+          "action": "pickup"
+        },
+        {
+          "task_id": 79,
+          "action": "delivery"
+        },
+        {
+          "task_id": 32,
+          "action": "pickup"
+        },
+        {
+          "task_id": 182,
+          "action": "delivery"
+        },
+        {
+          "task_id": 41,
+          "action": "pickup"
+        },
+        {
+          "task_id": 32,
+          "action": "delivery"
+        },
+        {
+          "task_id": 41,
+          "action": "delivery"
+        },
+        {
+          "task_id": 102,
+          "action": "pickup"
+        },
+        {
+          "task_id": 102,
+          "action": "delivery"
+        }
+      ]
+    },
+    {
+      "drone_id": 8,
+      "task_count": 25,
+      "distance_km": 85.13430158583463,
+      "completion_time_min": 94.59366842870514,
+      "late_count": 9,
+      "total_lateness_min": 321.00477413264844,
+      "on_time_task_count": 16,
+      "encoded_visits": [
+        153,
+        189,
+        -153,
+        18,
+        -189,
+        -18,
+        162,
+        49,
+        -162,
+        -49,
+        142,
+        29,
+        -142,
+        146,
+        -146,
+        161,
+        -29,
+        66,
+        -66,
+        -161,
+        191,
+        198,
+        -191,
+        155,
+        -155,
+        94,
+        -198,
+        14,
+        -14,
+        98,
+        -94,
+        101,
+        -101,
+        -98,
+        133,
+        117,
+        -117,
+        13,
+        -133,
+        15,
+        -13,
+        48,
+        -48,
+        -15,
+        68,
+        3,
+        -68,
+        -3,
+        145,
+        -145
+      ],
+      "visits": [
+        {
+          "task_id": 153,
+          "action": "pickup"
+        },
+        {
+          "task_id": 189,
+          "action": "pickup"
+        },
+        {
+          "task_id": 153,
+          "action": "delivery"
+        },
+        {
+          "task_id": 18,
+          "action": "pickup"
+        },
+        {
+          "task_id": 189,
+          "action": "delivery"
+        },
+        {
+          "task_id": 18,
+          "action": "delivery"
+        },
+        {
+          "task_id": 162,
+          "action": "pickup"
+        },
+        {
+          "task_id": 49,
+          "action": "pickup"
+        },
+        {
+          "task_id": 162,
+          "action": "delivery"
+        },
+        {
+          "task_id": 49,
+          "action": "delivery"
+        },
+        {
+          "task_id": 142,
+          "action": "pickup"
+        },
+        {
+          "task_id": 29,
+          "action": "pickup"
+        },
+        {
+          "task_id": 142,
+          "action": "delivery"
+        },
+        {
+          "task_id": 146,
+          "action": "pickup"
+        },
+        {
+          "task_id": 146,
+          "action": "delivery"
+        },
+        {
+          "task_id": 161,
+          "action": "pickup"
+        },
+        {
+          "task_id": 29,
+          "action": "delivery"
+        },
+        {
+          "task_id": 66,
+          "action": "pickup"
+        },
+        {
+          "task_id": 66,
+          "action": "delivery"
+        },
+        {
+          "task_id": 161,
+          "action": "delivery"
+        },
+        {
+          "task_id": 191,
+          "action": "pickup"
+        },
+        {
+          "task_id": 198,
+          "action": "pickup"
+        },
+        {
+          "task_id": 191,
+          "action": "delivery"
+        },
+        {
+          "task_id": 155,
+          "action": "pickup"
+        },
+        {
+          "task_id": 155,
+          "action": "delivery"
+        },
+        {
+          "task_id": 94,
+          "action": "pickup"
+        },
+        {
+          "task_id": 198,
+          "action": "delivery"
+        },
+        {
+          "task_id": 14,
+          "action": "pickup"
+        },
+        {
+          "task_id": 14,
+          "action": "delivery"
+        },
+        {
+          "task_id": 98,
+          "action": "pickup"
+        },
+        {
+          "task_id": 94,
+          "action": "delivery"
+        },
+        {
+          "task_id": 101,
+          "action": "pickup"
+        },
+        {
+          "task_id": 101,
+          "action": "delivery"
+        },
+        {
+          "task_id": 98,
+          "action": "delivery"
+        },
+        {
+          "task_id": 133,
+          "action": "pickup"
+        },
+        {
+          "task_id": 117,
+          "action": "pickup"
+        },
+        {
+          "task_id": 117,
+          "action": "delivery"
+        },
+        {
+          "task_id": 13,
+          "action": "pickup"
+        },
+        {
+          "task_id": 133,
+          "action": "delivery"
+        },
+        {
+          "task_id": 15,
+          "action": "pickup"
+        },
+        {
+          "task_id": 13,
+          "action": "delivery"
+        },
+        {
+          "task_id": 48,
+          "action": "pickup"
+        },
+        {
+          "task_id": 48,
+          "action": "delivery"
+        },
+        {
+          "task_id": 15,
+          "action": "delivery"
+        },
+        {
+          "task_id": 68,
+          "action": "pickup"
+        },
+        {
+          "task_id": 3,
+          "action": "pickup"
+        },
+        {
+          "task_id": 68,
+          "action": "delivery"
+        },
+        {
+          "task_id": 3,
+          "action": "delivery"
+        },
+        {
+          "task_id": 145,
+          "action": "pickup"
+        },
+        {
+          "task_id": 145,
+          "action": "delivery"
+        }
+      ]
+    }
+  ],
+  "experiment": {
+    "scenario": "equal_wall_clock_240s",
+    "variant": "A4",
+    "variant_name": "cluster",
+    "method": "A4 +cluster",
+    "run_order": 3,
+    "flags": {
+      "enable_assignment_destroy": true,
+      "enable_deadline_risk": true,
+      "enable_vnd": true,
+      "enable_cluster_repair": true,
+      "enable_ejection": false,
+      "enable_route_pool": false
+    }
+  }
+}

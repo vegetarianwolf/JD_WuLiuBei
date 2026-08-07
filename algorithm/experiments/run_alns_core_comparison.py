@@ -650,6 +650,10 @@ def run(args: argparse.Namespace) -> None:
                     time_limit_seconds=None,
                     seed=seed,
                     candidate_limit=args.candidate_limit,
+                    enable_assignment_destroy=False,
+                    enable_deadline_risk=False,
+                    enable_vnd=False,
+                    enable_cluster_repair=False,
                 ),
                 initial_routes=initial.routes,
             )
@@ -731,6 +735,12 @@ def run(args: argparse.Namespace) -> None:
                     time_limit_seconds=remaining_search_time,
                     seed=seed,
                     candidate_limit=args.candidate_limit,
+                    enable_route_pool=method == HALNS_METHOD,
+                    enable_ejection=method == HALNS_METHOD,
+                    enable_assignment_destroy=False,
+                    enable_deadline_risk=False,
+                    enable_vnd=False,
+                    enable_cluster_repair=False,
                 )
                 if method == CORE_METHOD:
                     result = solve_alns_core(

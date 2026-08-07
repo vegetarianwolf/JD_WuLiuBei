@@ -17,11 +17,12 @@ src/uav_dispatch/
 ├── validation.py     不复用搜索缓存的独立完整校验器
 ├── search.py         路线缓存、容量二 O(1) 固定位置检查与成对插入
 ├── exact.py          小规模 Pareto 标签动态规划 oracle
-├── alns.py           基线、ALNS、驱逐交换与路线池集合划分强化
+├── alns.py           ALNS、任务分配邻域、风险引导、VND 与可选强化
 └── cli.py            求解与 JSON 结果输出
 experiments/
-├── run_benchmarks.py            多规模、多随机种子可复现实验
-└── run_alns_core_comparison.py ALNS Core/HALNS 配对对比
+├── run_benchmarks.py              多规模、多随机种子可复现实验
+├── run_alns_core_comparison.py    ALNS Core/HALNS 配对对比
+└── run_neighborhood_ablation.py   问题特定邻域逐项消融
 results/              原始运行、汇总统计与两类最终路线
 tests/                行为测试、随机交叉验证与 CLI 测试
 ```
@@ -55,7 +56,7 @@ PYTHONPATH=algorithm/src python3 -m uav_dispatch solve \
   --output algorithm/results/solution.json
 ```
 
-`--method` 还支持 `exact`、`edd`、`nearest`、`greedy`、`regret2` 和 `alns-core`；`basic-alns` 作为 `alns-core` 的兼容别名保留。ALNS Core 只运行自适应大邻域搜索主循环，不启用驱逐交换或路线池重组。将 `--candidate-limit` 设为 `0` 可关闭候选位置剪枝；固定迭代数适合复现比较，`--time-limit` 适合墙钟预算控制。小规模精确求解默认最多 10 个任务，可通过 `--exact-max-tasks` 调整，但状态空间指数增长。
+`--method` 还支持 `exact`、`edd`、`nearest`、`greedy`、`regret2` 和 `alns-core`；`basic-alns` 作为 `alns-core` 的兼容别名保留。当前 ALNS Core 默认用 assignment destroy 替换旧 route-clear，并启用 deadline-risk guidance；不启用驱逐交换、VND、cluster repair 或路线池。HALNS 在此基础上启用 ejection，route pool 默认关闭。VND、cluster repair 和全部细分预算可通过 Python API 的 `ALNSConfig` 显式开启。将 `--candidate-limit` 设为 `0` 可关闭候选位置剪枝；固定迭代数适合复现比较，`--time-limit` 适合墙钟预算控制。小规模精确求解默认最多 10 个任务，可通过 `--exact-max-tasks` 调整，但状态空间指数增长。
 
 ## 复现实验
 
@@ -85,3 +86,16 @@ PYTHONPATH=algorithm/src python3 \
 ```
 
 断点续跑可增加 `--resume`；脚本会核对输入与参数签名，并为新运行持久化完整路线。结论、逐种子得分和统计限制见 [ALNS_CORE_COMPARISON_REPORT.md](ALNS_CORE_COMPARISON_REPORT.md)，原始记录位于 `results/alns_core_comparison/`。
+
+## 问题特定邻域消融
+
+新实验按 `legacy baseline → assignment destroy 替换 route-clear → deadline risk → VND → cluster repair` 展开，并可继续隔离 ejection 与 route pool。A1 是保持 destroy pool 大小不变的算子替换，后续步骤才逐项累加。默认计划同时支持旧实验的 5 个种子 × 400 轮和 3 个种子 × 240 秒；快速自检可增加 `--quick`。
+
+```bash
+PYTHONPATH=algorithm/src python3 \
+  algorithm/experiments/run_neighborhood_ablation.py \
+  --output-dir algorithm/results/neighborhood_ablation \
+  --include-hybrid-tuning
+```
+
+三个种子的正式 240 秒结果、默认开关依据和限制见 [NEIGHBORHOOD_ABLATION_REPORT.md](NEIGHBORHOOD_ABLATION_REPORT.md)，原始逐运行结果及完整路线位于 `results/neighborhood_ablation/`。
