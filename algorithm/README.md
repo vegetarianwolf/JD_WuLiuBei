@@ -98,4 +98,4 @@ PYTHONPATH=algorithm/src python3 \
   --include-hybrid-tuning
 ```
 
-三个种子的正式 240 秒结果、默认开关依据和限制见 [NEIGHBORHOOD_ABLATION_REPORT.md](NEIGHBORHOOD_ABLATION_REPORT.md)，原始逐运行结果及完整路线位于 `results/neighborhood_ablation/`。
+三个种子的正式 240 秒结果、默认开关依据、与前两次实验的统一口径比较及限制见 [NEIGHBORHOOD_ABLATION_REPORT.md](NEIGHBORHOOD_ABLATION_REPORT.md)，原始逐运行结果及完整路线位于 `results/neighborhood_ablation/`。
