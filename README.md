@@ -30,6 +30,7 @@ data/                      数据与实验结果
 python3 -m venv .venv
 source .venv/bin/activate       # macOS/Linux
 python -m pip install --upgrade pip
+python -m pip install -r requirements-dev.txt -e .
 ```
 
 激活环境后，在项目根目录运行测试：
@@ -44,3 +45,7 @@ python -m pytest algorithm/tests
 - 论文原文放在 `papers/references/`，阅读笔记放在 `papers/notes/`。
 - 论文正文、图表分别放在 `writing/manuscript/`、`writing/figures/` 和 `writing/tables/`。
 - 原始数据放入 `data/raw/`，处理后的数据和实验结果放入 `data/processed/`。
+
+## 当前算法成果
+
+容量二词典序 HALNS、ALNS Core 模式、独立校验器、精确小规模 oracle 与可复现实验已集中在 [algorithm/README.md](algorithm/README.md)。原 HALNS 结果见 [algorithm/RESULTS_REPORT.md](algorithm/RESULTS_REPORT.md)，ALNS Core 与 HALNS 的固定迭代/等墙钟对比见 [algorithm/ALNS_CORE_COMPARISON_REPORT.md](algorithm/ALNS_CORE_COMPARISON_REPORT.md)。
