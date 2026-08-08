@@ -13,6 +13,13 @@ from .alns import (
     solve_alns_core,
 )
 from .model import Point, Problem, Score, SolutionEvaluation, Task
+from .interaction_graph import (
+    PairInteraction,
+    TaskInteractionGraph,
+    build_interaction_graph,
+    evaluate_task_pair,
+    rank_interaction_tasks,
+)
 from .search import InsertionResult, SolverResult, insert_task_best
 from .validation import evaluate_solution
 
@@ -24,15 +31,20 @@ __all__ = [
     "SolutionEvaluation",
     "SolverResult",
     "InsertionResult",
+    "PairInteraction",
     "Task",
+    "TaskInteractionGraph",
+    "build_interaction_graph",
     "construct_regret_initial",
     "construct_edd_adjacent",
     "construct_greedy_initial",
     "construct_nearest_adjacent",
     "destroy_solution",
     "evaluate_solution",
+    "evaluate_task_pair",
     "insert_task_best",
     "load_tasks_csv",
+    "rank_interaction_tasks",
     "solve_exact",
     "solve_alns",
     "solve_alns_core",
