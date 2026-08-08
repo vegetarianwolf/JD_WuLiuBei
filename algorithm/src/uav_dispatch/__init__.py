@@ -26,6 +26,12 @@ from .pair_repair import (
     pair_insertion_options,
     pair_regret_repair,
 )
+from .propagation_eval import (
+    InsertionPropagationEvaluation,
+    RoutePropagationEvaluation,
+    evaluate_insertion_propagation,
+    evaluate_route_propagation,
+)
 from .search import InsertionResult, SolverResult, insert_task_best
 from .validation import evaluate_solution
 
@@ -37,8 +43,10 @@ __all__ = [
     "SolutionEvaluation",
     "SolverResult",
     "InsertionResult",
+    "InsertionPropagationEvaluation",
     "PairInteraction",
     "PairInsertionOption",
+    "RoutePropagationEvaluation",
     "Task",
     "TaskInteractionGraph",
     "build_interaction_graph",
@@ -47,6 +55,8 @@ __all__ = [
     "construct_greedy_initial",
     "construct_nearest_adjacent",
     "destroy_solution",
+    "evaluate_insertion_propagation",
+    "evaluate_route_propagation",
     "evaluate_solution",
     "evaluate_task_pair",
     "enumerate_pair_orders",

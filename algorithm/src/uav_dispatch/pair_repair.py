@@ -15,6 +15,11 @@ from typing import Iterable, Sequence
 
 from .interaction_graph import evaluate_task_pair
 from .model import Problem, Score
+from .propagation_eval import (
+    InsertionPropagationEvaluation,
+    evaluate_insertion_propagation,
+    evaluate_route_propagation,
+)
 from .search import (
     Route,
     RouteEvaluator,
@@ -37,6 +42,7 @@ class PairInsertionOption:
     task_ids: tuple[int, int]
     pair_order: tuple[int, ...]
     insertion_position: int
+    propagation: InsertionPropagationEvaluation
 
 
 def enumerate_pair_orders(task_a: int, task_b: int) -> tuple[tuple[int, ...], ...]:
@@ -79,6 +85,11 @@ def pair_insertion_options(
         if sum(visit > 0 for visit in route) + 2 > problem.max_tasks_per_drone:
             continue
         old_score = evaluator.evaluate(route).score
+        base_propagation = evaluate_route_propagation(
+            route,
+            problem=problem,
+            evaluator=evaluator,
+        )
         for position in range(len(route) + 1):
             for pair_order in orders:
                 candidate = route[:position] + pair_order + route[position:]
@@ -86,6 +97,14 @@ def pair_insertion_options(
                     score = evaluator.evaluate(candidate).score
                 except ValueError:
                     continue
+                propagation = evaluate_insertion_propagation(
+                    route,
+                    candidate,
+                    inserted_task_ids=pair,
+                    problem=problem,
+                    evaluator=evaluator,
+                    base_evaluation=base_propagation,
+                )
                 options.append(
                     PairInsertionOption(
                         delta=score - old_score,
@@ -94,11 +113,14 @@ def pair_insertion_options(
                         task_ids=pair,
                         pair_order=pair_order,
                         insertion_position=position,
+                        propagation=propagation,
                     )
                 )
     options.sort(
         key=lambda option: (
             option.delta,
+            option.propagation.future_lateness_delta_min,
+            option.propagation.future_delivery_delay_min,
             option.route_index,
             option.insertion_position,
             option.pair_order,
