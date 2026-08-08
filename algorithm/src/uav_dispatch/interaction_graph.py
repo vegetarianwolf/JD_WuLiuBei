@@ -235,6 +235,14 @@ def _evaluate_problem_pair_cached(
     return _build_pair_interaction(left, right, score_order)
 
 
+def clear_interaction_graph_cache() -> None:
+    """Clear static edge caches so independent benchmark runs start cold."""
+
+    _PROBLEM_REGISTRY.clear()
+    _evaluate_problem_pair_cached.cache_clear()
+    _evaluate_task_pair_cached.cache_clear()
+
+
 def _evaluate_problem_pair(
     problem: Problem,
     task_a: Task,

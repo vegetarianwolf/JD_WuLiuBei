@@ -18,11 +18,16 @@ src/uav_dispatch/
 ├── search.py         路线缓存、容量二 O(1) 固定位置检查与成对插入
 ├── exact.py          小规模 Pareto 标签动态规划 oracle
 ├── alns.py           ALNS、任务分配邻域、风险引导、VND 与可选强化
+├── interaction_graph.py  容量二任务交互图与冲突排序
+├── pair_repair.py        六种双任务取送顺序与 pair-regret 修复
+├── propagation_eval.py   插入后的前向截止期延迟传播评估
+├── hypergraph_destroy.py 高冲突任务对联合破坏
 └── cli.py            求解与 JSON 结果输出
 experiments/
 ├── run_benchmarks.py              多规模、多随机种子可复现实验
 ├── run_alns_core_comparison.py    ALNS Core/HALNS 配对对比
-└── run_neighborhood_ablation.py   问题特定邻域逐项消融
+├── run_neighborhood_ablation.py   问题特定邻域逐项消融
+└── run_capacity_halns_benchmark.py A2/容量感知 HALNS 配对实验
 results/              原始运行、汇总统计与两类最终路线
 tests/                行为测试、随机交叉验证与 CLI 测试
 ```
@@ -99,3 +104,16 @@ PYTHONPATH=algorithm/src python3 \
 ```
 
 三个种子的正式 240 秒结果、默认开关依据，以及按“逾期任务数、总逾期分钟、总里程”与前两次实验的比较见 [NEIGHBORHOOD_ABLATION_REPORT.md](NEIGHBORHOOD_ABLATION_REPORT.md)，原始逐运行结果及完整路线位于 `results/neighborhood_ablation/`。
+
+## 容量感知 HALNS 实验
+
+容量交互图、pair-regret 修复、前向截止期传播与 hypergraph destroy 均为可选邻域；默认配置不启用，因此旧 ALNS/修复算子和既有实验可原样复现。专项实验以 A2（assignment destroy + deadline risk）为控制组，仅为处理组开启新的 pair repair 与 hypergraph destroy，并在每次运行前清空交互边缓存，使图构建时间计入同一墙钟预算：
+
+```bash
+PYTHONPATH=algorithm/src python3 \
+  algorithm/experiments/run_capacity_halns_benchmark.py \
+  --output-dir algorithm/results/capacity_halns \
+  --seed-count 3 --time-limit 240 --safety-margin 2
+```
+
+三组配对种子中容量感知版本胜 1 组、A2 胜 2 组；容量感知版本平均逾期任务数为 `71.000`，A2 为 `69.333`。这说明新邻域在个别种子上能找到明显更好的容量二协同解，但当前固定墙钟配置尚未形成稳定总体优势。逐种子得分、运行时间、迭代数、完整路线和严格词典序比较见 [results/capacity_halns/BENCHMARK_REPORT.md](results/capacity_halns/BENCHMARK_REPORT.md)。

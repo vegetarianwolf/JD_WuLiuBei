@@ -17,6 +17,7 @@ from .interaction_graph import (
     PairInteraction,
     TaskInteractionGraph,
     build_interaction_graph,
+    clear_interaction_graph_cache,
     evaluate_task_pair,
     rank_interaction_tasks,
 )
@@ -52,6 +53,7 @@ __all__ = [
     "Task",
     "TaskInteractionGraph",
     "build_interaction_graph",
+    "clear_interaction_graph_cache",
     "construct_regret_initial",
     "construct_edd_adjacent",
     "construct_greedy_initial",
