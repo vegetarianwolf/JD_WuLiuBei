@@ -48,4 +48,4 @@ python -m pytest algorithm/tests
 
 ## 当前算法成果
 
-容量二词典序 HALNS、ALNS Core 模式、独立校验器、精确小规模 oracle 与可复现实验已集中在 [algorithm/README.md](algorithm/README.md)。原 HALNS 结果见 [algorithm/RESULTS_REPORT.md](algorithm/RESULTS_REPORT.md)，ALNS Core 与 HALNS 的固定迭代/等墙钟对比见 [algorithm/ALNS_CORE_COMPARISON_REPORT.md](algorithm/ALNS_CORE_COMPARISON_REPORT.md)，assignment destroy、deadline risk、VND、cluster repair 与路线池的 240 秒消融见 [algorithm/NEIGHBORHOOD_ABLATION_REPORT.md](algorithm/NEIGHBORHOOD_ABLATION_REPORT.md)。
+容量二词典序 HALNS、ALNS Core 模式、独立校验器、精确小规模 oracle 与可复现实验已集中在 [algorithm/README.md](algorithm/README.md)。所有路线先比较逾期任务数；相同才比较总逾期分钟；仍相同才比较总里程。原 HALNS 结果见 [algorithm/RESULTS_REPORT.md](algorithm/RESULTS_REPORT.md)，ALNS Core 与 HALNS 的固定迭代/等墙钟对比见 [algorithm/ALNS_CORE_COMPARISON_REPORT.md](algorithm/ALNS_CORE_COMPARISON_REPORT.md)，assignment destroy、deadline risk、VND、cluster repair 与路线池的 240 秒消融见 [algorithm/NEIGHBORHOOD_ABLATION_REPORT.md](algorithm/NEIGHBORHOOD_ABLATION_REPORT.md)。

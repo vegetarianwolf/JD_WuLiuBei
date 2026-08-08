@@ -70,7 +70,7 @@ PYTHONPATH=algorithm/src python3 algorithm/experiments/run_benchmarks.py \
   --extended-iterations 1500
 ```
 
-快速冒烟实验可增加 `--quick`。完整数值结论、限制与复现环境见 [RESULTS_REPORT.md](RESULTS_REPORT.md)。`results/best_fleet_solution_compliant.json` 是四分钟内的最好路线；`results/best_fleet_solution.json` 是超时离线扩展路线，二者不可混为竞赛成绩。
+快速冒烟实验可增加 `--quick`。完整数值结论、限制与复现环境见 [RESULTS_REPORT.md](RESULTS_REPORT.md)。`results/best_fleet_solution_compliant.json` 是第一次基准实验中四分钟内的最好路线；`results/best_fleet_solution.json` 是同批次的超时离线扩展路线，二者不可混为竞赛成绩。
 
 ## ALNS Core 对比实验
 
@@ -89,7 +89,7 @@ PYTHONPATH=algorithm/src python3 \
 
 ## 问题特定邻域消融
 
-新实验按 `legacy baseline → assignment destroy 替换 route-clear → deadline risk → VND → cluster repair` 展开，并可继续隔离 ejection 与 route pool。A1 是保持 destroy pool 大小不变的算子替换，后续步骤才逐项累加。默认计划同时支持旧实验的 5 个种子 × 400 轮和 3 个种子 × 240 秒；快速自检可增加 `--quick`。
+新实验按 `A0 → A1（assignment destroy 替换 route-clear）→ A2（deadline risk）→ A3（VND）→ A4（cluster repair）` 展开，并可继续隔离 A5 的 ejection 与 A6 的 route pool。A1 是保持 destroy pool 大小不变的算子替换，后续步骤才逐项累加。默认计划同时支持旧实验的 5 个种子 × 400 轮和 3 个种子 × 240 秒；快速自检可增加 `--quick`。
 
 ```bash
 PYTHONPATH=algorithm/src python3 \
@@ -98,4 +98,4 @@ PYTHONPATH=algorithm/src python3 \
   --include-hybrid-tuning
 ```
 
-三个种子的正式 240 秒结果、默认开关依据、与前两次实验的统一口径比较及限制见 [NEIGHBORHOOD_ABLATION_REPORT.md](NEIGHBORHOOD_ABLATION_REPORT.md)，原始逐运行结果及完整路线位于 `results/neighborhood_ablation/`。
+三个种子的正式 240 秒结果、默认开关依据，以及按“逾期任务数、总逾期分钟、总里程”与前两次实验的比较见 [NEIGHBORHOOD_ABLATION_REPORT.md](NEIGHBORHOOD_ABLATION_REPORT.md)，原始逐运行结果及完整路线位于 `results/neighborhood_ablation/`。
