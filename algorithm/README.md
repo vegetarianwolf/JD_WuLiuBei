@@ -116,4 +116,4 @@ PYTHONPATH=algorithm/src python3 \
   --seed-count 3 --time-limit 240 --safety-margin 2
 ```
 
-三组配对种子中容量感知版本胜 1 组、A2 胜 2 组；容量感知版本平均逾期任务数为 `71.000`，A2 为 `69.333`。这说明新邻域在个别种子上能找到明显更好的容量二协同解，但当前固定墙钟配置尚未形成稳定总体优势。逐种子得分、运行时间、迭代数、完整路线和严格词典序比较见 [results/capacity_halns/BENCHMARK_REPORT.md](results/capacity_halns/BENCHMARK_REPORT.md)。
+三组配对种子中容量感知版本胜 1 组、A2 胜 2 组；容量感知版本平均逾期任务数为 `71.000`，A2 为 `69.333`。这说明新邻域在个别种子上能找到明显更好的容量二协同解，但当前固定墙钟配置尚未形成稳定总体优势。逐种子得分、运行时间、迭代数、完整路线和严格词典序比较见 [results/capacity_halns/BENCHMARK_REPORT.md](results/capacity_halns/BENCHMARK_REPORT.md)；按题目要求的逾期任务数、总逾期时间、总里程、运行时间和迭代次数与此前全部同规模实验的对比见 [CAPACITY_HALNS_COMPARISON_REPORT.md](CAPACITY_HALNS_COMPARISON_REPORT.md)。
