@@ -20,6 +20,12 @@ from .interaction_graph import (
     evaluate_task_pair,
     rank_interaction_tasks,
 )
+from .pair_repair import (
+    PairInsertionOption,
+    enumerate_pair_orders,
+    pair_insertion_options,
+    pair_regret_repair,
+)
 from .search import InsertionResult, SolverResult, insert_task_best
 from .validation import evaluate_solution
 
@@ -32,6 +38,7 @@ __all__ = [
     "SolverResult",
     "InsertionResult",
     "PairInteraction",
+    "PairInsertionOption",
     "Task",
     "TaskInteractionGraph",
     "build_interaction_graph",
@@ -42,8 +49,11 @@ __all__ = [
     "destroy_solution",
     "evaluate_solution",
     "evaluate_task_pair",
+    "enumerate_pair_orders",
     "insert_task_best",
     "load_tasks_csv",
+    "pair_insertion_options",
+    "pair_regret_repair",
     "rank_interaction_tasks",
     "solve_exact",
     "solve_alns",

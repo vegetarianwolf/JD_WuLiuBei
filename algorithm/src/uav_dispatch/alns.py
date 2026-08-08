@@ -11,6 +11,7 @@ from types import MappingProxyType
 from typing import Iterable, Sequence
 
 from .model import Problem, Score
+from .pair_repair import PairRepairDeadlineReached, pair_regret_repair
 from .search import (
     Route,
     RouteEvaluator,
@@ -42,6 +43,7 @@ REPAIR_OPERATORS = (
     "deadline",
     "slack",
     "cluster_regret",
+    "pair_regret",
 )
 
 
@@ -79,6 +81,8 @@ class ALNSConfig:
     enable_cluster_repair: bool = False
     cluster_bundle_candidate_limit: int = 12
     cluster_pair_limit: int = 6
+    enable_pair_repair: bool = False
+    pair_candidate_limit: int = 8
 
     def __post_init__(self) -> None:
         if self.max_iterations < 0:
@@ -122,8 +126,9 @@ class ALNSConfig:
             self.vnd_block_window_limit,
             self.cluster_bundle_candidate_limit,
             self.cluster_pair_limit,
+            self.pair_candidate_limit,
         ) < 0:
-            raise ValueError("VND 与聚类修复搜索预算不能为负")
+            raise ValueError("VND、聚类修复与成对修复搜索预算不能为负")
 
 
 def _task_ids_in_routes(routes: Sequence[Sequence[int]]) -> tuple[int, ...]:
@@ -680,6 +685,7 @@ def _repair(
     original_route_by_task: dict[int, int] | None = None,
     cluster_bundle_candidate_limit: int = 12,
     cluster_pair_limit: int = 6,
+    pair_candidate_limit: int = 8,
     deadline: float | None = None,
 ) -> Routes:
     if strategy == "cluster_regret":
@@ -693,6 +699,16 @@ def _repair(
             use_deadline_risk=use_deadline_risk,
             bundle_candidate_limit=cluster_bundle_candidate_limit,
             pair_limit=cluster_pair_limit,
+            deadline=deadline,
+        )
+    if strategy == "pair_regret":
+        return pair_regret_repair(
+            problem,
+            evaluator,
+            partial_routes,
+            removed_task_ids,
+            candidate_limit=candidate_limit,
+            pair_candidate_limit=pair_candidate_limit,
             deadline=deadline,
         )
     routes = tuple(tuple(route) for route in partial_routes)
@@ -1536,7 +1552,8 @@ def solve_alns(
     repair_operators = tuple(
         name
         for name in REPAIR_OPERATORS
-        if cfg.enable_cluster_repair or name != "cluster_regret"
+        if (cfg.enable_cluster_repair or name != "cluster_regret")
+        and (cfg.enable_pair_repair or name != "pair_regret")
     )
     repair_weights = {name: 1.0 for name in repair_operators}
     total_uses = {
@@ -1590,9 +1607,10 @@ def solve_alns(
                 original_route_by_task=original_route_by_task,
                 cluster_bundle_candidate_limit=cfg.cluster_bundle_candidate_limit,
                 cluster_pair_limit=cfg.cluster_pair_limit,
+                pair_candidate_limit=cfg.pair_candidate_limit,
                 deadline=deadline,
             )
-        except _SearchDeadlineReached:
+        except (_SearchDeadlineReached, PairRepairDeadlineReached):
             break
         timed_out = deadline is not None and perf_counter() >= deadline
         if not timed_out and cfg.enable_vnd and cfg.vnd_max_moves > 0:
@@ -1740,6 +1758,7 @@ def solve_alns(
             "enable_deadline_risk": cfg.enable_deadline_risk,
             "enable_vnd": cfg.enable_vnd,
             "enable_cluster_repair": cfg.enable_cluster_repair,
+            "enable_pair_repair": cfg.enable_pair_repair,
             "vnd_calls": vnd_calls,
             "vnd_improved_iterations": vnd_improved_iterations,
             "time_limit_seconds": cfg.time_limit_seconds,
