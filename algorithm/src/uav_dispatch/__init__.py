@@ -20,6 +20,7 @@ from .interaction_graph import (
     evaluate_task_pair,
     rank_interaction_tasks,
 )
+from .hypergraph_destroy import ConflictHyperedge, hypergraph_destroy
 from .pair_repair import (
     PairInsertionOption,
     enumerate_pair_orders,
@@ -38,6 +39,7 @@ from .validation import evaluate_solution
 __all__ = [
     "Point",
     "ALNSConfig",
+    "ConflictHyperedge",
     "Problem",
     "Score",
     "SolutionEvaluation",
@@ -61,6 +63,7 @@ __all__ = [
     "evaluate_task_pair",
     "enumerate_pair_orders",
     "insert_task_best",
+    "hypergraph_destroy",
     "load_tasks_csv",
     "pair_insertion_options",
     "pair_regret_repair",

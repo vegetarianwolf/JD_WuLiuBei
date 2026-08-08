@@ -180,9 +180,17 @@ def evaluate_task_pair(
     *,
     depot: Point = Point(0.0, 0.0),
     speed_km_per_min: float = 0.9,
+    problem: Problem | None = None,
 ) -> PairInteraction:
     """Evaluate all six legal two-task pickup/delivery interleavings."""
 
+    if problem is not None:
+        if (
+            problem.task(task_a.id) != task_a
+            or problem.task(task_b.id) != task_b
+        ):
+            raise ValueError("任务必须属于给定 problem")
+        return _evaluate_problem_pair(problem, task_a, task_b)
     return _evaluate_task_pair_cached(
         task_a,
         task_b,
@@ -191,11 +199,18 @@ def evaluate_task_pair(
     )
 
 
-def _evaluate_problem_pair(
-    problem: Problem,
-    task_a: Task,
-    task_b: Task,
+_PROBLEM_REGISTRY: dict[int, Problem] = {}
+
+
+@lru_cache(maxsize=50_000)
+def _evaluate_problem_pair_cached(
+    problem_token: int,
+    task_a_id: int,
+    task_b_id: int,
 ) -> PairInteraction:
+    problem = _PROBLEM_REGISTRY[problem_token]
+    task_a = problem.task(task_a_id)
+    task_b = problem.task(task_b_id)
     left, right = sorted((task_a, task_b), key=lambda task: task.id)
 
     def score_order(order: tuple[int, ...]) -> Score:
@@ -218,6 +233,27 @@ def _evaluate_problem_pair(
         return Score(late_count, total_lateness, distance)
 
     return _build_pair_interaction(left, right, score_order)
+
+
+def _evaluate_problem_pair(
+    problem: Problem,
+    task_a: Task,
+    task_b: Task,
+) -> PairInteraction:
+    # Keep the problem alive while identity-keyed cached edges exist.  This
+    # avoids hashing the 401x401 matrix for every edge and makes repeated
+    # hypergraph destroys cheap without conflating different custom matrices.
+    problem_token = id(problem)
+    if problem_token not in _PROBLEM_REGISTRY:
+        if len(_PROBLEM_REGISTRY) >= 16:
+            _PROBLEM_REGISTRY.clear()
+            _evaluate_problem_pair_cached.cache_clear()
+        _PROBLEM_REGISTRY[problem_token] = problem
+    return _evaluate_problem_pair_cached(
+        problem_token,
+        task_a.id,
+        task_b.id,
+    )
 
 
 def _solution_routes(solution: object) -> tuple[tuple[int, ...], ...]:

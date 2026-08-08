@@ -10,6 +10,7 @@ from time import perf_counter
 from types import MappingProxyType
 from typing import Iterable, Sequence
 
+from .hypergraph_destroy import hypergraph_destroy
 from .model import Problem, Score
 from .pair_repair import PairRepairDeadlineReached, pair_regret_repair
 from .search import (
@@ -35,6 +36,7 @@ DESTROY_OPERATORS = (
     "capacity_conflict",
     "assignment_destroy",
     "route_clear",
+    "hypergraph_destroy",
 )
 REPAIR_OPERATORS = (
     "greedy",
@@ -83,6 +85,7 @@ class ALNSConfig:
     cluster_pair_limit: int = 6
     enable_pair_repair: bool = False
     pair_candidate_limit: int = 8
+    enable_hypergraph_destroy: bool = False
 
     def __post_init__(self) -> None:
         if self.max_iterations < 0:
@@ -209,6 +212,14 @@ def destroy_solution(
     count = min(max(1, count), len(task_ids))
     route_by_task = _task_route_index(routes)
 
+    if operator == "hypergraph_destroy":
+        return hypergraph_destroy(
+            problem,
+            evaluator,
+            routes,
+            count,
+            rng,
+        )
     if operator == "random":
         removed = rng.sample(task_ids, count)
     elif operator == "assignment_destroy":
@@ -1547,6 +1558,7 @@ def solve_alns(
             if cfg.enable_assignment_destroy
             else name != "assignment_destroy"
         )
+        and (cfg.enable_hypergraph_destroy or name != "hypergraph_destroy")
     )
     destroy_weights = {name: 1.0 for name in destroy_operators}
     repair_operators = tuple(
@@ -1759,6 +1771,7 @@ def solve_alns(
             "enable_vnd": cfg.enable_vnd,
             "enable_cluster_repair": cfg.enable_cluster_repair,
             "enable_pair_repair": cfg.enable_pair_repair,
+            "enable_hypergraph_destroy": cfg.enable_hypergraph_destroy,
             "vnd_calls": vnd_calls,
             "vnd_improved_iterations": vnd_improved_iterations,
             "time_limit_seconds": cfg.time_limit_seconds,

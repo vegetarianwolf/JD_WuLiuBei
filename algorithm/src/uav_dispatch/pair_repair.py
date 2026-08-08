@@ -141,8 +141,7 @@ def _rank_candidate_pairs(
         interaction = evaluate_task_pair(
             problem.task(pair[0]),
             problem.task(pair[1]),
-            depot=problem.depot,
-            speed_km_per_min=problem.speed_km_per_min,
+            problem=problem,
         )
         compatibility = (
             interaction.deadline_conflict_risk,
@@ -282,8 +281,7 @@ def pair_regret_repair(
             interaction = evaluate_task_pair(
                 problem.task(pair[0]),
                 problem.task(pair[1]),
-                depot=problem.depot,
-                speed_km_per_min=problem.speed_km_per_min,
+                problem=problem,
             )
             choices.append(
                 (
