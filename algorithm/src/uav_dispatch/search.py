@@ -65,23 +65,31 @@ class InsertionResult:
 class RouteEvaluator:
     """Exact route scorer with a bounded cache for the search loop."""
 
-    def __init__(self, problem: Problem, cache_size: int = 50_000) -> None:
+    def __init__(
+        self,
+        problem: Problem,
+        cache_size: int = 50_000,
+        *,
+        enable_search_score: bool = True,
+    ) -> None:
         self.problem = problem
-        deadlines = tuple(task.deadline_min for task in problem.tasks)
-        minimum_deadline = min(deadlines)
-        maximum_deadline = max(deadlines)
-        deadline_span = maximum_deadline - minimum_deadline
-        self.deadline_priorities = MappingProxyType(
-            {
-                task.id: (
-                    1.0
-                    if deadline_span <= 1e-12
-                    else 1.0
-                    + (maximum_deadline - task.deadline_min) / deadline_span
-                )
-                for task in problem.tasks
-            }
-        )
+        self._deadline_priorities: Mapping[int, float] | None = None
+        if enable_search_score:
+            deadlines = tuple(task.deadline_min for task in problem.tasks)
+            minimum_deadline = min(deadlines)
+            maximum_deadline = max(deadlines)
+            deadline_span = maximum_deadline - minimum_deadline
+            self._deadline_priorities = MappingProxyType(
+                {
+                    task.id: (
+                        1.0
+                        if deadline_span <= 1e-12
+                        else 1.0
+                        + (maximum_deadline - task.deadline_min) / deadline_span
+                    )
+                    for task in problem.tasks
+                }
+            )
 
         @lru_cache(maxsize=cache_size)
         def cached(route: Route) -> RouteMetrics:
@@ -89,8 +97,46 @@ class RouteEvaluator:
 
         self._cached = cached
 
+        @lru_cache(maxsize=cache_size)
+        def cached_guided(route: Route, beta: float) -> float:
+            priorities = self.deadline_priorities
+            metrics = self._cached(route)
+            return sum(
+                priorities[task_id]
+                * max(
+                    0.0,
+                    delivered_at - soft_deadline(problem, task_id, beta),
+                )
+                for task_id, delivered_at in metrics.delivery_times_min.items()
+            )
+
+        self._cached_guided = cached_guided
+
+    @property
+    def search_score_enabled(self) -> bool:
+        return self._deadline_priorities is not None
+
+    @property
+    def deadline_priorities(self) -> Mapping[int, float]:
+        """Return search priorities, rejecting accidental use when disabled."""
+
+        if self._deadline_priorities is None:
+            raise RuntimeError("search score guidance is disabled")
+        return self._deadline_priorities
+
     def evaluate(self, route: Sequence[int]) -> RouteMetrics:
         return self._cached(tuple(route))
+
+    def guided_weighted_lateness(
+        self, route: Sequence[int], soft_deadline_beta: float
+    ) -> float:
+        """Score every delivery against soft deadlines in a separate cache."""
+
+        if not isfinite(soft_deadline_beta) or soft_deadline_beta < 0:
+            raise ValueError("soft deadline beta 必须为有限非负数")
+        if not self.search_score_enabled:
+            raise RuntimeError("search score guidance is disabled")
+        return self._cached_guided(tuple(route), soft_deadline_beta)
 
     def _evaluate_uncached(self, route: Route) -> RouteMetrics:
         seen_pickups: set[int] = set()
@@ -132,9 +178,10 @@ class RouteEvaluator:
                 if lateness > 1e-9:
                     late_ids.append(task_id)
                     total_lateness += lateness
-                    weighted_lateness += (
-                        self.deadline_priorities[task_id] * lateness
-                    )
+                    if self._deadline_priorities is not None:
+                        weighted_lateness += (
+                            self._deadline_priorities[task_id] * lateness
+                        )
                     max_lateness = max(max_lateness, lateness)
         if load != 0 or seen_pickups != seen_deliveries:
             raise ValueError("路线必须包含完整的取送任务对")
@@ -159,6 +206,8 @@ def routes_search_score(
 ) -> SearchScore:
     """Aggregate the strict internal objective without changing official scoring."""
 
+    if not evaluator.search_score_enabled:
+        raise RuntimeError("search score guidance is disabled")
     late_count = 0
     weighted_lateness = 0.0
     distance = 0.0
@@ -375,15 +424,18 @@ def route_insertion_options(
 
     if not isfinite(lateness_lambda) or lateness_lambda < 0:
         raise ValueError("risk-aware lateness lambda 必须为有限非负数")
+    guided_beta = soft_deadline_beta
+    if (risk_aware or guided_beta is not None) and not evaluator.search_score_enabled:
+        raise RuntimeError("search score guidance is disabled")
     old_metrics = evaluator.evaluate(materialized)
     old_score = old_metrics.score
-    guided_task_deadline = (
+    old_guided_weighted_lateness = (
         None
-        if soft_deadline_beta is None
-        else soft_deadline(problem, task_id, soft_deadline_beta)
+        if guided_beta is None
+        else evaluator.guided_weighted_lateness(
+            materialized, guided_beta
+        )
     )
-    real_task_deadline = problem.task(task_id).deadline_min
-    task_priority = evaluator.deadline_priorities[task_id]
     options: list[RouteInsertionOption] = []
     for pickup_position, delivery_position in positions:
         candidate = insert_pair(
@@ -395,11 +447,12 @@ def route_insertion_options(
             candidate_metrics.weighted_lateness_min
             - old_metrics.weighted_lateness_min
         )
-        if guided_task_deadline is not None:
-            delivered_at = candidate_metrics.delivery_times_min[task_id]
-            weighted_lateness_delta += task_priority * (
-                max(0.0, delivered_at - guided_task_deadline)
-                - max(0.0, delivered_at - real_task_deadline)
+        if guided_beta is not None and old_guided_weighted_lateness is not None:
+            weighted_lateness_delta = (
+                evaluator.guided_weighted_lateness(
+                    candidate, guided_beta
+                )
+                - old_guided_weighted_lateness
             )
         options.append(
             RouteInsertionOption(

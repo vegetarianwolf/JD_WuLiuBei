@@ -99,3 +99,22 @@ PYTHONPATH=algorithm/src python3 \
 ```
 
 三个种子的正式 240 秒结果、默认开关依据，以及按“逾期任务数、总逾期分钟、总里程”与前两次实验的比较见 [NEIGHBORHOOD_ABLATION_REPORT.md](NEIGHBORHOOD_ABLATION_REPORT.md)，原始逐运行结果及完整路线位于 `results/neighborhood_ablation/`。
+
+## Adaptive Deadline / Rejection Pool 实验
+
+在稳定 A2 上分别测试 late-risk destroy、temporary rejection pool、soft-deadline
+search package 及三者组合：
+
+```bash
+PYTHONPATH=algorithm/src python3 \
+  algorithm/experiments/run_adaptive_deadline_rejection.py \
+  --methods baseline experiment1 experiment2 experiment3 experiment4 \
+  --equal-seed-count 0 --wall-seed-count 3 \
+  --wall-time-limit 240 --wall-safety-margin 2 \
+  --output-dir results/adaptive_deadline_rejection
+```
+
+断点续跑增加 `--resume`；恢复时会校验输入、源码、完整配置、路线文件哈希、
+官方得分、预算与拒绝池终态。正式结果支持仅启用 `late_risk_destroy`：其三 seed
+平均少 1 个逾期订单、官方配对 2 胜 1 负；其余新增模块应保持关闭。完整结论见
+[adaptive_deadline_rejection_report.md](reports/adaptive_deadline_rejection_report.md)。

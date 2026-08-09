@@ -15,7 +15,7 @@ from uav_dispatch import (
     solve_alns_core,
     routes_search_score,
 )
-from uav_dispatch.search import RouteEvaluator
+from uav_dispatch.search import RouteEvaluator, route_insertion_options, routes_score
 
 
 def test_late_risk_destroy_removes_the_highest_risk_complete_pair() -> None:
@@ -211,6 +211,44 @@ def test_internal_search_score_is_lexicographic_and_deadline_weighted() -> None:
     assert SearchScore(1, 2, 10) < SearchScore(1, 2, 11)
 
 
+def test_route_evaluator_can_disable_search_score_without_disabling_official_score() -> None:
+    problem = Problem(
+        (Task(1, Point(2, 0), Point(5, 0), deadline_min=4),),
+        drone_count=1,
+        max_tasks_per_drone=1,
+        speed_km_per_min=1,
+    )
+    evaluator = RouteEvaluator(problem, enable_search_score=False)
+
+    assert routes_score(evaluator, ((1, -1),)).late_count == 1
+    with pytest.raises(RuntimeError, match="search score"):
+        routes_search_score(evaluator, ((1, -1),))
+    with pytest.raises(RuntimeError, match="search score"):
+        _ = evaluator.deadline_priorities
+
+
+def test_route_insertion_skips_search_guidance_when_it_is_disabled() -> None:
+    problem = Problem(
+        (Task(1, Point(2, 0), Point(5, 0), deadline_min=4),),
+        drone_count=1,
+        max_tasks_per_drone=1,
+        speed_km_per_min=1,
+    )
+
+    options = route_insertion_options(
+        problem,
+        RouteEvaluator(problem, enable_search_score=False),
+        (),
+        0,
+        1,
+        candidate_limit=None,
+    )
+
+    assert len(options) == 1
+    assert options[0].delta.late_count == 1
+    assert options[0].weighted_lateness_delta == 0
+
+
 def test_soft_deadline_flag_keeps_final_evaluation_on_the_real_deadline() -> None:
     with pytest.raises(ValueError, match="beta"):
         ALNSConfig(enable_soft_deadline=True, soft_deadline_beta=0.25)
@@ -298,6 +336,44 @@ def test_risk_aware_insertion_spends_distance_to_reduce_weighted_lateness() -> N
     assert inserted.routes == ((1, -1), (2, -2))
     assert inserted.evaluation.valid
     assert inserted.evaluation.score.distance_km == pytest.approx(31)
+
+
+def test_soft_deadline_insertion_guides_every_delivery_on_the_changed_route() -> None:
+    problem = Problem(
+        (
+            Task(1, Point(5, 0), Point(10, 0), deadline_min=9),
+            Task(2, Point(0, 3), Point(0, 4), deadline_min=4),
+        ),
+        drone_count=1,
+        max_tasks_per_drone=2,
+        capacity=2,
+        speed_km_per_min=1,
+    )
+    evaluator = RouteEvaluator(problem)
+
+    options = route_insertion_options(
+        problem,
+        evaluator,
+        (1, -1),
+        0,
+        2,
+        candidate_limit=None,
+        option_count=100,
+        risk_aware=True,
+        soft_deadline_beta=0.30,
+    )
+    detour_before_existing_task = next(
+        option for option in options if option.route == (2, -2, 1, -1)
+    )
+
+    # Task 1's true lateness rises from 1 to sqrt(41) + 1, but its guided
+    # deadline is 12, so the all-delivery soft delta is sqrt(41) - 3.
+    assert detour_before_existing_task.weighted_lateness_delta == pytest.approx(
+        41**0.5 - 3
+    )
+    assert detour_before_existing_task.delta.total_lateness_min == pytest.approx(
+        41**0.5 - 1
+    )
 
 
 def test_soft_deadline_enables_internal_score_and_risk_aware_repair() -> None:

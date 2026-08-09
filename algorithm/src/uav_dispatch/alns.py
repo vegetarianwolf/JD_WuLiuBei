@@ -180,6 +180,19 @@ def _task_ids_in_routes(routes: Sequence[Sequence[int]]) -> tuple[int, ...]:
     return tuple(visit for route in routes for visit in route if visit > 0)
 
 
+def _terminal_rejected_tasks(
+    problem: Problem, routes: Sequence[Sequence[int]]
+) -> tuple[int, ...]:
+    """Derive tasks whose complete pickup-delivery pair is absent at termination."""
+
+    visits = {visit for route in routes for visit in route}
+    return tuple(
+        task_id
+        for task_id in problem.task_ids
+        if task_id not in visits or -task_id not in visits
+    )
+
+
 def _remove_tasks(routes: Sequence[Sequence[int]], task_ids: Iterable[int]) -> Routes:
     removed = set(task_ids)
     return tuple(
@@ -1013,7 +1026,7 @@ def construct_regret_initial(
     """Construct a complete deterministic regret-2 initial solution."""
 
     started = perf_counter()
-    evaluator = RouteEvaluator(problem)
+    evaluator = RouteEvaluator(problem, enable_search_score=False)
     routes: Routes = tuple(() for _ in range(problem.drone_count))
     routes = _repair(
         problem,
@@ -1052,7 +1065,7 @@ def construct_edd_adjacent(problem: Problem) -> SolverResult:
     """Earliest-deadline-first baseline with adjacent pickup-delivery pairs."""
 
     started = perf_counter()
-    evaluator = RouteEvaluator(problem)
+    evaluator = RouteEvaluator(problem, enable_search_score=False)
     routes: Routes = tuple(() for _ in range(problem.drone_count))
     for task in sorted(problem.tasks, key=lambda item: (item.deadline_min, item.id)):
         choices: list[tuple[Score, int, Route]] = []
@@ -1075,7 +1088,7 @@ def construct_nearest_adjacent(problem: Problem) -> SolverResult:
     """Distance-nearest adjacent-pair baseline."""
 
     started = perf_counter()
-    evaluator = RouteEvaluator(problem)
+    evaluator = RouteEvaluator(problem, enable_search_score=False)
     routes: Routes = tuple(() for _ in range(problem.drone_count))
     remaining = set(problem.task_ids)
     while remaining:
@@ -1111,7 +1124,7 @@ def construct_greedy_initial(
     """EDD-ordered full-position lexicographic greedy insertion baseline."""
 
     started = perf_counter()
-    evaluator = RouteEvaluator(problem)
+    evaluator = RouteEvaluator(problem, enable_search_score=False)
     routes: Routes = tuple(() for _ in range(problem.drone_count))
     cache: dict[
         tuple[int, int, Route, int | None, int], tuple[RouteInsertionOption, ...]
@@ -1738,7 +1751,9 @@ def solve_alns(
         else started + cfg.time_limit_seconds
     )
     rng = Random(cfg.seed)
-    evaluator = RouteEvaluator(problem)
+    evaluator = RouteEvaluator(
+        problem, enable_search_score=cfg.enable_soft_deadline
+    )
     if initial_routes is None:
         current = construct_regret_initial(
             problem, candidate_limit=cfg.candidate_limit
@@ -2042,6 +2057,12 @@ def solve_alns(
         )
         completed_iterations = iteration
 
+    final_rejected_tasks = _terminal_rejected_tasks(problem, best)
+    if final_rejected_tasks:
+        raise RuntimeError(
+            "ALNS 临时拒绝池未清空: "
+            + ", ".join(str(task_id) for task_id in final_rejected_tasks)
+        )
     evaluation = evaluate_solution(problem, best)
     if not evaluation.valid:
         raise RuntimeError(f"ALNS 最终解非法: {evaluation.violations}")
@@ -2080,7 +2101,7 @@ def solve_alns(
             "rejection_events": rejection_events,
             "reinserted_task_count": reinserted_task_count,
             "peak_rejected_count": peak_rejected_count,
-            "final_rejected_count": 0,
+            "final_rejected_count": len(final_rejected_tasks),
             "enable_soft_deadline": cfg.enable_soft_deadline,
             "soft_deadline_beta": cfg.soft_deadline_beta,
             "internal_search_score_enabled": cfg.enable_soft_deadline,
