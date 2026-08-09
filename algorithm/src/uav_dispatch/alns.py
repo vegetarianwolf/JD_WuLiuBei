@@ -76,6 +76,8 @@ class ALNSConfig:
     late_risk_lateness_weight: float = 0.5
     late_risk_deadline_weight: float = 0.3
     late_risk_detour_weight: float = 0.2
+    enable_rejection_pool: bool = False
+    rejection_pool_fraction: float = 0.10
     enable_vnd: bool = False
     vnd_max_moves: int = 2
     vnd_task_limit: int = 12
@@ -114,6 +116,11 @@ class ALNSConfig:
             or sum(late_risk_weights) <= 0
         ):
             raise ValueError("late-risk 权重必须为有限非负数且至少一个为正")
+        if (
+            not isfinite(self.rejection_pool_fraction)
+            or not 0 <= self.rejection_pool_fraction <= 0.10
+        ):
+            raise ValueError("临时拒绝池比例必须在 [0, 0.10] 内")
         if not isfinite(self.cooling_rate) or not 0 < self.cooling_rate <= 1:
             raise ValueError("降温率必须在 (0, 1] 内")
         if (
@@ -139,6 +146,21 @@ class ALNSConfig:
             self.cluster_pair_limit,
         ) < 0:
             raise ValueError("VND 与聚类修复搜索预算不能为负")
+
+
+@dataclass(frozen=True, slots=True)
+class _SearchState:
+    """Incomplete iteration state; rejected tasks must be drained before acceptance."""
+
+    routes: Routes
+    rejected_tasks: tuple[int, ...] = ()
+
+    def __post_init__(self) -> None:
+        if len(self.rejected_tasks) != len(set(self.rejected_tasks)):
+            raise ValueError("临时拒绝池不能包含重复任务")
+        routed = {abs(visit) for route in self.routes for visit in route}
+        if routed.intersection(self.rejected_tasks):
+            raise ValueError("临时拒绝任务不能同时保留在路线中")
 
 
 def _task_ids_in_routes(routes: Sequence[Sequence[int]]) -> tuple[int, ...]:
@@ -220,6 +242,58 @@ def _score_strictly_better(
     if lateness_delta != 0.0:
         return False
     return candidate.distance_km < incumbent.distance_km - tolerance
+
+
+def _first_two_objectives_improve(candidate: Score, incumbent: Score) -> bool:
+    """Compare only late count and true total lateness for pool admission."""
+
+    if candidate.late_count != incumbent.late_count:
+        return candidate.late_count < incumbent.late_count
+    return candidate.total_lateness_min < incumbent.total_lateness_min - 1e-9
+
+
+def _build_temporary_rejection_state(
+    problem: Problem,
+    evaluator: RouteEvaluator,
+    original_routes: Routes,
+    partial_routes: Routes,
+    removed_task_ids: Sequence[int],
+    pool_fraction: float,
+) -> tuple[_SearchState, int]:
+    """Classify improving removals into a bounded, iteration-local pool."""
+
+    capacity = int(len(problem.tasks) * pool_fraction)
+    if capacity <= 0 or not removed_task_ids:
+        return _SearchState(partial_routes), 0
+    route_by_task = _task_route_index(original_routes)
+    route_metrics = {
+        route_index: evaluator.evaluate(route)
+        for route_index, route in enumerate(original_routes)
+    }
+    ranked: list[tuple[tuple[float, float, float, int], int]] = []
+    for task_id in removed_task_ids:
+        route_index = route_by_task[task_id]
+        route = original_routes[route_index]
+        old_score = route_metrics[route_index].score
+        reduced = tuple(visit for visit in route if abs(visit) != task_id)
+        new_score = evaluator.evaluate(reduced).score
+        if not _first_two_objectives_improve(new_score, old_score):
+            continue
+        gain = old_score - new_score
+        ranked.append(
+            (
+                (
+                    float(gain.late_count),
+                    gain.total_lateness_min,
+                    -problem.task(task_id).deadline_min,
+                    -task_id,
+                ),
+                task_id,
+            )
+        )
+    ranked.sort(reverse=True)
+    rejected = tuple(task_id for _, task_id in ranked[:capacity])
+    return _SearchState(partial_routes, rejected), len(removed_task_ids)
 
 
 def destroy_solution(
@@ -1621,6 +1695,10 @@ def solve_alns(
     accepted_count = 0
     vnd_calls = 0
     vnd_improved_iterations = 0
+    rejection_attempts = 0
+    rejection_events = 0
+    reinserted_task_count = 0
+    peak_rejected_count = 0
     temperature = cfg.initial_temperature
     route_pool = _RoutePool(problem, evaluator) if cfg.enable_route_pool else None
     if route_pool is not None:
@@ -1656,12 +1734,45 @@ def solve_alns(
         )
         if deadline is not None and perf_counter() >= deadline:
             break
+        rejected: tuple[int, ...] = ()
+        regular_removed = removed
+        if cfg.enable_rejection_pool:
+            state, attempts = _build_temporary_rejection_state(
+                problem,
+                evaluator,
+                current,
+                partial,
+                removed,
+                cfg.rejection_pool_fraction,
+            )
+            partial = state.routes
+            rejected = state.rejected_tasks
+            rejected_set = set(rejected)
+            regular_removed = tuple(
+                task_id for task_id in removed if task_id not in rejected_set
+            )
+            rejection_attempts += attempts
+            rejection_events += len(rejected)
+            peak_rejected_count = max(peak_rejected_count, len(rejected))
         try:
+            candidate = partial
+            if rejected:
+                candidate = _repair(
+                    problem,
+                    evaluator,
+                    candidate,
+                    rejected,
+                    "regret2",
+                    cfg.candidate_limit,
+                    use_deadline_risk=cfg.enable_deadline_risk,
+                    original_route_by_task=original_route_by_task,
+                    deadline=deadline,
+                )
             candidate = _repair(
                 problem,
                 evaluator,
-                partial,
-                removed,
+                candidate,
+                regular_removed,
                 repair_name,
                 cfg.candidate_limit,
                 use_deadline_risk=cfg.enable_deadline_risk,
@@ -1672,6 +1783,7 @@ def solve_alns(
             )
         except _SearchDeadlineReached:
             break
+        reinserted_task_count += len(rejected)
         timed_out = deadline is not None and perf_counter() >= deadline
         if not timed_out and cfg.enable_vnd and cfg.vnd_max_moves > 0:
             repaired_score = routes_score(evaluator, candidate)
@@ -1822,6 +1934,18 @@ def solve_alns(
                 cfg.late_risk_deadline_weight,
                 cfg.late_risk_detour_weight,
             ),
+            "enable_rejection_pool": cfg.enable_rejection_pool,
+            "rejection_pool_fraction": cfg.rejection_pool_fraction,
+            "rejection_pool_capacity": (
+                int(len(problem.tasks) * cfg.rejection_pool_fraction)
+                if cfg.enable_rejection_pool
+                else 0
+            ),
+            "rejection_attempts": rejection_attempts,
+            "rejection_events": rejection_events,
+            "reinserted_task_count": reinserted_task_count,
+            "peak_rejected_count": peak_rejected_count,
+            "final_rejected_count": 0,
             "enable_vnd": cfg.enable_vnd,
             "enable_cluster_repair": cfg.enable_cluster_repair,
             "vnd_calls": vnd_calls,

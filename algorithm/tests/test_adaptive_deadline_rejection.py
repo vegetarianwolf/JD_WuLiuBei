@@ -100,3 +100,75 @@ def test_late_risk_weights_are_validated_and_reported() -> None:
     )
 
     assert result.metadata["late_risk_weights"] == (0.6, 0.25, 0.15)
+
+
+def test_temporary_rejection_pool_is_bounded_reinserted_and_never_final() -> None:
+    tasks = tuple(
+        Task(
+            task_id,
+            Point(float(task_id), 0),
+            Point(float(task_id) + 0.5, 0),
+            deadline_min=0.5,
+        )
+        for task_id in range(1, 11)
+    )
+    problem = Problem(
+        tasks,
+        drone_count=1,
+        max_tasks_per_drone=10,
+        capacity=2,
+        speed_km_per_min=1,
+    )
+
+    result = solve_alns_core(
+        problem,
+        config=ALNSConfig(
+            max_iterations=1,
+            seed=20260805,
+            candidate_limit=None,
+            enable_rejection_pool=True,
+        ),
+    )
+
+    assert result.evaluation.valid
+    assert result.metadata["rejection_pool_capacity"] == 1
+    assert result.metadata["peak_rejected_count"] == 1
+    assert result.metadata["rejection_events"] == 1
+    assert result.metadata["reinserted_task_count"] == 1
+    assert result.metadata["final_rejected_count"] == 0
+    visits = [visit for route in result.routes for visit in route]
+    for task_id in problem.task_ids:
+        assert visits.count(task_id) == visits.count(-task_id) == 1
+
+
+def test_rejection_pool_does_not_admit_distance_only_improvements() -> None:
+    problem = Problem(
+        tuple(
+            Task(
+                task_id,
+                Point(float(task_id), 0),
+                Point(float(task_id) + 0.25, 0),
+                deadline_min=1_000,
+            )
+            for task_id in range(1, 11)
+        ),
+        drone_count=1,
+        max_tasks_per_drone=10,
+        speed_km_per_min=1,
+    )
+
+    result = solve_alns_core(
+        problem,
+        config=ALNSConfig(
+            max_iterations=1,
+            seed=20260805,
+            candidate_limit=None,
+            enable_rejection_pool=True,
+        ),
+    )
+
+    assert result.evaluation.score.late_count == 0
+    assert result.evaluation.score.total_lateness_min == 0
+    assert result.metadata["rejection_attempts"] == 2
+    assert result.metadata["rejection_events"] == 0
+    assert result.metadata["peak_rejected_count"] == 0

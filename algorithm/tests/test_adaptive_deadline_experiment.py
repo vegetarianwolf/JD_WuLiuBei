@@ -10,7 +10,7 @@ from algorithm.experiments.run_adaptive_deadline_rejection import (
 
 def test_phase2_variants_are_explicit_a2_configs_differing_only_in_late_risk() -> None:
     args = _parse_args([])
-    baseline, experiment1 = build_variants()
+    baseline, experiment1, _ = build_variants()
 
     baseline_config = config_for_variant(
         args,
@@ -47,6 +47,36 @@ def test_phase2_variants_are_explicit_a2_configs_differing_only_in_late_risk() -
     assert baseline_config.enable_route_pool is False
 
 
+def test_experiment2_differs_from_a2_only_by_the_rejection_pool_flag() -> None:
+    args = _parse_args([])
+    baseline, _, experiment2 = build_variants()
+    baseline_fields = asdict(
+        config_for_variant(
+            args,
+            baseline,
+            seed=7,
+            max_iterations=5,
+            time_limit_seconds=None,
+        )
+    )
+    experiment_fields = asdict(
+        config_for_variant(
+            args,
+            experiment2,
+            seed=7,
+            max_iterations=5,
+            time_limit_seconds=None,
+        )
+    )
+
+    assert experiment2.name == "experiment2"
+    assert {
+        name
+        for name in baseline_fields
+        if baseline_fields[name] != experiment_fields[name]
+    } == {"enable_rejection_pool"}
+
+
 def test_phase2_runner_writes_valid_routes_csv_and_json(tmp_path) -> None:
     source = tmp_path / "tasks.csv"
     source.write_text(
@@ -65,6 +95,7 @@ def test_phase2_runner_writes_valid_routes_csv_and_json(tmp_path) -> None:
             "--methods",
             "baseline",
             "experiment1",
+            "experiment2",
             "--equal-seed-count",
             "1",
             "--equal-iterations",
@@ -76,9 +107,14 @@ def test_phase2_runner_writes_valid_routes_csv_and_json(tmp_path) -> None:
 
     payload = run(args)
 
-    assert len(payload["runs"]) == 2
+    assert len(payload["runs"]) == 3
     assert all(row["valid"] for row in payload["runs"])
+    rejection_row = next(
+        row for row in payload["runs"] if row["method"] == "experiment2"
+    )
+    assert rejection_row["final_rejected_count"] == 0
+    assert rejection_row["peak_rejected_count"] <= 0.10 * 2
     assert (output / "adaptive_runs.csv").is_file()
     assert (output / "adaptive_summary.csv").is_file()
     assert (output / "adaptive_results.json").is_file()
-    assert len(tuple((output / "run_solutions").glob("*.json"))) == 2
+    assert len(tuple((output / "run_solutions").glob("*.json"))) == 3

@@ -41,6 +41,7 @@ class AdaptiveVariant:
     name: str
     label: str
     enable_late_risk_destroy: bool = False
+    enable_rejection_pool: bool = False
 
 
 def build_variants() -> tuple[AdaptiveVariant, ...]:
@@ -52,6 +53,11 @@ def build_variants() -> tuple[AdaptiveVariant, ...]:
             "experiment1",
             "A2 + late_risk_destroy",
             enable_late_risk_destroy=True,
+        ),
+        AdaptiveVariant(
+            "experiment2",
+            "A2 + rejection_pool",
+            enable_rejection_pool=True,
         ),
     )
 
@@ -90,6 +96,8 @@ def config_for_variant(
         late_risk_lateness_weight=args.late_risk_lateness_weight,
         late_risk_deadline_weight=args.late_risk_deadline_weight,
         late_risk_detour_weight=args.late_risk_detour_weight,
+        enable_rejection_pool=variant.enable_rejection_pool,
+        rejection_pool_fraction=args.rejection_pool_fraction,
         enable_vnd=False,
         enable_cluster_repair=False,
         enable_ejection=False,
@@ -126,6 +134,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--late-risk-lateness-weight", type=float, default=0.5)
     parser.add_argument("--late-risk-deadline-weight", type=float, default=0.3)
     parser.add_argument("--late-risk-detour-weight", type=float, default=0.2)
+    parser.add_argument("--rejection-pool-fraction", type=float, default=0.10)
     return parser
 
 
@@ -332,6 +341,22 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                         "enable_late_risk_destroy": (
                             config.enable_late_risk_destroy
                         ),
+                        "enable_rejection_pool": config.enable_rejection_pool,
+                        "rejection_attempts": result.metadata.get(
+                            "rejection_attempts", 0
+                        ),
+                        "rejection_events": result.metadata.get(
+                            "rejection_events", 0
+                        ),
+                        "reinserted_task_count": result.metadata.get(
+                            "reinserted_task_count", 0
+                        ),
+                        "peak_rejected_count": result.metadata.get(
+                            "peak_rejected_count", 0
+                        ),
+                        "final_rejected_count": result.metadata.get(
+                            "final_rejected_count", 0
+                        ),
                         "solution_file": str(solution_path.relative_to(output_dir)),
                         "routes_sha256": _routes_sha256(result.routes),
                     }
@@ -353,6 +378,12 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "search_runtime_seconds",
         "iterations",
         "enable_late_risk_destroy",
+        "enable_rejection_pool",
+        "rejection_attempts",
+        "rejection_events",
+        "reinserted_task_count",
+        "peak_rejected_count",
+        "final_rejected_count",
         "solution_file",
         "routes_sha256",
     )
