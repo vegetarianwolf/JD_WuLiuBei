@@ -32,6 +32,7 @@ DESTROY_OPERATORS = (
     "late_critical",
     "route_segment",
     "capacity_conflict",
+    "late_risk_destroy",
     "assignment_destroy",
     "route_clear",
 )
@@ -71,6 +72,10 @@ class ALNSConfig:
     enable_ejection: bool = True
     enable_assignment_destroy: bool = True
     enable_deadline_risk: bool = True
+    enable_late_risk_destroy: bool = False
+    late_risk_lateness_weight: float = 0.5
+    late_risk_deadline_weight: float = 0.3
+    late_risk_detour_weight: float = 0.2
     enable_vnd: bool = False
     vnd_max_moves: int = 2
     vnd_task_limit: int = 12
@@ -99,6 +104,16 @@ class ALNSConfig:
             raise ValueError("权重更新周期必须为正整数")
         if not isfinite(self.reaction_factor) or not 0 < self.reaction_factor <= 1:
             raise ValueError("权重反应系数必须在 (0, 1] 内")
+        late_risk_weights = (
+            self.late_risk_lateness_weight,
+            self.late_risk_deadline_weight,
+            self.late_risk_detour_weight,
+        )
+        if (
+            any(not isfinite(weight) or weight < 0 for weight in late_risk_weights)
+            or sum(late_risk_weights) <= 0
+        ):
+            raise ValueError("late-risk 权重必须为有限非负数且至少一个为正")
         if not isfinite(self.cooling_rate) or not 0 < self.cooling_rate <= 1:
             raise ValueError("降温率必须在 (0, 1] 内")
         if (
@@ -166,6 +181,25 @@ def _deadline_risk(delivered_at: float, deadline: float) -> float:
     return delivered_at / deadline
 
 
+def _lateness_ratio(delivered_at: float, deadline: float) -> float:
+    """Return the prescribed relative lateness with a safe zero-deadline rule."""
+
+    if deadline <= 1e-12:
+        return float("inf") if delivered_at > 1e-12 else 0.0
+    return max(0.0, delivered_at - deadline) / deadline
+
+
+def _relative_deadline_pressure(
+    deadline: float, minimum_deadline: float, maximum_deadline: float
+) -> float:
+    """Map tighter deadlines to higher pressure in the closed interval [0, 1]."""
+
+    span = maximum_deadline - minimum_deadline
+    if span <= 1e-12:
+        return 0.0
+    return (maximum_deadline - deadline) / span
+
+
 def _score_strictly_better(
     candidate: Score,
     incumbent: Score,
@@ -197,6 +231,7 @@ def destroy_solution(
     rng: Random,
     *,
     use_deadline_risk: bool = True,
+    late_risk_weights: tuple[float, float, float] = (0.5, 0.3, 0.2),
 ) -> tuple[Routes, tuple[int, ...]]:
     """Remove complete task pairs using one named destroy operator."""
 
@@ -206,6 +241,41 @@ def destroy_solution(
 
     if operator == "random":
         removed = rng.sample(task_ids, count)
+    elif operator == "late_risk_destroy":
+        lateness_weight, deadline_weight, detour_weight = late_risk_weights
+        deadlines = [problem.task(task_id).deadline_min for task_id in task_ids]
+        minimum_deadline = min(deadlines)
+        maximum_deadline = max(deadlines)
+        route_metrics = {
+            route_index: evaluator.evaluate(route)
+            for route_index, route in enumerate(routes)
+        }
+
+        def task_risk(task_id: int) -> float:
+            route_index = route_by_task[task_id]
+            route = routes[route_index]
+            metrics = route_metrics[route_index]
+            deadline = problem.task(task_id).deadline_min
+            delivered_at = metrics.delivery_times_min[task_id]
+            reduced = tuple(visit for visit in route if abs(visit) != task_id)
+            reduced_distance = evaluator.evaluate(reduced).score.distance_km
+            distance = metrics.score.distance_km
+            detour_gain = max(0.0, distance - reduced_distance)
+            detour_contribution = (
+                min(1.0, detour_gain / distance) if distance > 1e-12 else 0.0
+            )
+            return (
+                lateness_weight * _lateness_ratio(delivered_at, deadline)
+                + deadline_weight
+                * _relative_deadline_pressure(
+                    deadline, minimum_deadline, maximum_deadline
+                )
+                + detour_weight * detour_contribution
+            )
+
+        removed = sorted(task_ids, key=lambda task_id: (-task_risk(task_id), task_id))[
+            :count
+        ]
     elif operator == "assignment_destroy":
         non_empty_indices = [
             route_index for route_index, route in enumerate(routes) if route
@@ -1527,9 +1597,12 @@ def solve_alns(
         name
         for name in DESTROY_OPERATORS
         if (
-            name != "route_clear"
-            if cfg.enable_assignment_destroy
-            else name != "assignment_destroy"
+            (name != "late_risk_destroy" or cfg.enable_late_risk_destroy)
+            and (
+                name != "route_clear"
+                if cfg.enable_assignment_destroy
+                else name != "assignment_destroy"
+            )
         )
     )
     destroy_weights = {name: 1.0 for name in destroy_operators}
@@ -1575,6 +1648,11 @@ def solve_alns(
             remove_count,
             rng,
             use_deadline_risk=cfg.enable_deadline_risk,
+            late_risk_weights=(
+                cfg.late_risk_lateness_weight,
+                cfg.late_risk_deadline_weight,
+                cfg.late_risk_detour_weight,
+            ),
         )
         if deadline is not None and perf_counter() >= deadline:
             break
@@ -1738,6 +1816,12 @@ def solve_alns(
             "enable_ejection": cfg.enable_ejection,
             "enable_assignment_destroy": cfg.enable_assignment_destroy,
             "enable_deadline_risk": cfg.enable_deadline_risk,
+            "enable_late_risk_destroy": cfg.enable_late_risk_destroy,
+            "late_risk_weights": (
+                cfg.late_risk_lateness_weight,
+                cfg.late_risk_deadline_weight,
+                cfg.late_risk_detour_weight,
+            ),
             "enable_vnd": cfg.enable_vnd,
             "enable_cluster_repair": cfg.enable_cluster_repair,
             "vnd_calls": vnd_calls,
