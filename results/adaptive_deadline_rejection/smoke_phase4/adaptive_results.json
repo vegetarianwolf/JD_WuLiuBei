@@ -1,0 +1,123 @@
+{
+  "manifest": {
+    "generated_at_utc": "2026-08-09T07:33:40.192306+00:00",
+    "input": "/Users/vegetarianwolf/Projects/JD_WuLiuBei/algorithm/命题1-低空经济场景下的物流无人机调度算法数据.csv",
+    "input_sha256": "386d3fbaa9009aeed947493782d657ed0b30b25d369c8187bfc9619fc7e31d25",
+    "initial_routes_sha256": "0aa05645d9ca61227c51c1d69993de896ecca045136165dec06a4bd1636288b6",
+    "objective_order": [
+      "late_count",
+      "total_lateness_min",
+      "distance_km"
+    ],
+    "methods": [
+      {
+        "name": "baseline",
+        "label": "A2",
+        "enable_late_risk_destroy": false,
+        "enable_rejection_pool": false,
+        "enable_soft_deadline": false
+      },
+      {
+        "name": "experiment3",
+        "label": "A2 + soft_deadline",
+        "enable_late_risk_destroy": false,
+        "enable_rejection_pool": false,
+        "enable_soft_deadline": true
+      }
+    ],
+    "seed_base": 2026080500,
+    "equal_seed_count": 1,
+    "equal_iterations": 5,
+    "wall_seed_count": 0,
+    "wall_time_limit_seconds": 240.0,
+    "wall_safety_margin_seconds": 2.0
+  },
+  "runs": [
+    {
+      "scenario": "equal_iterations",
+      "method": "baseline",
+      "label": "A2",
+      "seed": 2026080500,
+      "run_order": 1,
+      "valid": true,
+      "late_count": 105,
+      "total_lateness_min": 4230.116735433213,
+      "distance_km": 765.3857544430806,
+      "runtime_seconds": 5.257156625040807,
+      "search_runtime_seconds": 0.5746919169905595,
+      "iterations": 5,
+      "enable_late_risk_destroy": false,
+      "enable_rejection_pool": false,
+      "rejection_attempts": 0,
+      "rejection_events": 0,
+      "reinserted_task_count": 0,
+      "peak_rejected_count": 0,
+      "final_rejected_count": 0,
+      "enable_soft_deadline": false,
+      "soft_deadline_beta": 0.2,
+      "internal_search_score_enabled": false,
+      "risk_aware_insertion_enabled": false,
+      "risk_aware_lateness_lambda": 1.0,
+      "solution_file": "run_solutions/equal_iterations__baseline__seed_2026080500.json",
+      "routes_sha256": "1daaa2c9cc048f37ca94c228d110c4b9124a1e96a7cd1ca7d070d80a11b42109"
+    },
+    {
+      "scenario": "equal_iterations",
+      "method": "experiment3",
+      "label": "A2 + soft_deadline",
+      "seed": 2026080500,
+      "run_order": 2,
+      "valid": true,
+      "late_count": 105,
+      "total_lateness_min": 4333.16945284083,
+      "distance_km": 776.4092800544868,
+      "runtime_seconds": 5.436624625057448,
+      "search_runtime_seconds": 0.7541599170072004,
+      "iterations": 5,
+      "enable_late_risk_destroy": false,
+      "enable_rejection_pool": false,
+      "rejection_attempts": 0,
+      "rejection_events": 0,
+      "reinserted_task_count": 0,
+      "peak_rejected_count": 0,
+      "final_rejected_count": 0,
+      "enable_soft_deadline": true,
+      "soft_deadline_beta": 0.2,
+      "internal_search_score_enabled": true,
+      "risk_aware_insertion_enabled": true,
+      "risk_aware_lateness_lambda": 1.0,
+      "solution_file": "run_solutions/equal_iterations__experiment3__seed_2026080500.json",
+      "routes_sha256": "7b5e1e2863c4a530e4d1d44d0ad778fb673d6d9715b14870ec58c413a4b9452c"
+    }
+  ],
+  "summaries": [
+    {
+      "scenario": "equal_iterations",
+      "method": "baseline",
+      "runs": 1,
+      "mean_late_count": 105.0,
+      "mean_total_lateness_min": 4230.116735433213,
+      "mean_distance_km": 765.3857544430806,
+      "mean_runtime_seconds": 5.257156625040807,
+      "mean_iterations": 5.0,
+      "best_seed": 2026080500,
+      "best_late_count": 105,
+      "best_total_lateness_min": 4230.116735433213,
+      "best_distance_km": 765.3857544430806
+    },
+    {
+      "scenario": "equal_iterations",
+      "method": "experiment3",
+      "runs": 1,
+      "mean_late_count": 105.0,
+      "mean_total_lateness_min": 4333.16945284083,
+      "mean_distance_km": 776.4092800544868,
+      "mean_runtime_seconds": 5.436624625057448,
+      "mean_iterations": 5.0,
+      "best_seed": 2026080500,
+      "best_late_count": 105,
+      "best_total_lateness_min": 4333.16945284083,
+      "best_distance_km": 776.4092800544868
+    }
+  ]
+}

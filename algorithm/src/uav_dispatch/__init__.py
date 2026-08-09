@@ -13,7 +13,14 @@ from .alns import (
     solve_alns_core,
 )
 from .model import Point, Problem, Score, SolutionEvaluation, Task
-from .search import InsertionResult, SolverResult, insert_task_best
+from .search import (
+    InsertionResult,
+    SearchScore,
+    SolverResult,
+    insert_task_best,
+    routes_search_score,
+    soft_deadline,
+)
 from .validation import evaluate_solution
 
 __all__ = [
@@ -21,6 +28,7 @@ __all__ = [
     "ALNSConfig",
     "Problem",
     "Score",
+    "SearchScore",
     "SolutionEvaluation",
     "SolverResult",
     "InsertionResult",
@@ -36,4 +44,6 @@ __all__ = [
     "solve_exact",
     "solve_alns",
     "solve_alns_core",
+    "routes_search_score",
+    "soft_deadline",
 ]

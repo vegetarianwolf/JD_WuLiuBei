@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from functools import lru_cache
+from math import isfinite
 from types import MappingProxyType
 from typing import Mapping, Sequence
 
@@ -15,9 +16,29 @@ Route = tuple[int, ...]
 Routes = tuple[Route, ...]
 
 
+def soft_deadline(problem: Problem, task_id: int, beta: float) -> float:
+    """Return an immutable search-only deadline with service-time slack."""
+
+    if not isfinite(beta) or beta < 0:
+        raise ValueError("soft deadline beta 必须为有限非负数")
+    return problem.task(task_id).deadline_min + beta * problem.direct_completion_min(
+        task_id
+    )
+
+
+@dataclass(frozen=True, order=True, slots=True)
+class SearchScore:
+    """Search-only lexicographic guidance; never used as the official score."""
+
+    late_count: int
+    weighted_lateness_min: float
+    distance_km: float
+
+
 @dataclass(frozen=True, slots=True)
 class RouteMetrics:
     score: Score
+    weighted_lateness_min: float
     delivery_times_min: Mapping[int, float]
     late_task_ids: tuple[int, ...]
     max_lateness_min: float
@@ -46,6 +67,21 @@ class RouteEvaluator:
 
     def __init__(self, problem: Problem, cache_size: int = 50_000) -> None:
         self.problem = problem
+        deadlines = tuple(task.deadline_min for task in problem.tasks)
+        minimum_deadline = min(deadlines)
+        maximum_deadline = max(deadlines)
+        deadline_span = maximum_deadline - minimum_deadline
+        self.deadline_priorities = MappingProxyType(
+            {
+                task.id: (
+                    1.0
+                    if deadline_span <= 1e-12
+                    else 1.0
+                    + (maximum_deadline - task.deadline_min) / deadline_span
+                )
+                for task in problem.tasks
+            }
+        )
 
         @lru_cache(maxsize=cache_size)
         def cached(route: Route) -> RouteMetrics:
@@ -66,6 +102,7 @@ class RouteEvaluator:
         delivery_times: dict[int, float] = {}
         late_ids: list[int] = []
         total_lateness = 0.0
+        weighted_lateness = 0.0
         max_lateness = 0.0
 
         for visit in route:
@@ -95,11 +132,15 @@ class RouteEvaluator:
                 if lateness > 1e-9:
                     late_ids.append(task_id)
                     total_lateness += lateness
+                    weighted_lateness += (
+                        self.deadline_priorities[task_id] * lateness
+                    )
                     max_lateness = max(max_lateness, lateness)
         if load != 0 or seen_pickups != seen_deliveries:
             raise ValueError("路线必须包含完整的取送任务对")
         return RouteMetrics(
             score=Score(len(late_ids), total_lateness, distance),
+            weighted_lateness_min=weighted_lateness,
             delivery_times_min=MappingProxyType(delivery_times),
             late_task_ids=tuple(late_ids),
             max_lateness_min=max_lateness,
@@ -111,6 +152,22 @@ def routes_score(evaluator: RouteEvaluator, routes: Sequence[Sequence[int]]) -> 
     for route in routes:
         score += evaluator.evaluate(route).score
     return score
+
+
+def routes_search_score(
+    evaluator: RouteEvaluator, routes: Sequence[Sequence[int]]
+) -> SearchScore:
+    """Aggregate the strict internal objective without changing official scoring."""
+
+    late_count = 0
+    weighted_lateness = 0.0
+    distance = 0.0
+    for route in routes:
+        metrics = evaluator.evaluate(route)
+        late_count += metrics.score.late_count
+        weighted_lateness += metrics.weighted_lateness_min
+        distance += metrics.score.distance_km
+    return SearchScore(late_count, weighted_lateness, distance)
 
 
 def _load_before(route: Sequence[int]) -> tuple[int, ...]:
@@ -225,6 +282,28 @@ class RouteInsertionOption:
     pickup_position: int
     delivery_position: int
     route: Route
+    weighted_lateness_delta: float = 0.0
+    risk_aware_cost: float = 0.0
+
+    def ranking_key(self, risk_aware: bool) -> tuple[object, ...]:
+        if risk_aware:
+            return (
+                self.delta.late_count,
+                self.risk_aware_cost,
+                self.weighted_lateness_delta,
+                self.delta.distance_km,
+                self.route_index,
+                self.pickup_position,
+                self.delivery_position,
+                self.route,
+            )
+        return (
+            self.delta,
+            self.route_index,
+            self.pickup_position,
+            self.delivery_position,
+            self.route,
+        )
 
 
 def route_insertion_options(
@@ -236,6 +315,9 @@ def route_insertion_options(
     *,
     candidate_limit: int | None,
     option_count: int = 3,
+    risk_aware: bool = False,
+    soft_deadline_beta: float | None = None,
+    lateness_lambda: float = 1.0,
 ) -> tuple[RouteInsertionOption, ...]:
     """Return the best exact deltas after capacity-profile candidate pruning."""
 
@@ -291,13 +373,34 @@ def route_insertion_options(
                 selected_set.add(position)
         positions = selected[:limit]
 
-    old_score = evaluator.evaluate(materialized).score
+    if not isfinite(lateness_lambda) or lateness_lambda < 0:
+        raise ValueError("risk-aware lateness lambda 必须为有限非负数")
+    old_metrics = evaluator.evaluate(materialized)
+    old_score = old_metrics.score
+    guided_task_deadline = (
+        None
+        if soft_deadline_beta is None
+        else soft_deadline(problem, task_id, soft_deadline_beta)
+    )
+    real_task_deadline = problem.task(task_id).deadline_min
+    task_priority = evaluator.deadline_priorities[task_id]
     options: list[RouteInsertionOption] = []
     for pickup_position, delivery_position in positions:
         candidate = insert_pair(
             materialized, task_id, pickup_position, delivery_position
         )
-        delta = evaluator.evaluate(candidate).score - old_score
+        candidate_metrics = evaluator.evaluate(candidate)
+        delta = candidate_metrics.score - old_score
+        weighted_lateness_delta = (
+            candidate_metrics.weighted_lateness_min
+            - old_metrics.weighted_lateness_min
+        )
+        if guided_task_deadline is not None:
+            delivered_at = candidate_metrics.delivery_times_min[task_id]
+            weighted_lateness_delta += task_priority * (
+                max(0.0, delivered_at - guided_task_deadline)
+                - max(0.0, delivered_at - real_task_deadline)
+            )
         options.append(
             RouteInsertionOption(
                 delta,
@@ -305,17 +408,12 @@ def route_insertion_options(
                 pickup_position,
                 delivery_position,
                 candidate,
+                weighted_lateness_delta,
+                delta.distance_km
+                + lateness_lambda * weighted_lateness_delta,
             )
         )
-    options.sort(
-        key=lambda option: (
-            option.delta,
-            option.route_index,
-            option.pickup_position,
-            option.delivery_position,
-            option.route,
-        )
-    )
+    options.sort(key=lambda option: option.ranking_key(risk_aware))
     return tuple(options[:option_count])
 
 
@@ -333,7 +431,13 @@ def insert_pair(
 
 
 def insert_task_best(
-    problem: Problem, routes: Sequence[Sequence[int]], task_id: int
+    problem: Problem,
+    routes: Sequence[Sequence[int]],
+    task_id: int,
+    *,
+    risk_aware: bool = False,
+    soft_deadline_beta: float | None = None,
+    lateness_lambda: float = 1.0,
 ) -> InsertionResult:
     """Insert a complete task pair at the lexicographically best positions."""
 
@@ -349,7 +453,8 @@ def insert_task_best(
 
     evaluator = RouteEvaluator(problem)
     base_score = routes_score(evaluator, materialized)
-    best: tuple[Score, int, int, int, Route] | None = None
+    best_key: tuple[object, ...] | None = None
+    best_choice: tuple[int, int, int, Route] | None = None
     for route_index in range(problem.drone_count):
         route = materialized[route_index] if route_index < len(materialized) else ()
         task_count = sum(1 for visit in route if visit > 0)
@@ -363,21 +468,34 @@ def insert_task_best(
             task_id,
             candidate_limit=None,
             option_count=10_000,
+            risk_aware=risk_aware,
+            soft_deadline_beta=soft_deadline_beta,
+            lateness_lambda=lateness_lambda,
         ):
             candidate_score = base_score + option.delta
             key = (
-                candidate_score,
-                route_index,
-                option.pickup_position,
-                option.delivery_position,
-                option.route,
+                option.ranking_key(True)
+                if risk_aware
+                else (
+                    candidate_score,
+                    route_index,
+                    option.pickup_position,
+                    option.delivery_position,
+                    option.route,
+                )
             )
-            if best is None or key < best:
-                best = key
-    if best is None:
+            if best_key is None or key < best_key:
+                best_key = key
+                best_choice = (
+                    route_index,
+                    option.pickup_position,
+                    option.delivery_position,
+                    option.route,
+                )
+    if best_choice is None:
         raise ValueError(f"任务 {task_id} 没有可用的路线槽位")
 
-    _, route_index, pickup_position, delivery_position, new_route = best
+    route_index, pickup_position, delivery_position, new_route = best_choice
     expanded = list(materialized)
     while len(expanded) < problem.drone_count:
         expanded.append(())

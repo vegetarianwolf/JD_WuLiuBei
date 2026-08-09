@@ -42,6 +42,7 @@ class AdaptiveVariant:
     label: str
     enable_late_risk_destroy: bool = False
     enable_rejection_pool: bool = False
+    enable_soft_deadline: bool = False
 
 
 def build_variants() -> tuple[AdaptiveVariant, ...]:
@@ -58,6 +59,11 @@ def build_variants() -> tuple[AdaptiveVariant, ...]:
             "experiment2",
             "A2 + rejection_pool",
             enable_rejection_pool=True,
+        ),
+        AdaptiveVariant(
+            "experiment3",
+            "A2 + soft_deadline",
+            enable_soft_deadline=True,
         ),
     )
 
@@ -98,6 +104,9 @@ def config_for_variant(
         late_risk_detour_weight=args.late_risk_detour_weight,
         enable_rejection_pool=variant.enable_rejection_pool,
         rejection_pool_fraction=args.rejection_pool_fraction,
+        enable_soft_deadline=variant.enable_soft_deadline,
+        soft_deadline_beta=args.soft_deadline_beta,
+        risk_aware_lateness_lambda=args.risk_aware_lateness_lambda,
         enable_vnd=False,
         enable_cluster_repair=False,
         enable_ejection=False,
@@ -135,6 +144,13 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--late-risk-deadline-weight", type=float, default=0.3)
     parser.add_argument("--late-risk-detour-weight", type=float, default=0.2)
     parser.add_argument("--rejection-pool-fraction", type=float, default=0.10)
+    parser.add_argument(
+        "--soft-deadline-beta",
+        type=float,
+        choices=(0.15, 0.20, 0.30),
+        default=0.20,
+    )
+    parser.add_argument("--risk-aware-lateness-lambda", type=float, default=1.0)
     return parser
 
 
@@ -357,6 +373,17 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                         "final_rejected_count": result.metadata.get(
                             "final_rejected_count", 0
                         ),
+                        "enable_soft_deadline": config.enable_soft_deadline,
+                        "soft_deadline_beta": config.soft_deadline_beta,
+                        "internal_search_score_enabled": result.metadata.get(
+                            "internal_search_score_enabled", False
+                        ),
+                        "risk_aware_insertion_enabled": result.metadata.get(
+                            "risk_aware_insertion_enabled", False
+                        ),
+                        "risk_aware_lateness_lambda": (
+                            config.risk_aware_lateness_lambda
+                        ),
                         "solution_file": str(solution_path.relative_to(output_dir)),
                         "routes_sha256": _routes_sha256(result.routes),
                     }
@@ -384,6 +411,11 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "reinserted_task_count",
         "peak_rejected_count",
         "final_rejected_count",
+        "enable_soft_deadline",
+        "soft_deadline_beta",
+        "internal_search_score_enabled",
+        "risk_aware_insertion_enabled",
+        "risk_aware_lateness_lambda",
         "solution_file",
         "routes_sha256",
     )

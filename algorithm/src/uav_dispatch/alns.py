@@ -16,9 +16,12 @@ from .search import (
     RouteEvaluator,
     RouteInsertionOption,
     Routes,
+    SearchScore,
     SolverResult,
     route_insertion_options,
+    routes_search_score,
     routes_score,
+    soft_deadline,
 )
 from .validation import evaluate_solution
 
@@ -78,6 +81,9 @@ class ALNSConfig:
     late_risk_detour_weight: float = 0.2
     enable_rejection_pool: bool = False
     rejection_pool_fraction: float = 0.10
+    enable_soft_deadline: bool = False
+    soft_deadline_beta: float = 0.20
+    risk_aware_lateness_lambda: float = 1.0
     enable_vnd: bool = False
     vnd_max_moves: int = 2
     vnd_task_limit: int = 12
@@ -121,6 +127,13 @@ class ALNSConfig:
             or not 0 <= self.rejection_pool_fraction <= 0.10
         ):
             raise ValueError("临时拒绝池比例必须在 [0, 0.10] 内")
+        if self.soft_deadline_beta not in (0.15, 0.20, 0.30):
+            raise ValueError("soft deadline beta 必须是 0.15、0.20 或 0.30")
+        if (
+            not isfinite(self.risk_aware_lateness_lambda)
+            or self.risk_aware_lateness_lambda < 0
+        ):
+            raise ValueError("risk-aware lateness lambda 必须为有限非负数")
         if not isfinite(self.cooling_rate) or not 0 < self.cooling_rate <= 1:
             raise ValueError("降温率必须在 (0, 1] 内")
         if (
@@ -306,6 +319,7 @@ def destroy_solution(
     *,
     use_deadline_risk: bool = True,
     late_risk_weights: tuple[float, float, float] = (0.5, 0.3, 0.2),
+    soft_deadline_beta: float | None = None,
 ) -> tuple[Routes, tuple[int, ...]]:
     """Remove complete task pairs using one named destroy operator."""
 
@@ -313,11 +327,20 @@ def destroy_solution(
     count = min(max(1, count), len(task_ids))
     route_by_task = _task_route_index(routes)
 
+    def guidance_deadline(task_id: int) -> float:
+        if soft_deadline_beta is None:
+            return problem.task(task_id).deadline_min
+        return soft_deadline(problem, task_id, soft_deadline_beta)
+
     if operator == "random":
         removed = rng.sample(task_ids, count)
     elif operator == "late_risk_destroy":
         lateness_weight, deadline_weight, detour_weight = late_risk_weights
-        deadlines = [problem.task(task_id).deadline_min for task_id in task_ids]
+        deadlines_by_task = {
+            task_id: guidance_deadline(task_id)
+            for task_id in task_ids
+        }
+        deadlines = list(deadlines_by_task.values())
         minimum_deadline = min(deadlines)
         maximum_deadline = max(deadlines)
         route_metrics = {
@@ -329,7 +352,7 @@ def destroy_solution(
             route_index = route_by_task[task_id]
             route = routes[route_index]
             metrics = route_metrics[route_index]
-            deadline = problem.task(task_id).deadline_min
+            deadline = deadlines_by_task[task_id]
             delivered_at = metrics.delivery_times_min[task_id]
             reduced = tuple(visit for visit in route if abs(visit) != task_id)
             reduced_distance = evaluator.evaluate(reduced).score.distance_km
@@ -366,7 +389,7 @@ def destroy_solution(
             reduced = tuple(visit for visit in route if abs(visit) != task_id)
             gain = metrics.score - evaluator.evaluate(reduced).score
             delivered_at = metrics.delivery_times_min[task_id]
-            deadline = problem.task(task_id).deadline_min
+            deadline = guidance_deadline(task_id)
             lateness = max(0.0, delivered_at - deadline)
             risk = (
                 _deadline_risk(delivered_at, deadline)
@@ -396,7 +419,7 @@ def destroy_solution(
                 (
                     _deadline_risk(
                         metrics.delivery_times_min[task_id],
-                        problem.task(task_id).deadline_min,
+                        guidance_deadline(task_id),
                     )
                     for task_id in route_tasks
                 ),
@@ -486,10 +509,11 @@ def destroy_solution(
     elif operator in {"spatial_related", "deadline_related"}:
         seed = rng.choice(task_ids)
         seed_task = problem.task(seed)
+        seed_deadline = guidance_deadline(seed)
 
         def relatedness(task_id: int) -> tuple[float, int]:
             task = problem.task(task_id)
-            deadline_gap = abs(task.deadline_min - seed_task.deadline_min)
+            deadline_gap = abs(guidance_deadline(task_id) - seed_deadline)
             spatial_gap = task.pickup.distance_to(seed_task.pickup) + task.delivery.distance_to(
                 seed_task.delivery
             )
@@ -507,7 +531,7 @@ def destroy_solution(
         for route in routes:
             metrics = evaluator.evaluate(route)
             for task_id, delivered_at in metrics.delivery_times_min.items():
-                deadline = problem.task(task_id).deadline_min
+                deadline = guidance_deadline(task_id)
                 if use_deadline_risk:
                     urgency.append(
                         (-_deadline_risk(delivered_at, deadline), task_id)
@@ -568,14 +592,29 @@ def _all_options_for_task(
     task_id: int,
     candidate_limit: int | None,
     option_count: int,
-    cache: dict[tuple[int, int, Route, int | None, int], tuple[RouteInsertionOption, ...]],
+    cache: dict[tuple[object, ...], tuple[RouteInsertionOption, ...]],
     deadline: float | None = None,
+    risk_aware: bool = False,
+    soft_deadline_beta: float | None = None,
+    lateness_lambda: float = 1.0,
 ) -> tuple[RouteInsertionOption, ...]:
     options: list[RouteInsertionOption] = []
+    # A route's top-k contains every candidate that can enter the fleet-wide
+    # top-k, so retaining the requested k avoids needless merge/sort overhead.
+    route_option_count = option_count
     for route_index, route in enumerate(routes):
         if deadline is not None and perf_counter() >= deadline:
             raise _SearchDeadlineReached
-        key = (task_id, route_index, route, candidate_limit, option_count)
+        key = (
+            task_id,
+            route_index,
+            route,
+            candidate_limit,
+            route_option_count,
+            risk_aware,
+            soft_deadline_beta,
+            lateness_lambda,
+        )
         route_options = cache.get(key)
         if route_options is None:
             route_options = route_insertion_options(
@@ -585,19 +624,14 @@ def _all_options_for_task(
                 route_index,
                 task_id,
                 candidate_limit=candidate_limit,
-                option_count=option_count,
+                option_count=route_option_count,
+                risk_aware=risk_aware,
+                soft_deadline_beta=soft_deadline_beta,
+                lateness_lambda=lateness_lambda,
             )
             cache[key] = route_options
         options.extend(route_options)
-    options.sort(
-        key=lambda option: (
-            option.delta,
-            option.route_index,
-            option.pickup_position,
-            option.delivery_position,
-            option.route,
-        )
-    )
+    options.sort(key=lambda option: option.ranking_key(risk_aware))
     return tuple(options[:option_count])
 
 
@@ -825,6 +859,9 @@ def _repair(
     cluster_bundle_candidate_limit: int = 12,
     cluster_pair_limit: int = 6,
     deadline: float | None = None,
+    risk_aware_insertion: bool = False,
+    soft_deadline_beta: float | None = None,
+    lateness_lambda: float = 1.0,
 ) -> Routes:
     if strategy == "cluster_regret":
         return cluster_regret_repair(
@@ -841,10 +878,13 @@ def _repair(
         )
     routes = tuple(tuple(route) for route in partial_routes)
     remaining = set(removed_task_ids)
-    cache: dict[
-        tuple[int, int, Route, int | None, int], tuple[RouteInsertionOption, ...]
-    ] = {}
+    cache: dict[tuple[object, ...], tuple[RouteInsertionOption, ...]] = {}
     regret_k = 3 if strategy == "regret3" else 2
+
+    def guided_deadline(task_id: int) -> float:
+        if soft_deadline_beta is None:
+            return problem.task(task_id).deadline_min
+        return soft_deadline(problem, task_id, soft_deadline_beta)
 
     while remaining:
         if deadline is not None and perf_counter() >= deadline:
@@ -861,6 +901,9 @@ def _repair(
                 option_count,
                 cache,
                 deadline,
+                risk_aware_insertion,
+                soft_deadline_beta,
+                lateness_lambda,
             )
             if not options:
                 raise RuntimeError(f"修复阶段无法重新插入任务 {task_id}")
@@ -875,7 +918,7 @@ def _repair(
             ]
             return _deadline_risk(
                 delivered_at,
-                problem.task(task_id).deadline_min,
+                guided_deadline(task_id),
             )
 
         def risk_guided_min(key):
@@ -887,9 +930,10 @@ def _repair(
 
         if strategy == "greedy":
             def greedy_key(task_id: int):
+                option = per_task[task_id][0]
                 return (
-                    per_task[task_id][0].delta,
-                    problem.task(task_id).deadline_min,
+                    option.ranking_key(risk_aware_insertion),
+                    guided_deadline(task_id),
                     task_id,
                 )
 
@@ -897,13 +941,12 @@ def _repair(
         elif strategy in {"deadline", "slack"}:
             if strategy == "deadline":
                 order_key = lambda task_id: (
-                    problem.task(task_id).deadline_min,
+                    guided_deadline(task_id),
                     task_id,
                 )
             else:
                 order_key = lambda task_id: (
-                    problem.task(task_id).deadline_min
-                    - problem.direct_completion_min(task_id),
+                    guided_deadline(task_id) - problem.direct_completion_min(task_id),
                     task_id,
                 )
             chosen_task = (
@@ -915,10 +958,25 @@ def _repair(
 
             def regret_key(
                 task_id: int,
-            ) -> tuple[float, float, float, float, int]:
+            ) -> tuple[float, ...]:
                 options = per_task[task_id]
                 if len(options) < regret_k:
-                    regret = (float("inf"), float("inf"), float("inf"))
+                    regret = (float("inf"),) * 4
+                elif risk_aware_insertion:
+                    best_option = options[0]
+                    alternative_option = options[regret_k - 1]
+                    regret = (
+                        float(
+                            alternative_option.delta.late_count
+                            - best_option.delta.late_count
+                        ),
+                        alternative_option.risk_aware_cost
+                        - best_option.risk_aware_cost,
+                        alternative_option.weighted_lateness_delta
+                        - best_option.weighted_lateness_delta,
+                        alternative_option.delta.distance_km
+                        - best_option.delta.distance_km,
+                    )
                 else:
                     best = options[0].delta
                     alternative = options[regret_k - 1].delta
@@ -926,12 +984,14 @@ def _repair(
                         float(alternative.late_count - best.late_count),
                         alternative.total_lateness_min - best.total_lateness_min,
                         alternative.distance_km - best.distance_km,
+                        0.0,
                     )
                 return (
                     regret[0],
                     regret[1],
                     regret[2],
-                    -problem.task(task_id).deadline_min,
+                    regret[3],
+                    -guided_deadline(task_id),
                     -task_id,
                 )
 
@@ -1632,6 +1692,36 @@ def _accept_worse(
     return rng.random() < exp(-delta / max(temperature, 1e-12))
 
 
+def _accept_worse_search(
+    candidate: SearchScore,
+    current: SearchScore,
+    problem: Problem,
+    temperature: float,
+    rng: Random,
+) -> bool:
+    """Simulated-annealing acceptance on the internal lexicographic objective."""
+
+    if candidate <= current:
+        return True
+    if candidate.late_count != current.late_count:
+        delta = (candidate.late_count - current.late_count) / len(problem.tasks)
+    elif (
+        abs(candidate.weighted_lateness_min - current.weighted_lateness_min)
+        > 1e-12
+    ):
+        scale = max(1.0, 2.0 * sum(task.deadline_min for task in problem.tasks))
+        delta = (
+            candidate.weighted_lateness_min - current.weighted_lateness_min
+        ) / scale
+    else:
+        delta = (candidate.distance_km - current.distance_km) / max(
+            1.0, current.distance_km
+        )
+    if delta <= 0:
+        return True
+    return rng.random() < exp(-delta / max(temperature, 1e-12))
+
+
 def solve_alns(
     problem: Problem,
     *,
@@ -1663,6 +1753,10 @@ def solve_alns(
         )
     current_score = routes_score(evaluator, current)
     initial_score = current_score
+    current_search_score = (
+        routes_search_score(evaluator, current) if cfg.enable_soft_deadline else None
+    )
+    initial_search_score = current_search_score
     best = current
     best_score = current_score
     time_to_best = perf_counter() - started
@@ -1731,6 +1825,9 @@ def solve_alns(
                 cfg.late_risk_deadline_weight,
                 cfg.late_risk_detour_weight,
             ),
+            soft_deadline_beta=(
+                cfg.soft_deadline_beta if cfg.enable_soft_deadline else None
+            ),
         )
         if deadline is not None and perf_counter() >= deadline:
             break
@@ -1767,6 +1864,13 @@ def solve_alns(
                     use_deadline_risk=cfg.enable_deadline_risk,
                     original_route_by_task=original_route_by_task,
                     deadline=deadline,
+                    risk_aware_insertion=cfg.enable_soft_deadline,
+                    soft_deadline_beta=(
+                        cfg.soft_deadline_beta
+                        if cfg.enable_soft_deadline
+                        else None
+                    ),
+                    lateness_lambda=cfg.risk_aware_lateness_lambda,
                 )
             candidate = _repair(
                 problem,
@@ -1780,6 +1884,11 @@ def solve_alns(
                 cluster_bundle_candidate_limit=cfg.cluster_bundle_candidate_limit,
                 cluster_pair_limit=cfg.cluster_pair_limit,
                 deadline=deadline,
+                risk_aware_insertion=cfg.enable_soft_deadline,
+                soft_deadline_beta=(
+                    cfg.soft_deadline_beta if cfg.enable_soft_deadline else None
+                ),
+                lateness_lambda=cfg.risk_aware_lateness_lambda,
             )
         except _SearchDeadlineReached:
             break
@@ -1824,17 +1933,38 @@ def solve_alns(
             deadline is not None and perf_counter() >= deadline
         )
         candidate_score = routes_score(evaluator, candidate)
+        candidate_search_score = (
+            routes_search_score(evaluator, candidate)
+            if cfg.enable_soft_deadline
+            else None
+        )
         timed_out = timed_out or (
             deadline is not None and perf_counter() >= deadline
         )
-        improved_current = candidate_score < current_score
-        accepted = False if timed_out else _accept_worse(
-            candidate_score, current_score, problem, temperature, rng
-        )
+        if cfg.enable_soft_deadline:
+            if current_search_score is None or candidate_search_score is None:
+                raise RuntimeError("内部搜索分数未初始化")
+            improved_current = candidate_search_score < current_search_score
+            accepted = False if timed_out else (
+                candidate_score < current_score
+                or _accept_worse_search(
+                    candidate_search_score,
+                    current_search_score,
+                    problem,
+                    temperature,
+                    rng,
+                )
+            )
+        else:
+            improved_current = candidate_score < current_score
+            accepted = False if timed_out else _accept_worse(
+                candidate_score, current_score, problem, temperature, rng
+            )
         reward = 0.0
         if accepted:
             current = candidate
             current_score = candidate_score
+            current_search_score = candidate_search_score
             accepted_count += 1
             reward = 4.0 if improved_current else 1.0
             if route_pool is not None:
@@ -1877,6 +2007,11 @@ def solve_alns(
                 best_score = recombined_score
                 current = recombined
                 current_score = recombined_score
+                current_search_score = (
+                    routes_search_score(evaluator, recombined)
+                    if cfg.enable_soft_deadline
+                    else None
+                )
                 time_to_best = perf_counter() - started
                 route_pool.add(best)
 
@@ -1946,6 +2081,25 @@ def solve_alns(
             "reinserted_task_count": reinserted_task_count,
             "peak_rejected_count": peak_rejected_count,
             "final_rejected_count": 0,
+            "enable_soft_deadline": cfg.enable_soft_deadline,
+            "soft_deadline_beta": cfg.soft_deadline_beta,
+            "internal_search_score_enabled": cfg.enable_soft_deadline,
+            "risk_aware_insertion_enabled": cfg.enable_soft_deadline,
+            "risk_aware_lateness_lambda": cfg.risk_aware_lateness_lambda,
+            "search_objective_order": (
+                "late_count",
+                "weighted_lateness_min",
+                "distance_km",
+            ),
+            "initial_search_score": (
+                None
+                if initial_search_score is None
+                else (
+                    initial_search_score.late_count,
+                    initial_search_score.weighted_lateness_min,
+                    initial_search_score.distance_km,
+                )
+            ),
             "enable_vnd": cfg.enable_vnd,
             "enable_cluster_repair": cfg.enable_cluster_repair,
             "vnd_calls": vnd_calls,
