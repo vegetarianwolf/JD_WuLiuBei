@@ -1,0 +1,369 @@
+{
+  "version": 1,
+  "surface": "report",
+  "title": "非 main 分支准时率优先与“牺牲订单”实验汇总",
+  "description": "五个非 main 分支的准时率优先延后修复实验与全部历史实验汇总。",
+  "cards": [
+    {
+      "id": "best_existing_rate",
+      "dataset": "headline",
+      "sourceId": "formal_summary",
+      "description": "既有正式配置中按题目两层目标排序的最佳均值。",
+      "metrics": [
+        {
+          "label": "既有正式最佳准时率",
+          "field": "best_existing_on_time_rate",
+          "format": "percent"
+        }
+      ]
+    },
+    {
+      "id": "best_existing_distance",
+      "dataset": "headline",
+      "sourceId": "formal_summary",
+      "description": "既有正式最佳配置的第二目标。",
+      "metrics": [
+        {
+          "label": "对应总里程 (km)",
+          "field": "best_existing_distance_km",
+          "format": "number"
+        }
+      ]
+    },
+    {
+      "id": "best_new_rate",
+      "dataset": "headline",
+      "sourceId": "formal_summary",
+      "description": "本轮五个 treatment 中按题目两层目标排序的最佳均值。",
+      "metrics": [
+        {
+          "label": "新 treatment 最佳准时率",
+          "field": "best_new_on_time_rate",
+          "format": "percent"
+        }
+      ]
+    },
+    {
+      "id": "best_new_distance",
+      "dataset": "headline",
+      "sourceId": "formal_summary",
+      "description": "本轮最佳 treatment 的第二目标。",
+      "metrics": [
+        {
+          "label": "对应总里程 (km)",
+          "field": "best_new_distance_km",
+          "format": "number"
+        }
+      ]
+    }
+  ],
+  "charts": [
+    {
+      "id": "branch_on_time_rate",
+      "title": "五分支对照与新策略的平均准时率",
+      "subtitle": "新策略在 0/5 个分支提高平均按时订单数。",
+      "type": "bar",
+      "dataset": "comparison_chart",
+      "sourceId": "comparison",
+      "encodings": {
+        "x": {
+          "field": "branch",
+          "type": "ordinal",
+          "label": "分支"
+        },
+        "y": {
+          "field": "on_time_rate",
+          "type": "quantitative",
+          "label": "平均准时率",
+          "format": "percent"
+        },
+        "color": {
+          "field": "series",
+          "type": "nominal",
+          "label": "方案"
+        },
+        "tooltip": [
+          {
+            "field": "on_time_count_mean",
+            "type": "quantitative",
+            "label": "平均按时数",
+            "format": "number"
+          },
+          {
+            "field": "distance_km_mean",
+            "type": "quantitative",
+            "label": "平均总里程",
+            "format": "number",
+            "unit": "km"
+          },
+          {
+            "field": "outcome",
+            "type": "text",
+            "label": "题目顺序结论"
+          }
+        ]
+      }
+    }
+  ],
+  "tables": [
+    {
+      "id": "branch_comparison",
+      "title": "五分支新旧方案直接指标对照",
+      "dataset": "comparison_table",
+      "sourceId": "comparison",
+      "density": "compact",
+      "defaultSort": {
+        "field": "treatment_on_time_rate",
+        "direction": "desc"
+      },
+      "columns": [
+        {
+          "field": "branch",
+          "label": "分支",
+          "type": "text"
+        },
+        {
+          "field": "control_on_time_rate",
+          "label": "对照准时率",
+          "type": "percent",
+          "format": "percent"
+        },
+        {
+          "field": "treatment_on_time_rate",
+          "label": "新策略准时率",
+          "type": "percent",
+          "format": "percent"
+        },
+        {
+          "field": "on_time_rate_delta_pp",
+          "label": "准时率变化",
+          "type": "number",
+          "format": "number",
+          "unit": "百分点"
+        },
+        {
+          "field": "control_distance_km",
+          "label": "对照里程",
+          "type": "number",
+          "format": "number",
+          "unit": "km"
+        },
+        {
+          "field": "treatment_distance_km",
+          "label": "新策略里程",
+          "type": "number",
+          "format": "number",
+          "unit": "km"
+        },
+        {
+          "field": "outcome",
+          "label": "题目顺序结论",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "formal_summary",
+      "title": "全部正式 200 单、240 秒配置",
+      "dataset": "formal_summary",
+      "sourceId": "formal_summary",
+      "density": "compact",
+      "defaultSort": {
+        "field": "official_rank",
+        "direction": "asc"
+      },
+      "columns": [
+        {
+          "field": "official_rank",
+          "label": "两层目标排名",
+          "type": "number"
+        },
+        {
+          "field": "branch",
+          "label": "分支",
+          "type": "text"
+        },
+        {
+          "field": "method",
+          "label": "方法/变体",
+          "type": "text"
+        },
+        {
+          "field": "role",
+          "label": "批次",
+          "type": "text"
+        },
+        {
+          "field": "on_time_count_mean",
+          "label": "平均按时数",
+          "type": "number",
+          "format": "number"
+        },
+        {
+          "field": "on_time_rate_mean",
+          "label": "平均准时率",
+          "type": "percent",
+          "format": "percent"
+        },
+        {
+          "field": "distance_km_mean",
+          "label": "平均总里程",
+          "type": "number",
+          "format": "number",
+          "unit": "km"
+        },
+        {
+          "field": "run_count",
+          "label": "运行数",
+          "type": "number"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "problem_statement",
+      "label": "命题1题目文档",
+      "path": "命题1-低空经济场景下的物流无人机调度算法.docx"
+    },
+    {
+      "id": "comparison",
+      "label": "五分支新旧对照",
+      "path": "algorithm/reports/on_time_objective/new_vs_control.csv",
+      "query": {
+        "id": "comparison_csv_snapshot",
+        "description": "读取五个分支的新旧直接指标均值与差值。",
+        "engine": "duckdb",
+        "language": "sql",
+        "sql": "SELECT * FROM read_csv_auto('algorithm/reports/on_time_objective/new_vs_control.csv');",
+        "tables_used": [
+          "algorithm/reports/on_time_objective/new_vs_control.csv"
+        ],
+        "filters": [
+          "200 tasks",
+          "3 matched seeds",
+          "240-second protocol"
+        ],
+        "metric_definitions": [
+          "on_time_rate = on_time_count / 200",
+          "distance_km is total open-route delivery distance"
+        ]
+      }
+    },
+    {
+      "id": "formal_summary",
+      "label": "全部实验配置汇总",
+      "path": "algorithm/reports/on_time_objective/summary.csv",
+      "query": {
+        "id": "formal_summary_csv_snapshot",
+        "description": "读取全部配置的直接指标汇总。",
+        "engine": "duckdb",
+        "language": "sql",
+        "sql": "SELECT * FROM read_csv_auto('algorithm/reports/on_time_objective/summary.csv');",
+        "tables_used": [
+          "algorithm/reports/on_time_objective/summary.csv"
+        ],
+        "filters": [
+          "canonical deduplicated experiment configurations"
+        ],
+        "metric_definitions": [
+          "on_time_count_mean is the mean delivered by deadline",
+          "on_time_rate_mean = on_time_count_mean / task_count",
+          "distance_km_mean is mean total open-route distance"
+        ]
+      }
+    },
+    {
+      "id": "all_runs",
+      "label": "逐次运行直接指标",
+      "path": "algorithm/reports/on_time_objective/all_runs.csv",
+      "query": {
+        "id": "all_runs_csv_snapshot",
+        "description": "读取去重后的逐次运行直接指标。",
+        "engine": "duckdb",
+        "language": "sql",
+        "sql": "SELECT * FROM read_csv_auto('algorithm/reports/on_time_objective/all_runs.csv');",
+        "tables_used": [
+          "algorithm/reports/on_time_objective/all_runs.csv"
+        ],
+        "filters": [
+          "canonical final result rows only"
+        ],
+        "metric_definitions": [
+          "on_time_count = task_count - late_count in source data",
+          "on_time_rate = on_time_count / task_count",
+          "distance_km is total open-route distance"
+        ]
+      }
+    }
+  ],
+  "blocks": [
+    {
+      "id": "title",
+      "type": "markdown",
+      "body": "# 非 main 分支准时率优先与“牺牲订单”实验汇总"
+    },
+    {
+      "id": "technical_summary",
+      "type": "markdown",
+      "body": "## 技术摘要\n\n新组合策略在 0/5 个分支提高平均按时订单数，未形成跨分支稳定收益。现有实现原本已经把按时订单数作为第一目标；本轮真正测试的是去掉逾期幅度 tie-break，并把已明显逾期的 removed 任务延后回插。全部订单仍须完成。"
+    },
+    {
+      "id": "headline_metrics",
+      "type": "metric-strip",
+      "cardIds": [
+        "best_existing_rate",
+        "best_existing_distance",
+        "best_new_rate",
+        "best_new_distance"
+      ]
+    },
+    {
+      "id": "key_findings",
+      "type": "markdown",
+      "sourceId": "formal_summary",
+      "body": "## 关键发现\n\n既有正式最佳均值为 A2 + late_risk_destroy：准时率 65.667%，总里程 645.854 km。本轮 treatment 最佳为 Capacity-aware HALNS punctuality-first sacrifice treatment：准时率 64.167%，总里程 670.553 km。里程仅在按时数相同后用于比较，不能补偿准时率下降。"
+    },
+    {
+      "id": "comparison_chart",
+      "type": "chart",
+      "chartId": "branch_on_time_rate"
+    },
+    {
+      "id": "comparison_table",
+      "type": "table",
+      "tableId": "branch_comparison"
+    },
+    {
+      "id": "scope",
+      "type": "markdown",
+      "sourceId": "problem_statement",
+      "body": "## 范围与指标\n\n题目文档没有单独分值公式或权重；直接比较顺序是先最大化按时订单数，再最小化总配送里程。准时率是固定任务数下按时订单数的等价表达。约束合法性是纳入门槛，不作为分数。"
+    },
+    {
+      "id": "methodology",
+      "type": "markdown",
+      "body": "## 方法\n\n五个分支统一使用最多 10% 的延后池；只有单独删除后能减少当前逾期订单数的任务才可进入。普通任务先由分支原生 repair 回插，延后任务最后由 Regret-2 回插。正式比较采用 200 单、三个相同 seed 和 240 秒总预算。"
+    },
+    {
+      "id": "formal_table_block",
+      "type": "table",
+      "tableId": "formal_summary"
+    },
+    {
+      "id": "limitations",
+      "type": "markdown",
+      "body": "## 局限\n\n每个正式配置仅三个 seed；除 uav 外，对照来自仓库中的同 seed、同预算历史批次。本轮同时改变 tie-break 与回插顺序，不能独立归因；10% 延后比例尚未调优。"
+    },
+    {
+      "id": "recommendations",
+      "type": "markdown",
+      "body": "## 建议\n\n保持 treatment 默认关闭。下一轮优先保留已有 late-risk destroy，并对 2%/5%/10% 延后比例以及‘仅两层目标/仅 repair-last/组合’做析因实验。"
+    },
+    {
+      "id": "further_questions",
+      "type": "markdown",
+      "body": "## 后续问题\n\n需要验证基于预计最早可达时间、边际插入代价与路径冲突度的 hopeless 概率，能否比当前‘已经逾期’筛选更早、更准确地识别应降低准时优先级的订单。"
+    }
+  ]
+}
