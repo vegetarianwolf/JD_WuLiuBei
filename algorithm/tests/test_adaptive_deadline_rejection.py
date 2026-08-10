@@ -16,6 +16,8 @@ from uav_dispatch import (
     routes_search_score,
 )
 from uav_dispatch.search import RouteEvaluator, route_insertion_options, routes_score
+from uav_dispatch.alns import _on_time_distance_score
+from uav_dispatch.model import Score
 
 
 def test_late_risk_destroy_removes_the_highest_risk_complete_pair() -> None:
@@ -143,6 +145,64 @@ def test_temporary_rejection_pool_is_bounded_reinserted_and_never_final() -> Non
     visits = [visit for route in result.routes for visit in route]
     for task_id in problem.task_ids:
         assert visits.count(task_id) == visits.count(-task_id) == 1
+
+
+def test_deferred_rejection_pool_is_explicit_and_still_finishes_complete() -> None:
+    with pytest.raises(ValueError, match="延后拒绝任务"):
+        ALNSConfig(defer_rejected_tasks=True)
+
+    tasks = tuple(
+        Task(
+            task_id,
+            Point(float(task_id), 0),
+            Point(float(task_id) + 0.5, 0),
+            deadline_min=0.5,
+        )
+        for task_id in range(1, 11)
+    )
+    problem = Problem(
+        tasks,
+        drone_count=1,
+        max_tasks_per_drone=10,
+        capacity=2,
+        speed_km_per_min=1,
+    )
+
+    result = solve_alns_core(
+        problem,
+        config=ALNSConfig(
+            max_iterations=1,
+            seed=20260805,
+            candidate_limit=None,
+            enable_rejection_pool=True,
+            defer_rejected_tasks=True,
+        ),
+    )
+
+    assert result.evaluation.valid
+    assert result.metadata["defer_rejected_tasks"] is True
+    assert result.metadata["peak_rejected_count"] == 1
+    assert result.metadata["reinserted_task_count"] == 1
+    assert result.metadata["final_rejected_count"] == 0
+    visits = [visit for route in result.routes for visit in route]
+    for task_id in problem.task_ids:
+        assert visits.count(task_id) == visits.count(-task_id) == 1
+
+
+def test_on_time_distance_objective_ignores_total_lateness_tiebreaker() -> None:
+    high_lateness_short_route = Score(5, 1_000.0, 90.0)
+    low_lateness_long_route = Score(5, 1.0, 100.0)
+
+    assert low_lateness_long_route < high_lateness_short_route
+    assert _on_time_distance_score(high_lateness_short_route) < (
+        _on_time_distance_score(low_lateness_long_route)
+    )
+
+    with pytest.raises(ValueError, match="准时率-里程目标"):
+        ALNSConfig(
+            enable_on_time_distance_objective=True,
+            enable_soft_deadline=True,
+        )
 
 
 def test_rejection_pool_does_not_admit_distance_only_improvements() -> None:

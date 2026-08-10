@@ -80,7 +80,9 @@ class ALNSConfig:
     late_risk_deadline_weight: float = 0.3
     late_risk_detour_weight: float = 0.2
     enable_rejection_pool: bool = False
+    defer_rejected_tasks: bool = False
     rejection_pool_fraction: float = 0.10
+    enable_on_time_distance_objective: bool = False
     enable_soft_deadline: bool = False
     soft_deadline_beta: float = 0.20
     risk_aware_lateness_lambda: float = 1.0
@@ -127,6 +129,10 @@ class ALNSConfig:
             or not 0 <= self.rejection_pool_fraction <= 0.10
         ):
             raise ValueError("临时拒绝池比例必须在 [0, 0.10] 内")
+        if self.defer_rejected_tasks and not self.enable_rejection_pool:
+            raise ValueError("延后拒绝任务必须同时启用临时拒绝池")
+        if self.enable_on_time_distance_objective and self.enable_soft_deadline:
+            raise ValueError("准时率-里程目标不能与 soft deadline 搜索目标同时启用")
         if self.soft_deadline_beta not in (0.15, 0.20, 0.30):
             raise ValueError("soft deadline beta 必须是 0.15、0.20 或 0.30")
         if (
@@ -311,6 +317,50 @@ def _build_temporary_rejection_state(
                 (
                     float(gain.late_count),
                     gain.total_lateness_min,
+                    -problem.task(task_id).deadline_min,
+                    -task_id,
+                ),
+                task_id,
+            )
+        )
+    ranked.sort(reverse=True)
+    rejected = tuple(task_id for _, task_id in ranked[:capacity])
+    return _SearchState(partial_routes, rejected), len(removed_task_ids)
+
+
+def _build_deferred_rejection_state(
+    problem: Problem,
+    evaluator: RouteEvaluator,
+    partial_routes: Routes,
+    original_routes: Routes,
+    removed_task_ids: Sequence[int],
+    pool_fraction: float,
+) -> tuple[_SearchState, int]:
+    """Defer only tasks whose removal directly saves at least one on-time order."""
+
+    capacity = int(len(problem.tasks) * pool_fraction)
+    if capacity <= 0 or not removed_task_ids:
+        return _SearchState(partial_routes), 0
+    route_by_task = _task_route_index(original_routes)
+    route_metrics = {
+        route_index: evaluator.evaluate(route)
+        for route_index, route in enumerate(original_routes)
+    }
+    ranked: list[tuple[tuple[int, float, float, int], int]] = []
+    for task_id in removed_task_ids:
+        route_index = route_by_task[task_id]
+        route = original_routes[route_index]
+        old_score = route_metrics[route_index].score
+        reduced = tuple(visit for visit in route if abs(visit) != task_id)
+        new_score = evaluator.evaluate(reduced).score
+        late_count_gain = old_score.late_count - new_score.late_count
+        if late_count_gain <= 0:
+            continue
+        ranked.append(
+            (
+                (
+                    late_count_gain,
+                    old_score.distance_km - new_score.distance_km,
                     -problem.task(task_id).deadline_min,
                     -task_id,
                 ),
@@ -1735,6 +1785,32 @@ def _accept_worse_search(
     return rng.random() < exp(-delta / max(temperature, 1e-12))
 
 
+def _on_time_distance_score(score: Score) -> tuple[int, float]:
+    """Return the two objectives that directly affect the stated judging goal."""
+
+    return score.late_count, score.distance_km
+
+
+def _accept_worse_on_time_distance(
+    candidate: tuple[int, float],
+    current: tuple[int, float],
+    problem: Problem,
+    temperature: float,
+    rng: Random,
+) -> bool:
+    """Simulated-annealing acceptance without rewarding lower lateness of lost orders."""
+
+    if candidate <= current:
+        return True
+    if candidate[0] != current[0]:
+        delta = (candidate[0] - current[0]) / len(problem.tasks)
+    else:
+        delta = (candidate[1] - current[1]) / max(1.0, current[1])
+    if delta <= 0:
+        return True
+    return rng.random() < exp(-delta / max(temperature, 1e-12))
+
+
 def solve_alns(
     problem: Problem,
     *,
@@ -1768,12 +1844,14 @@ def solve_alns(
         )
     current_score = routes_score(evaluator, current)
     initial_score = current_score
+    current_on_time_distance_score = _on_time_distance_score(current_score)
     current_search_score = (
         routes_search_score(evaluator, current) if cfg.enable_soft_deadline else None
     )
     initial_search_score = current_search_score
     best = current
     best_score = current_score
+    best_on_time_distance_score = current_on_time_distance_score
     time_to_best = perf_counter() - started
 
     destroy_operators = tuple(
@@ -1849,14 +1927,24 @@ def solve_alns(
         rejected: tuple[int, ...] = ()
         regular_removed = removed
         if cfg.enable_rejection_pool:
-            state, attempts = _build_temporary_rejection_state(
-                problem,
-                evaluator,
-                current,
-                partial,
-                removed,
-                cfg.rejection_pool_fraction,
-            )
+            if cfg.defer_rejected_tasks:
+                state, attempts = _build_deferred_rejection_state(
+                    problem,
+                    evaluator,
+                    partial,
+                    current,
+                    removed,
+                    cfg.rejection_pool_fraction,
+                )
+            else:
+                state, attempts = _build_temporary_rejection_state(
+                    problem,
+                    evaluator,
+                    current,
+                    partial,
+                    removed,
+                    cfg.rejection_pool_fraction,
+                )
             partial = state.routes
             rejected = state.rejected_tasks
             rejected_set = set(rejected)
@@ -1868,7 +1956,7 @@ def solve_alns(
             peak_rejected_count = max(peak_rejected_count, len(rejected))
         try:
             candidate = partial
-            if rejected:
+            if rejected and not cfg.defer_rejected_tasks:
                 candidate = _repair(
                     problem,
                     evaluator,
@@ -1905,6 +1993,25 @@ def solve_alns(
                 ),
                 lateness_lambda=cfg.risk_aware_lateness_lambda,
             )
+            if rejected and cfg.defer_rejected_tasks:
+                candidate = _repair(
+                    problem,
+                    evaluator,
+                    candidate,
+                    rejected,
+                    "regret2",
+                    cfg.candidate_limit,
+                    use_deadline_risk=cfg.enable_deadline_risk,
+                    original_route_by_task=original_route_by_task,
+                    deadline=deadline,
+                    risk_aware_insertion=cfg.enable_soft_deadline,
+                    soft_deadline_beta=(
+                        cfg.soft_deadline_beta
+                        if cfg.enable_soft_deadline
+                        else None
+                    ),
+                    lateness_lambda=cfg.risk_aware_lateness_lambda,
+                )
         except _SearchDeadlineReached:
             break
         reinserted_task_count += len(rejected)
@@ -1948,6 +2055,7 @@ def solve_alns(
             deadline is not None and perf_counter() >= deadline
         )
         candidate_score = routes_score(evaluator, candidate)
+        candidate_on_time_distance_score = _on_time_distance_score(candidate_score)
         candidate_search_score = (
             routes_search_score(evaluator, candidate)
             if cfg.enable_soft_deadline
@@ -1956,7 +2064,18 @@ def solve_alns(
         timed_out = timed_out or (
             deadline is not None and perf_counter() >= deadline
         )
-        if cfg.enable_soft_deadline:
+        if cfg.enable_on_time_distance_objective:
+            improved_current = (
+                candidate_on_time_distance_score < current_on_time_distance_score
+            )
+            accepted = False if timed_out else _accept_worse_on_time_distance(
+                candidate_on_time_distance_score,
+                current_on_time_distance_score,
+                problem,
+                temperature,
+                rng,
+            )
+        elif cfg.enable_soft_deadline:
             if current_search_score is None or candidate_search_score is None:
                 raise RuntimeError("内部搜索分数未初始化")
             improved_current = candidate_search_score < current_search_score
@@ -1979,14 +2098,21 @@ def solve_alns(
         if accepted:
             current = candidate
             current_score = candidate_score
+            current_on_time_distance_score = candidate_on_time_distance_score
             current_search_score = candidate_search_score
             accepted_count += 1
             reward = 4.0 if improved_current else 1.0
             if route_pool is not None:
                 route_pool.add(current)
-        if candidate_score < best_score:
+        candidate_improves_best = (
+            candidate_on_time_distance_score < best_on_time_distance_score
+            if cfg.enable_on_time_distance_objective
+            else candidate_score < best_score
+        )
+        if candidate_improves_best:
             best = candidate
             best_score = candidate_score
+            best_on_time_distance_score = candidate_on_time_distance_score
             time_to_best = perf_counter() - started
             reward = 8.0
             if route_pool is not None:
@@ -2017,11 +2143,21 @@ def solve_alns(
                 completed_iterations = iteration
                 break
             recombined_score = routes_score(evaluator, recombined)
-            if recombined_score < best_score:
+            recombined_on_time_distance_score = _on_time_distance_score(
+                recombined_score
+            )
+            recombined_improves_best = (
+                recombined_on_time_distance_score < best_on_time_distance_score
+                if cfg.enable_on_time_distance_objective
+                else recombined_score < best_score
+            )
+            if recombined_improves_best:
                 best = recombined
                 best_score = recombined_score
+                best_on_time_distance_score = recombined_on_time_distance_score
                 current = recombined
                 current_score = recombined_score
+                current_on_time_distance_score = recombined_on_time_distance_score
                 current_search_score = (
                     routes_search_score(evaluator, recombined)
                     if cfg.enable_soft_deadline
@@ -2091,6 +2227,10 @@ def solve_alns(
                 cfg.late_risk_detour_weight,
             ),
             "enable_rejection_pool": cfg.enable_rejection_pool,
+            "defer_rejected_tasks": cfg.defer_rejected_tasks,
+            "enable_on_time_distance_objective": (
+                cfg.enable_on_time_distance_objective
+            ),
             "rejection_pool_fraction": cfg.rejection_pool_fraction,
             "rejection_pool_capacity": (
                 int(len(problem.tasks) * cfg.rejection_pool_fraction)
@@ -2108,9 +2248,13 @@ def solve_alns(
             "risk_aware_insertion_enabled": cfg.enable_soft_deadline,
             "risk_aware_lateness_lambda": cfg.risk_aware_lateness_lambda,
             "search_objective_order": (
-                "late_count",
-                "weighted_lateness_min",
-                "distance_km",
+                ("late_count", "distance_km")
+                if cfg.enable_on_time_distance_objective
+                else (
+                    "late_count",
+                    "weighted_lateness_min",
+                    "distance_km",
+                )
             ),
             "initial_search_score": (
                 None

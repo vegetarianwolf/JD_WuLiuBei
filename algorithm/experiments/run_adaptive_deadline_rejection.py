@@ -42,6 +42,8 @@ class AdaptiveVariant:
     label: str
     enable_late_risk_destroy: bool = False
     enable_rejection_pool: bool = False
+    defer_rejected_tasks: bool = False
+    enable_on_time_distance_objective: bool = False
     enable_soft_deadline: bool = False
 
 
@@ -71,6 +73,14 @@ def build_variants() -> tuple[AdaptiveVariant, ...]:
             enable_late_risk_destroy=True,
             enable_rejection_pool=True,
             enable_soft_deadline=True,
+        ),
+        AdaptiveVariant(
+            "experiment5",
+            "A2 + late_risk_destroy + deferred sacrifice pool",
+            enable_late_risk_destroy=True,
+            enable_rejection_pool=True,
+            defer_rejected_tasks=True,
+            enable_on_time_distance_objective=True,
         ),
     )
 
@@ -110,7 +120,11 @@ def config_for_variant(
         late_risk_deadline_weight=args.late_risk_deadline_weight,
         late_risk_detour_weight=args.late_risk_detour_weight,
         enable_rejection_pool=variant.enable_rejection_pool,
+        defer_rejected_tasks=variant.defer_rejected_tasks,
         rejection_pool_fraction=args.rejection_pool_fraction,
+        enable_on_time_distance_objective=(
+            variant.enable_on_time_distance_objective
+        ),
         enable_soft_deadline=variant.enable_soft_deadline,
         soft_deadline_beta=args.soft_deadline_beta,
         risk_aware_lateness_lambda=args.risk_aware_lateness_lambda,
@@ -197,6 +211,8 @@ RUN_FIELDS = (
     "iterations",
     "enable_late_risk_destroy",
     "enable_rejection_pool",
+    "defer_rejected_tasks",
+    "enable_on_time_distance_objective",
     "rejection_attempts",
     "rejection_events",
     "reinserted_task_count",
@@ -686,6 +702,8 @@ def _load_checkpoint(
         for flag in (
             "enable_late_risk_destroy",
             "enable_rejection_pool",
+            "defer_rejected_tasks",
+            "enable_on_time_distance_objective",
             "enable_soft_deadline",
         ):
             if row.get(flag) is not config[flag]:
@@ -949,6 +967,10 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "iterations": result.iterations,
             "enable_late_risk_destroy": config.enable_late_risk_destroy,
             "enable_rejection_pool": config.enable_rejection_pool,
+            "defer_rejected_tasks": config.defer_rejected_tasks,
+            "enable_on_time_distance_objective": (
+                config.enable_on_time_distance_objective
+            ),
             "rejection_attempts": result.metadata.get("rejection_attempts", 0),
             "rejection_events": result.metadata.get("rejection_events", 0),
             "reinserted_task_count": result.metadata.get(

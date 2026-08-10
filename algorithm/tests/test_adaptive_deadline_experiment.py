@@ -44,7 +44,7 @@ def _tiny_run_argv(source, output) -> list[str]:
 
 def test_phase2_variants_are_explicit_a2_configs_differing_only_in_late_risk() -> None:
     args = _parse_args([])
-    baseline, experiment1, _, _, _ = build_variants()
+    baseline, experiment1, _, _, _, _ = build_variants()
 
     baseline_config = config_for_variant(
         args,
@@ -83,7 +83,7 @@ def test_phase2_variants_are_explicit_a2_configs_differing_only_in_late_risk() -
 
 def test_experiment2_differs_from_a2_only_by_the_rejection_pool_flag() -> None:
     args = _parse_args([])
-    baseline, _, experiment2, _, _ = build_variants()
+    baseline, _, experiment2, _, _, _ = build_variants()
     baseline_fields = asdict(
         config_for_variant(
             args,
@@ -113,7 +113,7 @@ def test_experiment2_differs_from_a2_only_by_the_rejection_pool_flag() -> None:
 
 def test_experiment3_enables_the_soft_deadline_search_package() -> None:
     args = _parse_args(["--soft-deadline-beta", "0.30"])
-    baseline, _, _, experiment3, _ = build_variants()
+    baseline, _, _, experiment3, _, _ = build_variants()
     baseline_fields = asdict(
         config_for_variant(
             args,
@@ -144,7 +144,7 @@ def test_experiment3_enables_the_soft_deadline_search_package() -> None:
 
 def test_experiment4_combines_all_three_adaptive_features() -> None:
     args = _parse_args([])
-    baseline, _, _, _, experiment4 = build_variants()
+    baseline, _, _, _, experiment4, _ = build_variants()
     baseline_config = config_for_variant(
         args,
         baseline,
@@ -170,6 +170,38 @@ def test_experiment4_combines_all_three_adaptive_features() -> None:
         "enable_late_risk_destroy",
         "enable_rejection_pool",
         "enable_soft_deadline",
+    }
+
+
+def test_experiment5_defers_the_rejection_pool_after_late_risk_destroy() -> None:
+    args = _parse_args([])
+    baseline, _, _, _, _, experiment5 = build_variants()
+    baseline_config = config_for_variant(
+        args,
+        baseline,
+        seed=7,
+        max_iterations=5,
+        time_limit_seconds=None,
+    )
+    treatment = config_for_variant(
+        args,
+        experiment5,
+        seed=7,
+        max_iterations=5,
+        time_limit_seconds=None,
+    )
+    changed = {
+        name
+        for name, value in asdict(baseline_config).items()
+        if value != asdict(treatment)[name]
+    }
+
+    assert experiment5.name == "experiment5"
+    assert changed == {
+        "enable_late_risk_destroy",
+        "enable_rejection_pool",
+        "defer_rejected_tasks",
+        "enable_on_time_distance_objective",
     }
 
 
