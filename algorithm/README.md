@@ -1,6 +1,6 @@
 # 物流无人机调度算法
 
-本目录实现了研究报告建议的容量二、词典序混合自适应大邻域搜索（C2-Lex-HALNS）。算法处理开放式取送货路线：每项任务必须先取后送、同机完成，每架无人机最多同时携带 2 件快递，最后一次送达后不计算返航里程。最终目标严格按“逾期任务数、总逾期分钟、总里程”三层词典序比较，不使用可能颠倒优先级的固定加权和。
+本目录实现了容量二、开放式物流无人机调度求解器，并新增允许静态缓冲交接的 Relay 事件层。题目主比较口径是先最大化按时任务数（等价于最小化逾期任务数），同分时再最小化总配送里程。旧求解器保留 `total_lateness_min` 作为内部诊断或历史 tie-break；它不是题目明示的评分项，正式报告不会让它压过总里程。
 
 ## 题意假设
 
@@ -18,11 +18,20 @@ src/uav_dispatch/
 ├── search.py         路线缓存、容量二 O(1) 固定位置检查与成对插入
 ├── exact.py          小规模 Pareto 标签动态规划 oracle
 ├── alns.py           ALNS、任务分配邻域、风险引导、VND 与可选强化
+├── relay.py          独立的接力事件、静态 hub 与任务计数语义
+├── relay_validation.py 跨无人机事件 DAG、载荷、custody 与等待验证
+├── relay_search.py   split/merge/change-hub/change-receiver 候选生成
+├── relay_alns.py     直接 ALNS + 静态缓冲接力搜索
 └── cli.py            求解与 JSON 结果输出
 experiments/
 ├── run_benchmarks.py              多规模、多随机种子可复现实验
 ├── run_alns_core_comparison.py    ALNS Core/HALNS 配对对比
-└── run_neighborhood_ablation.py   问题特定邻域逐项消融
+├── run_neighborhood_ablation.py   问题特定邻域逐项消融
+├── generate_relay_scenarios.py    U/G/MZ/MIX synthetic campus 生成器
+├── run_relay_handoff.py           strict/primary-owner 接力实验
+├── run_relay_sensitivity.py       hub 数×交接耗时配对敏感性
+├── build_relay_comparison.py      历史与接力结果两层指标汇总
+└── migrate_relay_handoff_artifacts.py 旧产物元数据审计迁移
 results/              原始运行、汇总统计与两类最终路线
 tests/                行为测试、随机交叉验证与 CLI 测试
 ```
@@ -57,6 +66,23 @@ PYTHONPATH=algorithm/src python3 -m uav_dispatch solve \
 ```
 
 `--method` 还支持 `exact`、`edd`、`nearest`、`greedy`、`regret2` 和 `alns-core`；`basic-alns` 作为 `alns-core` 的兼容别名保留。当前 ALNS Core 默认用 assignment destroy 替换旧 route-clear，并启用 deadline-risk guidance；不启用驱逐交换、VND、cluster repair 或路线池。HALNS 在此基础上启用 ejection，route pool 默认关闭。VND、cluster repair 和全部细分预算可通过 Python API 的 `ALNSConfig` 显式开启。将 `--candidate-limit` 设为 `0` 可关闭候选位置剪枝；固定迭代数适合复现比较，`--time-limit` 适合墙钟预算控制。小规模精确求解默认最多 10 个任务，可通过 `--exact-max-tasks` 调整，但状态空间指数增长。
+
+### 静态缓冲接力
+
+`relay-alns` 使用单独的事件路线，支持 `PICKUP → HANDOFF_DROP → HANDOFF_PICK → DELIVERY`。接力层按历史表现自适应选择 split/merge/change-receiver/change-hub，并保留 best-so-far；下例启用 4 个从任务流确定性生成的静态 hub，每单最多一次接力：
+
+```bash
+PYTHONPATH=algorithm/src python3 -m uav_dispatch solve \
+  --input 'algorithm/命题1-低空经济场景下的物流无人机调度算法数据.csv' \
+  --method relay-alns --relay-mode static-buffered \
+  --relay-hub-count 4 --handoff-service-min 0.5 \
+  --relay-task-count-semantics primary-owner \
+  --tasks 200 --drones 8 --max-tasks 25 \
+  --iterations 10000 --time-limit 240 --seed 2026080500 \
+  --output algorithm/results/relay_solution.json
+```
+
+`strict-touch` 是题意保守解释：任务被两架无人机运输，就分别占用两架机的任务额度。官方实例满足 `200 = 8 × 25`，因此 strict-touch 下数学上不能出现跨机接力。`primary-owner` 只把订单计入取件无人机的 25 单额度，能研究接力，但属于明确的题意扩展，不能冒充官方合规结果。完整证明与验收边界见 [relay_task_count_semantics.md](reports/relay_task_count_semantics.md)。
 
 ## 复现实验
 
@@ -115,7 +141,39 @@ PYTHONPATH=algorithm/src python3 \
 ```
 
 断点续跑增加 `--resume`；恢复时会校验输入、源码、完整配置、路线文件哈希、
-官方得分、预算与拒绝池终态。报告同时审计 main 之外所有历史分支，并只比较题目
-官方三项指标。正式结果支持仅启用 `late_risk_destroy`：其三-seed均值为
-`(68.667, 2310.280, 645.854)`；其余新增模块应保持关闭。完整结论见
+历史内部得分、预算与拒绝池终态。报告同时审计 main 之外所有历史分支；按题面直接
+排名时只使用按时任务数与总里程。历史内部三层记录中，仅启用 `late_risk_destroy`
+的三-seed 均值为 `(68.667 个逾期, 2310.280 分钟诊断逾期量, 645.854 km)`；
+其余新增模块应保持关闭。完整结论见
 [adaptive_deadline_rejection_report.md](reports/adaptive_deadline_rejection_report.md)。
+
+## Relay 正式实验
+
+官方 200 单实验使用 3 个固定 seed、每次 240 秒总预算。接力预算包含前置直接 ALNS 搜索；结果保存完整事件路线、输入/问题哈希和独立复算诊断。
+
+```bash
+PYTHONPATH=algorithm/src python3 algorithm/experiments/run_relay_handoff.py \
+  --dataset official \
+  --methods baseline static-1hub static-multihub \
+  --seeds 2026080500 2026080501 2026080502 \
+  --time-limit 240 --wall-safety-margin 2 \
+  --task-count-semantics primary-owner --hub-count 4 \
+  --handoff-service-min 0.5 \
+  --output-dir algorithm/results/relay_handoff/official_primary
+```
+
+正式结论、全部历史实验拉表和限制见 [relay_handoff_report.md](reports/relay_handoff_report.md)，逐运行结果位于 `results/relay_handoff/`。
+
+Synthetic campus 敏感性使用 U（均匀负对照）、G（gate cut）、MZ（多分区）和 MIX（混合流向）四类坐标度量场景。下列 680-run 开发矩阵只研究 hub 数与交接耗时，不与官方 240 秒结果混排：
+
+```bash
+PYTHONPATH=algorithm/src python3 algorithm/experiments/run_relay_sensitivity.py \
+  --scenarios U G MZ MIX --tasks 50 \
+  --seeds 2026081000 2026081001 2026081002 2026081003 2026081004 \
+          2026081005 2026081006 2026081007 2026081008 2026081009 \
+  --hub-counts 1 2 4 8 --handoff-times 0 0.5 1 2 \
+  --time-limit 1.0 --wall-safety-margin 0.2 \
+  --candidate-limit 4 --task-sample-size 8 --base-search-fraction 0.60 \
+  --require-relay-iterations \
+  --output-dir algorithm/results/relay_handoff/synthetic_development_sensitivity
+```

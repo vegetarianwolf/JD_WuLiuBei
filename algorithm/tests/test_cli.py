@@ -85,3 +85,51 @@ def test_cli_exposes_an_explicit_alns_core_method(tmp_path):
     assert payload["metadata"]["method"] == "C2-Lex-ALNS-Core"
     assert payload["metadata"]["enable_route_pool"] is False
     assert payload["metadata"]["enable_ejection"] is False
+
+
+def test_cli_serializes_the_explicit_relay_semantics_and_event_routes(tmp_path):
+    source = tmp_path / "tasks.csv"
+    source.write_text(
+        "task_id,pickup_x,pickup_y,delivery_x,delivery_y,deadline_min\n"
+        "1,1,0,2,0,10\n"
+        "2,0,1,0,2,10\n",
+        encoding="utf-8",
+    )
+    output = tmp_path / "relay-solution.json"
+
+    exit_code = main(
+        [
+            "solve",
+            "--input",
+            str(source),
+            "--output",
+            str(output),
+            "--method",
+            "relay-alns",
+            "--relay-mode",
+            "static-buffered",
+            "--iterations",
+            "0",
+            "--drones",
+            "2",
+            "--max-tasks",
+            "1",
+            "--relay-hub",
+            "gate:1:1",
+            "--relay-task-count-semantics",
+            "strict-touch",
+        ]
+    )
+
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert exit_code == 0
+    assert payload["valid"] is True
+    assert payload["problem"]["objective_order"] == [
+        "late_count",
+        "distance_km",
+    ]
+    assert payload["relay"]["task_count_semantics"] == "strict-touch"
+    assert payload["relay"]["mode"] == "static-buffered"
+    assert payload["relay"]["semantics_extension"] is False
+    assert payload["relay"]["relay_count"] == 0
+    assert payload["routes"][0]["events"][0]["action"] == "pickup"

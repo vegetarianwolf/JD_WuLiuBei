@@ -1,0 +1,4864 @@
+{
+  "experiment": {
+    "method": "baseline",
+    "seed": 2026080502,
+    "semantics": "primary-owner",
+    "semantics_extension": true,
+    "source": "/Users/vegetarianwolf/Projects/JD_WuLiuBei/algorithm/命题1-低空经济场景下的物流无人机调度算法数据.csv",
+    "input_sha256": "386d3fbaa9009aeed947493782d657ed0b30b25d369c8187bfc9619fc7e31d25",
+    "problem_sha256": "6ab18af665022973fa45b0512d492dbac72f6eca6bbc0379e1ba602bcc94881e",
+    "budget_seconds": 240.0,
+    "effective_search_time_limit_seconds": 238.0,
+    "valid": true,
+    "runtime_compliant": true,
+    "official_semantics_compliant": false,
+    "official_plan_compliant": true,
+    "compliant": true,
+    "source_code_sha256": {
+      "algorithm/src/uav_dispatch/relay.py": "4db53d716f6a50c618d88686e87a30cb3281765dd1f03535e20c43ffff2c58fe",
+      "algorithm/src/uav_dispatch/relay_validation.py": "da8ff78355d6ced6dcdedc607ec11ad48f4f818fcf8bbd77b3f65fa99f47ef5c",
+      "algorithm/src/uav_dispatch/relay_search.py": "d48656de03653d27f1fdc9738b0d6be22e72ffce2e9b73054f5938700709d96f",
+      "algorithm/src/uav_dispatch/relay_alns.py": "1e980c9c0a4d431cff5e346f1417606ea47c6b9a9607acc13fa228bfa00de761",
+      "algorithm/experiments/run_relay_handoff.py": "1d757257ee2b8b4feb7337f44bc1aea7b62e6da25397073680f2cd1e2bd599f4"
+    },
+    "source_snapshot_sha256": "004977b52e50fd35829ee60b2f5041b1ce429a70c3e465fcfe1a439318542e62",
+    "source_snapshot_role": "execution_source",
+    "direct_event_equivalent": true
+  },
+  "problem": {
+    "task_count": 200,
+    "drone_count": 8,
+    "max_tasks_per_drone": 25,
+    "capacity": 2,
+    "speed_km_per_min": 0.9,
+    "tasks": [
+      {
+        "id": 1,
+        "pickup": [
+          3.62,
+          7.66
+        ],
+        "delivery": [
+          6.12,
+          5.19
+        ],
+        "deadline_min": 30.0
+      },
+      {
+        "id": 2,
+        "pickup": [
+          2.09,
+          1.41
+        ],
+        "delivery": [
+          7.06,
+          5.21
+        ],
+        "deadline_min": 43.0
+      },
+      {
+        "id": 3,
+        "pickup": [
+          1.14,
+          7.79
+        ],
+        "delivery": [
+          6.83,
+          2.49
+        ],
+        "deadline_min": 34.8
+      },
+      {
+        "id": 4,
+        "pickup": [
+          2.28,
+          3.13
+        ],
+        "delivery": [
+          4.67,
+          4.02
+        ],
+        "deadline_min": 27.9
+      },
+      {
+        "id": 5,
+        "pickup": [
+          5.28,
+          1.98
+        ],
+        "delivery": [
+          3.05,
+          3.56
+        ],
+        "deadline_min": 35.0
+      },
+      {
+        "id": 6,
+        "pickup": [
+          6.5,
+          2.4
+        ],
+        "delivery": [
+          4.6,
+          5.15
+        ],
+        "deadline_min": 24.8
+      },
+      {
+        "id": 7,
+        "pickup": [
+          5.25,
+          2.19
+        ],
+        "delivery": [
+          1.46,
+          7.64
+        ],
+        "deadline_min": 54.7
+      },
+      {
+        "id": 8,
+        "pickup": [
+          6.66,
+          3.13
+        ],
+        "delivery": [
+          1.68,
+          5.79
+        ],
+        "deadline_min": 39.6
+      },
+      {
+        "id": 9,
+        "pickup": [
+          1.85,
+          4.47
+        ],
+        "delivery": [
+          1.24,
+          7.37
+        ],
+        "deadline_min": 28.4
+      },
+      {
+        "id": 10,
+        "pickup": [
+          5.64,
+          3.18
+        ],
+        "delivery": [
+          4.64,
+          4.83
+        ],
+        "deadline_min": 26.9
+      },
+      {
+        "id": 11,
+        "pickup": [
+          7.79,
+          6.43
+        ],
+        "delivery": [
+          7.58,
+          7.26
+        ],
+        "deadline_min": 42.1
+      },
+      {
+        "id": 12,
+        "pickup": [
+          7.45,
+          1.62
+        ],
+        "delivery": [
+          2.37,
+          1.32
+        ],
+        "deadline_min": 35.9
+      },
+      {
+        "id": 13,
+        "pickup": [
+          3.72,
+          2.9
+        ],
+        "delivery": [
+          6.8,
+          3.5
+        ],
+        "deadline_min": 29.2
+      },
+      {
+        "id": 14,
+        "pickup": [
+          4.8,
+          1.99
+        ],
+        "delivery": [
+          6.62,
+          1.52
+        ],
+        "deadline_min": 49.5
+      },
+      {
+        "id": 15,
+        "pickup": [
+          6.41,
+          2.39
+        ],
+        "delivery": [
+          1.04,
+          6.71
+        ],
+        "deadline_min": 48.5
+      },
+      {
+        "id": 16,
+        "pickup": [
+          6.1,
+          6.4
+        ],
+        "delivery": [
+          1.52,
+          3.51
+        ],
+        "deadline_min": 31.3
+      },
+      {
+        "id": 17,
+        "pickup": [
+          7.04,
+          5.36
+        ],
+        "delivery": [
+          3.32,
+          1.44
+        ],
+        "deadline_min": 37.2
+      },
+      {
+        "id": 18,
+        "pickup": [
+          3.28,
+          6.11
+        ],
+        "delivery": [
+          5.46,
+          7.21
+        ],
+        "deadline_min": 36.6
+      },
+      {
+        "id": 19,
+        "pickup": [
+          1.84,
+          5.99
+        ],
+        "delivery": [
+          6.33,
+          4.93
+        ],
+        "deadline_min": 47.2
+      },
+      {
+        "id": 20,
+        "pickup": [
+          4.46,
+          4.66
+        ],
+        "delivery": [
+          3.99,
+          1.18
+        ],
+        "deadline_min": 26.3
+      },
+      {
+        "id": 21,
+        "pickup": [
+          1.22,
+          5.45
+        ],
+        "delivery": [
+          3.2,
+          4.56
+        ],
+        "deadline_min": 47.9
+      },
+      {
+        "id": 22,
+        "pickup": [
+          2.75,
+          3.87
+        ],
+        "delivery": [
+          6.29,
+          2.6
+        ],
+        "deadline_min": 23.8
+      },
+      {
+        "id": 23,
+        "pickup": [
+          3.03,
+          2.13
+        ],
+        "delivery": [
+          7.51,
+          6.66
+        ],
+        "deadline_min": 42.2
+      },
+      {
+        "id": 24,
+        "pickup": [
+          7.1,
+          6.63
+        ],
+        "delivery": [
+          2.31,
+          7.25
+        ],
+        "deadline_min": 44.3
+      },
+      {
+        "id": 25,
+        "pickup": [
+          6.65,
+          7.27
+        ],
+        "delivery": [
+          3.23,
+          1.77
+        ],
+        "deadline_min": 37.0
+      },
+      {
+        "id": 26,
+        "pickup": [
+          3.99,
+          6.73
+        ],
+        "delivery": [
+          7.03,
+          1.05
+        ],
+        "deadline_min": 43.2
+      },
+      {
+        "id": 27,
+        "pickup": [
+          3.92,
+          2.55
+        ],
+        "delivery": [
+          1.84,
+          3.36
+        ],
+        "deadline_min": 48.0
+      },
+      {
+        "id": 28,
+        "pickup": [
+          3.26,
+          4.63
+        ],
+        "delivery": [
+          5.92,
+          3.55
+        ],
+        "deadline_min": 50.6
+      },
+      {
+        "id": 29,
+        "pickup": [
+          7.74,
+          2.76
+        ],
+        "delivery": [
+          4.48,
+          3.11
+        ],
+        "deadline_min": 33.3
+      },
+      {
+        "id": 30,
+        "pickup": [
+          1.26,
+          5.27
+        ],
+        "delivery": [
+          4.52,
+          1.36
+        ],
+        "deadline_min": 32.0
+      },
+      {
+        "id": 31,
+        "pickup": [
+          7.36,
+          2.68
+        ],
+        "delivery": [
+          2.01,
+          4.43
+        ],
+        "deadline_min": 56.5
+      },
+      {
+        "id": 32,
+        "pickup": [
+          2.69,
+          5.7
+        ],
+        "delivery": [
+          6.33,
+          2.66
+        ],
+        "deadline_min": 46.1
+      },
+      {
+        "id": 33,
+        "pickup": [
+          3.57,
+          5.43
+        ],
+        "delivery": [
+          5.43,
+          4.75
+        ],
+        "deadline_min": 24.1
+      },
+      {
+        "id": 34,
+        "pickup": [
+          6.85,
+          3.25
+        ],
+        "delivery": [
+          2.31,
+          1.29
+        ],
+        "deadline_min": 43.6
+      },
+      {
+        "id": 35,
+        "pickup": [
+          5.74,
+          1.12
+        ],
+        "delivery": [
+          4.58,
+          2.59
+        ],
+        "deadline_min": 39.9
+      },
+      {
+        "id": 36,
+        "pickup": [
+          2.22,
+          5.84
+        ],
+        "delivery": [
+          3.71,
+          7.56
+        ],
+        "deadline_min": 25.6
+      },
+      {
+        "id": 37,
+        "pickup": [
+          3.39,
+          1.79
+        ],
+        "delivery": [
+          7.47,
+          7.14
+        ],
+        "deadline_min": 31.5
+      },
+      {
+        "id": 38,
+        "pickup": [
+          5.62,
+          6.72
+        ],
+        "delivery": [
+          4.89,
+          4.71
+        ],
+        "deadline_min": 31.4
+      },
+      {
+        "id": 39,
+        "pickup": [
+          1.65,
+          7.28
+        ],
+        "delivery": [
+          7.3,
+          5.43
+        ],
+        "deadline_min": 37.1
+      },
+      {
+        "id": 40,
+        "pickup": [
+          3.44,
+          6.08
+        ],
+        "delivery": [
+          7.28,
+          7.21
+        ],
+        "deadline_min": 47.6
+      },
+      {
+        "id": 41,
+        "pickup": [
+          5.49,
+          1.59
+        ],
+        "delivery": [
+          2.13,
+          7.29
+        ],
+        "deadline_min": 43.9
+      },
+      {
+        "id": 42,
+        "pickup": [
+          1.06,
+          1.71
+        ],
+        "delivery": [
+          5.64,
+          1.04
+        ],
+        "deadline_min": 24.2
+      },
+      {
+        "id": 43,
+        "pickup": [
+          4.84,
+          5.84
+        ],
+        "delivery": [
+          5.56,
+          2.57
+        ],
+        "deadline_min": 45.5
+      },
+      {
+        "id": 44,
+        "pickup": [
+          2.66,
+          3.28
+        ],
+        "delivery": [
+          6.23,
+          5.55
+        ],
+        "deadline_min": 46.9
+      },
+      {
+        "id": 45,
+        "pickup": [
+          5.6,
+          4.98
+        ],
+        "delivery": [
+          1.66,
+          3.57
+        ],
+        "deadline_min": 32.9
+      },
+      {
+        "id": 46,
+        "pickup": [
+          2.71,
+          7.81
+        ],
+        "delivery": [
+          3.75,
+          7.24
+        ],
+        "deadline_min": 41.4
+      },
+      {
+        "id": 47,
+        "pickup": [
+          6.56,
+          4.52
+        ],
+        "delivery": [
+          5.04,
+          4.45
+        ],
+        "deadline_min": 28.4
+      },
+      {
+        "id": 48,
+        "pickup": [
+          6.06,
+          2.97
+        ],
+        "delivery": [
+          1.17,
+          5.52
+        ],
+        "deadline_min": 30.9
+      },
+      {
+        "id": 49,
+        "pickup": [
+          7.58,
+          7.68
+        ],
+        "delivery": [
+          7.4,
+          3.59
+        ],
+        "deadline_min": 29.0
+      },
+      {
+        "id": 50,
+        "pickup": [
+          7.5,
+          4.0
+        ],
+        "delivery": [
+          7.77,
+          7.75
+        ],
+        "deadline_min": 51.2
+      },
+      {
+        "id": 51,
+        "pickup": [
+          3.06,
+          3.7
+        ],
+        "delivery": [
+          6.96,
+          3.22
+        ],
+        "deadline_min": 26.8
+      },
+      {
+        "id": 52,
+        "pickup": [
+          4.9,
+          7.55
+        ],
+        "delivery": [
+          5.87,
+          4.99
+        ],
+        "deadline_min": 28.0
+      },
+      {
+        "id": 53,
+        "pickup": [
+          5.31,
+          7.93
+        ],
+        "delivery": [
+          1.98,
+          4.63
+        ],
+        "deadline_min": 54.1
+      },
+      {
+        "id": 54,
+        "pickup": [
+          6.19,
+          5.88
+        ],
+        "delivery": [
+          5.92,
+          3.52
+        ],
+        "deadline_min": 32.9
+      },
+      {
+        "id": 55,
+        "pickup": [
+          6.67,
+          6.67
+        ],
+        "delivery": [
+          7.07,
+          7.39
+        ],
+        "deadline_min": 38.7
+      },
+      {
+        "id": 56,
+        "pickup": [
+          4.51,
+          6.59
+        ],
+        "delivery": [
+          5.55,
+          5.91
+        ],
+        "deadline_min": 46.1
+      },
+      {
+        "id": 57,
+        "pickup": [
+          7.23,
+          3.37
+        ],
+        "delivery": [
+          3.63,
+          1.66
+        ],
+        "deadline_min": 42.6
+      },
+      {
+        "id": 58,
+        "pickup": [
+          1.25,
+          4.26
+        ],
+        "delivery": [
+          4.8,
+          3.01
+        ],
+        "deadline_min": 38.8
+      },
+      {
+        "id": 59,
+        "pickup": [
+          1.21,
+          1.26
+        ],
+        "delivery": [
+          6.76,
+          3.52
+        ],
+        "deadline_min": 24.4
+      },
+      {
+        "id": 60,
+        "pickup": [
+          4.66,
+          6.39
+        ],
+        "delivery": [
+          2.51,
+          5.36
+        ],
+        "deadline_min": 26.0
+      },
+      {
+        "id": 61,
+        "pickup": [
+          1.36,
+          4.72
+        ],
+        "delivery": [
+          4.78,
+          5.46
+        ],
+        "deadline_min": 43.1
+      },
+      {
+        "id": 62,
+        "pickup": [
+          7.83,
+          4.61
+        ],
+        "delivery": [
+          3.26,
+          6.57
+        ],
+        "deadline_min": 35.7
+      },
+      {
+        "id": 63,
+        "pickup": [
+          4.07,
+          1.55
+        ],
+        "delivery": [
+          1.18,
+          7.74
+        ],
+        "deadline_min": 49.5
+      },
+      {
+        "id": 64,
+        "pickup": [
+          5.87,
+          3.86
+        ],
+        "delivery": [
+          2.21,
+          2.1
+        ],
+        "deadline_min": 31.8
+      },
+      {
+        "id": 65,
+        "pickup": [
+          4.84,
+          6.0
+        ],
+        "delivery": [
+          5.62,
+          2.96
+        ],
+        "deadline_min": 52.7
+      },
+      {
+        "id": 66,
+        "pickup": [
+          6.17,
+          4.88
+        ],
+        "delivery": [
+          5.28,
+          3.94
+        ],
+        "deadline_min": 29.6
+      },
+      {
+        "id": 67,
+        "pickup": [
+          3.49,
+          6.3
+        ],
+        "delivery": [
+          1.1,
+          1.81
+        ],
+        "deadline_min": 27.0
+      },
+      {
+        "id": 68,
+        "pickup": [
+          1.29,
+          6.99
+        ],
+        "delivery": [
+          5.93,
+          4.32
+        ],
+        "deadline_min": 28.8
+      },
+      {
+        "id": 69,
+        "pickup": [
+          4.44,
+          4.31
+        ],
+        "delivery": [
+          2.21,
+          4.04
+        ],
+        "deadline_min": 33.3
+      },
+      {
+        "id": 70,
+        "pickup": [
+          5.31,
+          5.45
+        ],
+        "delivery": [
+          1.32,
+          3.62
+        ],
+        "deadline_min": 44.1
+      },
+      {
+        "id": 71,
+        "pickup": [
+          4.52,
+          7.0
+        ],
+        "delivery": [
+          5.61,
+          2.14
+        ],
+        "deadline_min": 28.9
+      },
+      {
+        "id": 72,
+        "pickup": [
+          5.5,
+          1.19
+        ],
+        "delivery": [
+          5.1,
+          7.58
+        ],
+        "deadline_min": 42.6
+      },
+      {
+        "id": 73,
+        "pickup": [
+          3.72,
+          5.5
+        ],
+        "delivery": [
+          4.21,
+          4.82
+        ],
+        "deadline_min": 48.6
+      },
+      {
+        "id": 74,
+        "pickup": [
+          3.7,
+          7.73
+        ],
+        "delivery": [
+          7.34,
+          2.37
+        ],
+        "deadline_min": 30.8
+      },
+      {
+        "id": 75,
+        "pickup": [
+          1.71,
+          1.13
+        ],
+        "delivery": [
+          1.66,
+          5.78
+        ],
+        "deadline_min": 21.6
+      },
+      {
+        "id": 76,
+        "pickup": [
+          3.23,
+          6.91
+        ],
+        "delivery": [
+          1.16,
+          6.7
+        ],
+        "deadline_min": 31.2
+      },
+      {
+        "id": 77,
+        "pickup": [
+          1.83,
+          5.88
+        ],
+        "delivery": [
+          5.4,
+          7.14
+        ],
+        "deadline_min": 45.1
+      },
+      {
+        "id": 78,
+        "pickup": [
+          6.62,
+          2.97
+        ],
+        "delivery": [
+          2.24,
+          6.25
+        ],
+        "deadline_min": 50.4
+      },
+      {
+        "id": 79,
+        "pickup": [
+          7.93,
+          3.89
+        ],
+        "delivery": [
+          3.6,
+          6.43
+        ],
+        "deadline_min": 37.6
+      },
+      {
+        "id": 80,
+        "pickup": [
+          7.52,
+          7.01
+        ],
+        "delivery": [
+          4.0,
+          6.26
+        ],
+        "deadline_min": 50.0
+      },
+      {
+        "id": 81,
+        "pickup": [
+          1.72,
+          7.32
+        ],
+        "delivery": [
+          4.54,
+          6.79
+        ],
+        "deadline_min": 33.1
+      },
+      {
+        "id": 82,
+        "pickup": [
+          7.27,
+          3.72
+        ],
+        "delivery": [
+          1.08,
+          7.34
+        ],
+        "deadline_min": 31.8
+      },
+      {
+        "id": 83,
+        "pickup": [
+          3.24,
+          7.65
+        ],
+        "delivery": [
+          7.65,
+          5.01
+        ],
+        "deadline_min": 45.9
+      },
+      {
+        "id": 84,
+        "pickup": [
+          4.14,
+          3.05
+        ],
+        "delivery": [
+          3.3,
+          5.71
+        ],
+        "deadline_min": 43.4
+      },
+      {
+        "id": 85,
+        "pickup": [
+          6.54,
+          6.53
+        ],
+        "delivery": [
+          1.64,
+          4.46
+        ],
+        "deadline_min": 29.9
+      },
+      {
+        "id": 86,
+        "pickup": [
+          4.85,
+          4.09
+        ],
+        "delivery": [
+          7.21,
+          3.46
+        ],
+        "deadline_min": 25.3
+      },
+      {
+        "id": 87,
+        "pickup": [
+          2.0,
+          6.33
+        ],
+        "delivery": [
+          5.33,
+          1.71
+        ],
+        "deadline_min": 28.2
+      },
+      {
+        "id": 88,
+        "pickup": [
+          5.91,
+          1.51
+        ],
+        "delivery": [
+          6.75,
+          5.94
+        ],
+        "deadline_min": 26.2
+      },
+      {
+        "id": 89,
+        "pickup": [
+          1.59,
+          7.91
+        ],
+        "delivery": [
+          3.62,
+          3.59
+        ],
+        "deadline_min": 50.6
+      },
+      {
+        "id": 90,
+        "pickup": [
+          7.63,
+          7.9
+        ],
+        "delivery": [
+          6.27,
+          3.63
+        ],
+        "deadline_min": 31.7
+      },
+      {
+        "id": 91,
+        "pickup": [
+          6.44,
+          4.91
+        ],
+        "delivery": [
+          3.97,
+          7.34
+        ],
+        "deadline_min": 28.2
+      },
+      {
+        "id": 92,
+        "pickup": [
+          4.45,
+          1.08
+        ],
+        "delivery": [
+          4.28,
+          1.39
+        ],
+        "deadline_min": 21.0
+      },
+      {
+        "id": 93,
+        "pickup": [
+          1.82,
+          5.54
+        ],
+        "delivery": [
+          6.22,
+          5.08
+        ],
+        "deadline_min": 52.3
+      },
+      {
+        "id": 94,
+        "pickup": [
+          3.62,
+          3.0
+        ],
+        "delivery": [
+          7.08,
+          2.57
+        ],
+        "deadline_min": 50.0
+      },
+      {
+        "id": 95,
+        "pickup": [
+          1.09,
+          7.79
+        ],
+        "delivery": [
+          1.3,
+          7.24
+        ],
+        "deadline_min": 37.2
+      },
+      {
+        "id": 96,
+        "pickup": [
+          7.95,
+          1.52
+        ],
+        "delivery": [
+          4.88,
+          7.79
+        ],
+        "deadline_min": 44.4
+      },
+      {
+        "id": 97,
+        "pickup": [
+          5.41,
+          5.87
+        ],
+        "delivery": [
+          4.18,
+          5.39
+        ],
+        "deadline_min": 39.9
+      },
+      {
+        "id": 98,
+        "pickup": [
+          7.31,
+          1.32
+        ],
+        "delivery": [
+          2.97,
+          7.65
+        ],
+        "deadline_min": 55.5
+      },
+      {
+        "id": 99,
+        "pickup": [
+          4.19,
+          5.34
+        ],
+        "delivery": [
+          2.94,
+          2.32
+        ],
+        "deadline_min": 37.1
+      },
+      {
+        "id": 100,
+        "pickup": [
+          3.47,
+          5.09
+        ],
+        "delivery": [
+          1.54,
+          7.82
+        ],
+        "deadline_min": 52.1
+      },
+      {
+        "id": 101,
+        "pickup": [
+          5.89,
+          4.75
+        ],
+        "delivery": [
+          3.17,
+          6.7
+        ],
+        "deadline_min": 44.7
+      },
+      {
+        "id": 102,
+        "pickup": [
+          2.14,
+          7.38
+        ],
+        "delivery": [
+          6.76,
+          7.65
+        ],
+        "deadline_min": 47.4
+      },
+      {
+        "id": 103,
+        "pickup": [
+          5.29,
+          3.93
+        ],
+        "delivery": [
+          7.53,
+          7.06
+        ],
+        "deadline_min": 25.0
+      },
+      {
+        "id": 104,
+        "pickup": [
+          1.18,
+          3.64
+        ],
+        "delivery": [
+          6.67,
+          7.91
+        ],
+        "deadline_min": 28.5
+      },
+      {
+        "id": 105,
+        "pickup": [
+          5.16,
+          3.67
+        ],
+        "delivery": [
+          7.79,
+          6.89
+        ],
+        "deadline_min": 48.8
+      },
+      {
+        "id": 106,
+        "pickup": [
+          4.28,
+          3.9
+        ],
+        "delivery": [
+          2.91,
+          1.39
+        ],
+        "deadline_min": 47.6
+      },
+      {
+        "id": 107,
+        "pickup": [
+          6.69,
+          8.0
+        ],
+        "delivery": [
+          7.98,
+          4.89
+        ],
+        "deadline_min": 50.4
+      },
+      {
+        "id": 108,
+        "pickup": [
+          7.61,
+          6.95
+        ],
+        "delivery": [
+          2.73,
+          4.15
+        ],
+        "deadline_min": 33.6
+      },
+      {
+        "id": 109,
+        "pickup": [
+          7.68,
+          5.24
+        ],
+        "delivery": [
+          2.6,
+          5.7
+        ],
+        "deadline_min": 46.5
+      },
+      {
+        "id": 110,
+        "pickup": [
+          3.51,
+          1.79
+        ],
+        "delivery": [
+          5.7,
+          4.64
+        ],
+        "deadline_min": 43.5
+      },
+      {
+        "id": 111,
+        "pickup": [
+          4.64,
+          6.97
+        ],
+        "delivery": [
+          4.86,
+          4.93
+        ],
+        "deadline_min": 49.9
+      },
+      {
+        "id": 112,
+        "pickup": [
+          3.82,
+          1.94
+        ],
+        "delivery": [
+          1.2,
+          6.29
+        ],
+        "deadline_min": 41.0
+      },
+      {
+        "id": 113,
+        "pickup": [
+          5.93,
+          2.49
+        ],
+        "delivery": [
+          1.95,
+          1.1
+        ],
+        "deadline_min": 34.3
+      },
+      {
+        "id": 114,
+        "pickup": [
+          5.13,
+          3.75
+        ],
+        "delivery": [
+          4.06,
+          7.33
+        ],
+        "deadline_min": 33.7
+      },
+      {
+        "id": 115,
+        "pickup": [
+          4.6,
+          6.49
+        ],
+        "delivery": [
+          3.78,
+          5.35
+        ],
+        "deadline_min": 48.3
+      },
+      {
+        "id": 116,
+        "pickup": [
+          7.65,
+          2.03
+        ],
+        "delivery": [
+          7.49,
+          4.44
+        ],
+        "deadline_min": 31.2
+      },
+      {
+        "id": 117,
+        "pickup": [
+          4.21,
+          7.86
+        ],
+        "delivery": [
+          4.45,
+          3.3
+        ],
+        "deadline_min": 46.0
+      },
+      {
+        "id": 118,
+        "pickup": [
+          2.68,
+          1.53
+        ],
+        "delivery": [
+          1.9,
+          1.9
+        ],
+        "deadline_min": 20.9
+      },
+      {
+        "id": 119,
+        "pickup": [
+          1.97,
+          5.49
+        ],
+        "delivery": [
+          2.27,
+          3.42
+        ],
+        "deadline_min": 47.7
+      },
+      {
+        "id": 120,
+        "pickup": [
+          4.32,
+          5.67
+        ],
+        "delivery": [
+          2.21,
+          2.35
+        ],
+        "deadline_min": 25.5
+      },
+      {
+        "id": 121,
+        "pickup": [
+          2.18,
+          2.95
+        ],
+        "delivery": [
+          2.24,
+          1.62
+        ],
+        "deadline_min": 21.2
+      },
+      {
+        "id": 122,
+        "pickup": [
+          4.23,
+          2.44
+        ],
+        "delivery": [
+          3.55,
+          4.52
+        ],
+        "deadline_min": 40.6
+      },
+      {
+        "id": 123,
+        "pickup": [
+          1.28,
+          6.6
+        ],
+        "delivery": [
+          5.4,
+          1.57
+        ],
+        "deadline_min": 52.9
+      },
+      {
+        "id": 124,
+        "pickup": [
+          7.45,
+          1.43
+        ],
+        "delivery": [
+          2.94,
+          6.64
+        ],
+        "deadline_min": 50.5
+      },
+      {
+        "id": 125,
+        "pickup": [
+          2.29,
+          2.47
+        ],
+        "delivery": [
+          3.59,
+          4.39
+        ],
+        "deadline_min": 36.9
+      },
+      {
+        "id": 126,
+        "pickup": [
+          3.58,
+          4.24
+        ],
+        "delivery": [
+          6.23,
+          1.26
+        ],
+        "deadline_min": 30.2
+      },
+      {
+        "id": 127,
+        "pickup": [
+          5.99,
+          7.27
+        ],
+        "delivery": [
+          4.58,
+          4.72
+        ],
+        "deadline_min": 28.9
+      },
+      {
+        "id": 128,
+        "pickup": [
+          4.13,
+          4.73
+        ],
+        "delivery": [
+          2.7,
+          2.88
+        ],
+        "deadline_min": 32.9
+      },
+      {
+        "id": 129,
+        "pickup": [
+          1.14,
+          3.25
+        ],
+        "delivery": [
+          2.48,
+          3.29
+        ],
+        "deadline_min": 20.9
+      },
+      {
+        "id": 130,
+        "pickup": [
+          7.23,
+          5.16
+        ],
+        "delivery": [
+          5.75,
+          6.52
+        ],
+        "deadline_min": 39.1
+      },
+      {
+        "id": 131,
+        "pickup": [
+          1.61,
+          4.76
+        ],
+        "delivery": [
+          5.11,
+          6.22
+        ],
+        "deadline_min": 34.7
+      },
+      {
+        "id": 132,
+        "pickup": [
+          1.89,
+          2.99
+        ],
+        "delivery": [
+          3.54,
+          5.52
+        ],
+        "deadline_min": 36.4
+      },
+      {
+        "id": 133,
+        "pickup": [
+          3.49,
+          7.91
+        ],
+        "delivery": [
+          5.24,
+          2.66
+        ],
+        "deadline_min": 30.8
+      },
+      {
+        "id": 134,
+        "pickup": [
+          2.07,
+          2.72
+        ],
+        "delivery": [
+          2.12,
+          2.31
+        ],
+        "deadline_min": 24.8
+      },
+      {
+        "id": 135,
+        "pickup": [
+          2.21,
+          7.28
+        ],
+        "delivery": [
+          1.56,
+          4.67
+        ],
+        "deadline_min": 35.7
+      },
+      {
+        "id": 136,
+        "pickup": [
+          7.88,
+          1.78
+        ],
+        "delivery": [
+          3.78,
+          7.79
+        ],
+        "deadline_min": 55.0
+      },
+      {
+        "id": 137,
+        "pickup": [
+          6.72,
+          2.81
+        ],
+        "delivery": [
+          2.2,
+          5.68
+        ],
+        "deadline_min": 53.9
+      },
+      {
+        "id": 138,
+        "pickup": [
+          4.9,
+          5.0
+        ],
+        "delivery": [
+          2.96,
+          6.39
+        ],
+        "deadline_min": 28.0
+      },
+      {
+        "id": 139,
+        "pickup": [
+          3.27,
+          3.98
+        ],
+        "delivery": [
+          4.55,
+          2.7
+        ],
+        "deadline_min": 23.2
+      },
+      {
+        "id": 140,
+        "pickup": [
+          5.27,
+          3.02
+        ],
+        "delivery": [
+          5.07,
+          2.08
+        ],
+        "deadline_min": 34.3
+      },
+      {
+        "id": 141,
+        "pickup": [
+          4.73,
+          1.36
+        ],
+        "delivery": [
+          3.36,
+          1.94
+        ],
+        "deadline_min": 21.0
+      },
+      {
+        "id": 142,
+        "pickup": [
+          7.93,
+          3.26
+        ],
+        "delivery": [
+          6.67,
+          2.78
+        ],
+        "deadline_min": 43.5
+      },
+      {
+        "id": 143,
+        "pickup": [
+          6.32,
+          5.17
+        ],
+        "delivery": [
+          4.3,
+          3.88
+        ],
+        "deadline_min": 34.2
+      },
+      {
+        "id": 144,
+        "pickup": [
+          7.51,
+          6.81
+        ],
+        "delivery": [
+          7.76,
+          1.87
+        ],
+        "deadline_min": 50.7
+      },
+      {
+        "id": 145,
+        "pickup": [
+          7.57,
+          2.27
+        ],
+        "delivery": [
+          1.47,
+          6.19
+        ],
+        "deadline_min": 46.1
+      },
+      {
+        "id": 146,
+        "pickup": [
+          6.89,
+          1.98
+        ],
+        "delivery": [
+          6.57,
+          2.41
+        ],
+        "deadline_min": 25.5
+      },
+      {
+        "id": 147,
+        "pickup": [
+          2.15,
+          6.7
+        ],
+        "delivery": [
+          5.66,
+          4.66
+        ],
+        "deadline_min": 35.1
+      },
+      {
+        "id": 148,
+        "pickup": [
+          7.14,
+          3.75
+        ],
+        "delivery": [
+          6.72,
+          4.07
+        ],
+        "deadline_min": 32.9
+      },
+      {
+        "id": 149,
+        "pickup": [
+          4.24,
+          3.11
+        ],
+        "delivery": [
+          6.23,
+          4.52
+        ],
+        "deadline_min": 27.5
+      },
+      {
+        "id": 150,
+        "pickup": [
+          7.3,
+          3.69
+        ],
+        "delivery": [
+          4.8,
+          7.35
+        ],
+        "deadline_min": 44.7
+      },
+      {
+        "id": 151,
+        "pickup": [
+          1.82,
+          7.58
+        ],
+        "delivery": [
+          5.39,
+          3.34
+        ],
+        "deadline_min": 31.0
+      },
+      {
+        "id": 152,
+        "pickup": [
+          6.56,
+          5.34
+        ],
+        "delivery": [
+          4.73,
+          7.26
+        ],
+        "deadline_min": 48.0
+      },
+      {
+        "id": 153,
+        "pickup": [
+          2.06,
+          3.18
+        ],
+        "delivery": [
+          2.74,
+          6.21
+        ],
+        "deadline_min": 20.7
+      },
+      {
+        "id": 154,
+        "pickup": [
+          4.99,
+          6.34
+        ],
+        "delivery": [
+          7.14,
+          3.39
+        ],
+        "deadline_min": 49.6
+      },
+      {
+        "id": 155,
+        "pickup": [
+          1.77,
+          6.93
+        ],
+        "delivery": [
+          1.89,
+          3.78
+        ],
+        "deadline_min": 47.4
+      },
+      {
+        "id": 156,
+        "pickup": [
+          2.05,
+          2.6
+        ],
+        "delivery": [
+          6.06,
+          6.04
+        ],
+        "deadline_min": 40.8
+      },
+      {
+        "id": 157,
+        "pickup": [
+          5.86,
+          4.8
+        ],
+        "delivery": [
+          2.76,
+          3.42
+        ],
+        "deadline_min": 29.6
+      },
+      {
+        "id": 158,
+        "pickup": [
+          7.36,
+          5.08
+        ],
+        "delivery": [
+          3.81,
+          4.23
+        ],
+        "deadline_min": 54.4
+      },
+      {
+        "id": 159,
+        "pickup": [
+          2.07,
+          5.1
+        ],
+        "delivery": [
+          4.54,
+          5.28
+        ],
+        "deadline_min": 21.4
+      },
+      {
+        "id": 160,
+        "pickup": [
+          7.1,
+          7.52
+        ],
+        "delivery": [
+          4.96,
+          5.88
+        ],
+        "deadline_min": 54.2
+      },
+      {
+        "id": 161,
+        "pickup": [
+          5.95,
+          2.07
+        ],
+        "delivery": [
+          5.03,
+          5.25
+        ],
+        "deadline_min": 35.4
+      },
+      {
+        "id": 162,
+        "pickup": [
+          6.16,
+          7.54
+        ],
+        "delivery": [
+          7.48,
+          4.16
+        ],
+        "deadline_min": 30.3
+      },
+      {
+        "id": 163,
+        "pickup": [
+          7.89,
+          6.87
+        ],
+        "delivery": [
+          1.87,
+          7.45
+        ],
+        "deadline_min": 56.4
+      },
+      {
+        "id": 164,
+        "pickup": [
+          4.63,
+          5.14
+        ],
+        "delivery": [
+          3.79,
+          1.38
+        ],
+        "deadline_min": 34.0
+      },
+      {
+        "id": 165,
+        "pickup": [
+          6.62,
+          1.03
+        ],
+        "delivery": [
+          3.33,
+          3.79
+        ],
+        "deadline_min": 40.3
+      },
+      {
+        "id": 166,
+        "pickup": [
+          7.44,
+          3.42
+        ],
+        "delivery": [
+          3.43,
+          6.16
+        ],
+        "deadline_min": 40.1
+      },
+      {
+        "id": 167,
+        "pickup": [
+          2.57,
+          4.17
+        ],
+        "delivery": [
+          1.99,
+          2.23
+        ],
+        "deadline_min": 34.6
+      },
+      {
+        "id": 168,
+        "pickup": [
+          3.93,
+          7.4
+        ],
+        "delivery": [
+          3.54,
+          5.06
+        ],
+        "deadline_min": 42.9
+      },
+      {
+        "id": 169,
+        "pickup": [
+          1.09,
+          5.64
+        ],
+        "delivery": [
+          2.25,
+          7.73
+        ],
+        "deadline_min": 25.5
+      },
+      {
+        "id": 170,
+        "pickup": [
+          3.9,
+          1.6
+        ],
+        "delivery": [
+          7.98,
+          4.52
+        ],
+        "deadline_min": 40.1
+      },
+      {
+        "id": 171,
+        "pickup": [
+          1.47,
+          6.25
+        ],
+        "delivery": [
+          2.47,
+          7.29
+        ],
+        "deadline_min": 26.9
+      },
+      {
+        "id": 172,
+        "pickup": [
+          2.33,
+          1.26
+        ],
+        "delivery": [
+          4.3,
+          4.95
+        ],
+        "deadline_min": 21.6
+      },
+      {
+        "id": 173,
+        "pickup": [
+          6.43,
+          4.17
+        ],
+        "delivery": [
+          4.67,
+          4.09
+        ],
+        "deadline_min": 34.5
+      },
+      {
+        "id": 174,
+        "pickup": [
+          4.92,
+          2.09
+        ],
+        "delivery": [
+          2.27,
+          7.03
+        ],
+        "deadline_min": 52.6
+      },
+      {
+        "id": 175,
+        "pickup": [
+          3.61,
+          2.9
+        ],
+        "delivery": [
+          5.51,
+          3.86
+        ],
+        "deadline_min": 20.3
+      },
+      {
+        "id": 176,
+        "pickup": [
+          2.09,
+          6.01
+        ],
+        "delivery": [
+          5.61,
+          1.19
+        ],
+        "deadline_min": 32.4
+      },
+      {
+        "id": 177,
+        "pickup": [
+          2.62,
+          5.7
+        ],
+        "delivery": [
+          1.14,
+          1.73
+        ],
+        "deadline_min": 47.7
+      },
+      {
+        "id": 178,
+        "pickup": [
+          2.25,
+          5.57
+        ],
+        "delivery": [
+          2.67,
+          1.7
+        ],
+        "deadline_min": 30.3
+      },
+      {
+        "id": 179,
+        "pickup": [
+          6.06,
+          6.99
+        ],
+        "delivery": [
+          6.81,
+          3.78
+        ],
+        "deadline_min": 46.0
+      },
+      {
+        "id": 180,
+        "pickup": [
+          2.43,
+          3.05
+        ],
+        "delivery": [
+          7.27,
+          1.09
+        ],
+        "deadline_min": 24.7
+      },
+      {
+        "id": 181,
+        "pickup": [
+          2.46,
+          1.19
+        ],
+        "delivery": [
+          2.27,
+          5.08
+        ],
+        "deadline_min": 32.0
+      },
+      {
+        "id": 182,
+        "pickup": [
+          7.25,
+          6.72
+        ],
+        "delivery": [
+          3.39,
+          2.82
+        ],
+        "deadline_min": 40.5
+      },
+      {
+        "id": 183,
+        "pickup": [
+          5.13,
+          2.88
+        ],
+        "delivery": [
+          5.37,
+          3.87
+        ],
+        "deadline_min": 36.2
+      },
+      {
+        "id": 184,
+        "pickup": [
+          4.05,
+          3.06
+        ],
+        "delivery": [
+          7.64,
+          6.35
+        ],
+        "deadline_min": 27.2
+      },
+      {
+        "id": 185,
+        "pickup": [
+          7.08,
+          4.41
+        ],
+        "delivery": [
+          7.26,
+          6.6
+        ],
+        "deadline_min": 36.5
+      },
+      {
+        "id": 186,
+        "pickup": [
+          1.16,
+          2.88
+        ],
+        "delivery": [
+          4.79,
+          5.43
+        ],
+        "deadline_min": 28.1
+      },
+      {
+        "id": 187,
+        "pickup": [
+          1.98,
+          6.84
+        ],
+        "delivery": [
+          7.89,
+          4.68
+        ],
+        "deadline_min": 32.1
+      },
+      {
+        "id": 188,
+        "pickup": [
+          2.91,
+          1.13
+        ],
+        "delivery": [
+          7.4,
+          1.82
+        ],
+        "deadline_min": 37.8
+      },
+      {
+        "id": 189,
+        "pickup": [
+          2.92,
+          4.88
+        ],
+        "delivery": [
+          5.56,
+          6.81
+        ],
+        "deadline_min": 28.1
+      },
+      {
+        "id": 190,
+        "pickup": [
+          1.08,
+          1.96
+        ],
+        "delivery": [
+          7.3,
+          7.12
+        ],
+        "deadline_min": 41.4
+      },
+      {
+        "id": 191,
+        "pickup": [
+          5.2,
+          5.66
+        ],
+        "delivery": [
+          2.23,
+          7.4
+        ],
+        "deadline_min": 36.9
+      },
+      {
+        "id": 192,
+        "pickup": [
+          3.68,
+          4.63
+        ],
+        "delivery": [
+          1.33,
+          2.16
+        ],
+        "deadline_min": 44.5
+      },
+      {
+        "id": 193,
+        "pickup": [
+          1.58,
+          5.22
+        ],
+        "delivery": [
+          2.72,
+          3.73
+        ],
+        "deadline_min": 28.8
+      },
+      {
+        "id": 194,
+        "pickup": [
+          3.49,
+          6.03
+        ],
+        "delivery": [
+          3.08,
+          4.96
+        ],
+        "deadline_min": 35.3
+      },
+      {
+        "id": 195,
+        "pickup": [
+          5.65,
+          7.56
+        ],
+        "delivery": [
+          6.13,
+          2.5
+        ],
+        "deadline_min": 29.1
+      },
+      {
+        "id": 196,
+        "pickup": [
+          2.84,
+          5.17
+        ],
+        "delivery": [
+          1.36,
+          4.47
+        ],
+        "deadline_min": 38.3
+      },
+      {
+        "id": 197,
+        "pickup": [
+          3.34,
+          6.4
+        ],
+        "delivery": [
+          1.75,
+          1.53
+        ],
+        "deadline_min": 47.6
+      },
+      {
+        "id": 198,
+        "pickup": [
+          4.47,
+          5.82
+        ],
+        "delivery": [
+          4.04,
+          2.72
+        ],
+        "deadline_min": 48.2
+      },
+      {
+        "id": 199,
+        "pickup": [
+          6.6,
+          5.86
+        ],
+        "delivery": [
+          2.91,
+          5.13
+        ],
+        "deadline_min": 36.8
+      },
+      {
+        "id": 200,
+        "pickup": [
+          1.64,
+          7.42
+        ],
+        "delivery": [
+          1.96,
+          7.65
+        ],
+        "deadline_min": 34.3
+      }
+    ],
+    "handoff_service_min": 0.5,
+    "hubs": []
+  },
+  "score": {
+    "on_time_count": 129,
+    "on_time_rate": 0.645,
+    "distance_km": 658.1579765110746
+  },
+  "diagnostics": {
+    "late_count": 71,
+    "total_lateness_min": 2638.5379544756715,
+    "max_lateness_min": 71.40435285592734,
+    "relay_count": 0,
+    "direct_task_count": 200,
+    "package_wait_times_min": {},
+    "uav_wait_times_min": {},
+    "max_hub_inventory": 0,
+    "hub_peak_inventory": {},
+    "physical_touch_counts": [
+      25,
+      25,
+      25,
+      25,
+      25,
+      25,
+      25,
+      25
+    ],
+    "primary_owner_counts": [
+      25,
+      25,
+      25,
+      25,
+      25,
+      25,
+      25,
+      25
+    ],
+    "delivery_times_min": {
+      "1": 20.312607007398572,
+      "2": 27.574797504600475,
+      "3": 86.38370399936814,
+      "4": 7.515770854684921,
+      "5": 33.526186548163075,
+      "6": 16.027299905408444,
+      "7": 53.73895325385819,
+      "8": 88.35506720957811,
+      "9": 11.744786057024337,
+      "10": 21.56583205766669,
+      "11": 13.940287328555769,
+      "12": 93.22500065532462,
+      "13": 63.34830546367603,
+      "14": 16.721972934451067,
+      "15": 75.5348793734583,
+      "16": 97.90383690818557,
+      "17": 85.36992870727569,
+      "18": 21.964995264419922,
+      "19": 28.026308716635942,
+      "20": 12.42506729119448,
+      "21": 40.95975236493396,
+      "22": 18.41626224472417,
+      "23": 73.26329923597069,
+      "24": 33.71334631475752,
+      "25": 88.37720506971267,
+      "26": 62.867860342950706,
+      "27": 41.08263123608779,
+      "28": 37.92773565414307,
+      "29": 80.87189727851289,
+      "30": 58.75739660788077,
+      "31": 55.989093892599364,
+      "32": 43.169367860211075,
+      "33": 12.285968806578984,
+      "34": 68.23013919641238,
+      "35": 11.357113024651595,
+      "36": 23.251956629436336,
+      "37": 29.98778958026498,
+      "38": 18.819577740698833,
+      "39": 84.20679476835818,
+      "40": 45.27026550497431,
+      "41": 75.31810624966137,
+      "42": 7.3784853218957185,
+      "43": 42.27042867972293,
+      "44": 10.158078556781511,
+      "45": 73.67980790842962,
+      "46": 14.996863524135206,
+      "47": 15.02402352588458,
+      "48": 26.051911744226032,
+      "49": 75.12745622509263,
+      "50": 68.66385530153404,
+      "51": 25.63251821354531,
+      "52": 61.27009584946966,
+      "53": 51.87580724065441,
+      "54": 12.478417632815175,
+      "55": 25.792969526428625,
+      "56": 41.54164153809309,
+      "57": 82.73942353562084,
+      "58": 46.73747207819442,
+      "59": 67.66827476322604,
+      "60": 20.05556548233256,
+      "61": 38.87010053838365,
+      "62": 82.31170619640454,
+      "63": 35.64558012039671,
+      "64": 17.684221608267034,
+      "65": 39.90041676659899,
+      "66": 22.099823324355825,
+      "67": 88.15222642846717,
+      "68": 82.2476440327234,
+      "69": 50.40834900644477,
+      "70": 41.72860642958773,
+      "71": 74.35939196999499,
+      "72": 42.486246097874854,
+      "73": 34.92107986619856,
+      "74": 76.29852757989447,
+      "75": 9.163195015148352,
+      "76": 26.280235678237762,
+      "77": 42.91843329996398,
+      "78": 48.65768994281785,
+      "79": 81.72839861787273,
+      "80": 30.63659439874255,
+      "81": 57.29391775279665,
+      "82": 76.28799686067468,
+      "83": 61.31220750301999,
+      "84": 30.80670500233973,
+      "85": 53.94028970969988,
+      "86": 11.88452022038989,
+      "87": 64.95864744232148,
+      "88": 24.06183520421924,
+      "89": 82.6134336812603,
+      "90": 73.87111428846535,
+      "91": 67.26867839558766,
+      "92": 6.029066487025141,
+      "93": 45.31153481952844,
+      "94": 49.40045473531845,
+      "95": 36.41411761216479,
+      "96": 92.63527857097635,
+      "97": 33.345314111146976,
+      "98": 53.2709371058345,
+      "99": 30.008796377407432,
+      "100": 35.23582258896147,
+      "101": 18.127958333379027,
+      "102": 67.52715178565671,
+      "103": 13.711225904910343,
+      "104": 80.44832330756748,
+      "105": 48.645286270661586,
+      "106": 21.306661126884485,
+      "107": 48.67480397142482,
+      "108": 96.382912887551,
+      "109": 58.31327154743772,
+      "110": 37.02280616987605,
+      "111": 18.310065984974354,
+      "112": 14.498514146831047,
+      "113": 62.65014190753357,
+      "114": 20.403735880397672,
+      "115": 34.16275162038738,
+      "116": 21.86596876965106,
+      "117": 86.20291648164587,
+      "118": 4.445540006559805,
+      "119": 41.613142887079135,
+      "120": 24.637282940963505,
+      "121": 20.10853487778707,
+      "122": 35.082379897349895,
+      "123": 45.652975422417725,
+      "124": 74.07981901848986,
+      "125": 6.864705772319047,
+      "126": 15.481807124308835,
+      "127": 19.16420135001596,
+      "128": 57.69785856532118,
+      "129": 6.2061348991878225,
+      "130": 32.44379734236297,
+      "131": 31.330767005961274,
+      "132": 9.939018938104887,
+      "133": 98.61399423805672,
+      "134": 4.256801985915299,
+      "135": 29.526520020403765,
+      "136": 52.351100408902,
+      "137": 52.230605103690884,
+      "138": 21.703134007289403,
+      "139": 16.479738695476673,
+      "140": 24.189929378088753,
+      "141": 7.336852787924846,
+      "142": 41.68234115245222,
+      "143": 14.604844509388665,
+      "144": 79.78222065375847,
+      "145": 88.85703863171484,
+      "146": 17.91018309606671,
+      "147": 58.36519503310242,
+      "148": 12.802680030502433,
+      "149": 77.78089036250734,
+      "150": 31.517146275270395,
+      "151": 97.84027466656545,
+      "152": 31.643832433614744,
+      "153": 12.783428984169248,
+      "154": 44.42931474900468,
+      "155": 32.924095251501626,
+      "156": 9.55966668561176,
+      "157": 72.44627439114215,
+      "158": 53.992772500897445,
+      "159": 11.135016436572,
+      "160": 34.34532207410495,
+      "161": 70.81406912703703,
+      "162": 26.964082714818826,
+      "163": 56.09380554614499,
+      "164": 25.811413061037733,
+      "165": 13.282415630336423,
+      "166": 71.10172864267305,
+      "167": 28.948514560688782,
+      "168": 36.668793958239,
+      "169": 12.964815253079351,
+      "170": 65.42650381303949,
+      "171": 16.29456605842375,
+      "172": 8.155283977420783,
+      "173": 47.55883519248253,
+      "174": 49.52499739823503,
+      "175": 8.506948442861079,
+      "176": 65.61486180055407,
+      "177": 88.25160722746716,
+      "178": 61.60877528407935,
+      "179": 27.819926822003346,
+      "180": 96.10435285592735,
+      "181": 8.016996061247855,
+      "182": 56.9282988066135,
+      "183": 8.905887144708966,
+      "184": 12.765067717737509,
+      "185": 26.986826878275984,
+      "186": 64.53489978197574,
+      "187": 61.76558985331117,
+      "188": 64.78588987045943,
+      "189": 66.29077176471056,
+      "190": 73.84600246323402,
+      "191": 36.45694105251097,
+      "192": 56.69540044137807,
+      "193": 20.887242210739284,
+      "194": 28.676048402380562,
+      "195": 99.175648163866,
+      "196": 33.89082577301968,
+      "197": 58.37507056465611,
+      "198": 38.37125573717466,
+      "199": 72.38375057965915,
+      "200": 12.630557276268433
+    },
+    "route_distances_km": [
+      83.90250058979215,
+      89.25808334747938,
+      88.11345321736704,
+      66.31182711758665,
+      79.53948456274144,
+      75.78611529152234,
+      86.49391757033459,
+      88.75259481425107
+    ],
+    "route_completion_times_min": [
+      93.22500065532462,
+      99.175648163866,
+      97.90383690818557,
+      73.67980790842962,
+      88.37720506971267,
+      84.20679476835818,
+      96.10435285592735,
+      98.61399423805672
+    ],
+    "violations": []
+  },
+  "runtime_seconds": 238.00206108298153,
+  "iterations": 0,
+  "solver_metadata": {
+    "method": "Buffered-Static-Relay-ALNS",
+    "task_count_semantics": "primary-owner",
+    "semantics_extension": true,
+    "competition_objective_order": [
+      "late_count",
+      "distance_km"
+    ],
+    "search_score_order": [
+      "late_count",
+      "distance_km",
+      "total_lateness_min_tie_break_only"
+    ],
+    "returned_solution": "best_so_far",
+    "operator_selection": "adaptive_weighted_roulette",
+    "acceptance_rule": "simulated_annealing_normalized_lex_gap",
+    "reward_scores": {
+      "new_best": 8.0,
+      "improved_current": 4.0,
+      "equal_current": 2.0,
+      "accepted_non_improving": 1.0,
+      "rejected": 0.0
+    },
+    "relay_search_disabled_reason": "no_hubs",
+    "seed": 2026080502,
+    "candidate_limit": 12,
+    "task_sample_size": 24,
+    "search_tie_break": "total_lateness_min",
+    "initial_competition_key": [
+      71,
+      658.1579765110746
+    ],
+    "best_competition_key": [
+      71,
+      658.1579765110746
+    ],
+    "current_competition_key": [
+      71,
+      658.1579765110746
+    ],
+    "best_stable_search_key": [
+      71,
+      658.1579765110746,
+      2638.5379544756715
+    ],
+    "current_stable_search_key": [
+      71,
+      658.1579765110746,
+      2638.5379544756715
+    ],
+    "current_is_best": true,
+    "time_to_best_seconds": 238.0020469580195,
+    "accepted_splits": 0,
+    "accepted_merges": 0,
+    "accepted_hub_changes": 0,
+    "accepted_receiver_changes": 0,
+    "accepted_solutions": 0,
+    "accepted_non_improving": 0,
+    "accepted_equal": 0,
+    "evaluated_candidates": 0,
+    "operator_uses": {
+      "split": 0,
+      "merge": 0,
+      "change_receiver": 0,
+      "change_hub": 0
+    },
+    "operator_accepts": {
+      "split": 0,
+      "merge": 0,
+      "change_receiver": 0,
+      "change_hub": 0
+    },
+    "operator_improvements": {
+      "split": 0,
+      "merge": 0,
+      "change_receiver": 0,
+      "change_hub": 0
+    },
+    "operator_no_candidates": {
+      "split": 0,
+      "merge": 0,
+      "change_receiver": 0,
+      "change_hub": 0
+    },
+    "operator_rewards": {
+      "split": 0.0,
+      "merge": 0.0,
+      "change_receiver": 0.0,
+      "change_hub": 0.0
+    },
+    "operator_weights": {
+      "split": 1.0,
+      "merge": 1.0,
+      "change_receiver": 1.0,
+      "change_hub": 1.0
+    },
+    "weight_update_interval": 20,
+    "reaction_factor": 0.2,
+    "minimum_weight": 0.1,
+    "enable_non_improving_acceptance": true,
+    "initial_temperature": 0.01,
+    "final_temperature": 0.01,
+    "cooling_rate": 0.995,
+    "minimum_temperature": 0.0001,
+    "base_search_used": true,
+    "base_search_runtime_seconds": 238.0007255829987,
+    "base_search_iterations": 1645,
+    "base_search_objective_order": [
+      "late_count",
+      "distance_km"
+    ],
+    "base_search_fraction": 0.8
+  },
+  "official_plan_audit": {
+    "task_count_semantics": "strict-touch",
+    "valid": true,
+    "violations": [],
+    "physical_touch_counts": [
+      25,
+      25,
+      25,
+      25,
+      25,
+      25,
+      25,
+      25
+    ]
+  },
+  "direct_equivalence_audit": {
+    "checked": true,
+    "equivalent": true,
+    "late_count_delta": 0,
+    "total_lateness_abs_delta_min": 4.547473508864641e-13,
+    "distance_abs_delta_km": 3.410605131648481e-13,
+    "max_delivery_time_abs_delta_min": 0.0,
+    "legacy_score": {
+      "late_count": 71,
+      "total_lateness_min": 2638.537954475672,
+      "distance_km": 658.1579765110749
+    },
+    "event_score": {
+      "late_count": 71,
+      "total_lateness_min": 2638.5379544756715,
+      "distance_km": 658.1579765110746
+    }
+  },
+  "event_routes": [
+    [
+      {
+        "task_id": 92,
+        "event_type": "pickup",
+        "event_time_min": 5.0879790550077475
+      },
+      {
+        "task_id": 141,
+        "event_type": "pickup",
+        "event_time_min": 5.527956607746044
+      },
+      {
+        "task_id": 92,
+        "event_type": "delivery",
+        "event_time_min": 6.029066487025141
+      },
+      {
+        "task_id": 112,
+        "event_type": "pickup",
+        "event_time_min": 6.825741676813735
+      },
+      {
+        "task_id": 141,
+        "event_type": "delivery",
+        "event_time_min": 7.336852787924846
+      },
+      {
+        "task_id": 153,
+        "event_type": "pickup",
+        "event_time_min": 9.333021958617724
+      },
+      {
+        "task_id": 153,
+        "event_type": "delivery",
+        "event_time_min": 12.783428984169248
+      },
+      {
+        "task_id": 171,
+        "event_type": "pickup",
+        "event_time_min": 14.195239834298688
+      },
+      {
+        "task_id": 112,
+        "event_type": "delivery",
+        "event_time_min": 14.498514146831047
+      },
+      {
+        "task_id": 171,
+        "event_type": "delivery",
+        "event_time_min": 16.29456605842375
+      },
+      {
+        "task_id": 19,
+        "event_type": "pickup",
+        "event_time_min": 17.899689029752246
+      },
+      {
+        "task_id": 193,
+        "event_type": "pickup",
+        "event_time_min": 18.80270181967575
+      },
+      {
+        "task_id": 193,
+        "event_type": "delivery",
+        "event_time_min": 20.887242210739284
+      },
+      {
+        "task_id": 51,
+        "event_type": "pickup",
+        "event_time_min": 21.26648772553653
+      },
+      {
+        "task_id": 51,
+        "event_type": "delivery",
+        "event_time_min": 25.63251821354531
+      },
+      {
+        "task_id": 150,
+        "event_type": "pickup",
+        "event_time_min": 26.277058436313006
+      },
+      {
+        "task_id": 19,
+        "event_type": "delivery",
+        "event_time_min": 28.026308716635942
+      },
+      {
+        "task_id": 152,
+        "event_type": "pickup",
+        "event_time_min": 28.548649128793414
+      },
+      {
+        "task_id": 150,
+        "event_type": "delivery",
+        "event_time_min": 31.517146275270395
+      },
+      {
+        "task_id": 152,
+        "event_type": "delivery",
+        "event_time_min": 31.643832433614744
+      },
+      {
+        "task_id": 115,
+        "event_type": "pickup",
+        "event_time_min": 32.51149567829717
+      },
+      {
+        "task_id": 73,
+        "event_type": "pickup",
+        "event_time_min": 33.98324612681623
+      },
+      {
+        "task_id": 115,
+        "event_type": "delivery",
+        "event_time_min": 34.16275162038738
+      },
+      {
+        "task_id": 73,
+        "event_type": "delivery",
+        "event_time_min": 34.92107986619856
+      },
+      {
+        "task_id": 65,
+        "event_type": "pickup",
+        "event_time_min": 36.40735451971285
+      },
+      {
+        "task_id": 43,
+        "event_type": "pickup",
+        "event_time_min": 36.585132297490624
+      },
+      {
+        "task_id": 65,
+        "event_type": "delivery",
+        "event_time_min": 39.90041676659899
+      },
+      {
+        "task_id": 78,
+        "event_type": "pickup",
+        "event_time_min": 41.011583431876836
+      },
+      {
+        "task_id": 43,
+        "event_type": "delivery",
+        "event_time_min": 42.27042867972293
+      },
+      {
+        "task_id": 174,
+        "event_type": "pickup",
+        "event_time_min": 43.15931756861182
+      },
+      {
+        "task_id": 78,
+        "event_type": "delivery",
+        "event_time_min": 48.65768994281785
+      },
+      {
+        "task_id": 174,
+        "event_type": "delivery",
+        "event_time_min": 49.52499739823503
+      },
+      {
+        "task_id": 197,
+        "event_type": "pickup",
+        "event_time_min": 50.904655613201136
+      },
+      {
+        "task_id": 192,
+        "event_type": "pickup",
+        "event_time_min": 52.90727735161318
+      },
+      {
+        "task_id": 192,
+        "event_type": "delivery",
+        "event_time_min": 56.69540044137807
+      },
+      {
+        "task_id": 59,
+        "event_type": "pickup",
+        "event_time_min": 57.70425017140617
+      },
+      {
+        "task_id": 197,
+        "event_type": "delivery",
+        "event_time_min": 58.37507056465611
+      },
+      {
+        "task_id": 188,
+        "event_type": "pickup",
+        "event_time_min": 59.738436044671936
+      },
+      {
+        "task_id": 188,
+        "event_type": "delivery",
+        "event_time_min": 64.78588987045943
+      },
+      {
+        "task_id": 124,
+        "event_type": "pickup",
+        "event_time_min": 65.22276994271137
+      },
+      {
+        "task_id": 59,
+        "event_type": "delivery",
+        "event_time_min": 67.66827476322604
+      },
+      {
+        "task_id": 82,
+        "event_type": "pickup",
+        "event_time_min": 68.27695680432836
+      },
+      {
+        "task_id": 124,
+        "event_type": "delivery",
+        "event_time_min": 74.07981901848986
+      },
+      {
+        "task_id": 82,
+        "event_type": "delivery",
+        "event_time_min": 76.28799686067468
+      },
+      {
+        "task_id": 3,
+        "event_type": "pickup",
+        "event_time_min": 76.79242172568874
+      },
+      {
+        "task_id": 89,
+        "event_type": "pickup",
+        "event_time_min": 77.30989421556407
+      },
+      {
+        "task_id": 89,
+        "event_type": "delivery",
+        "event_time_min": 82.6134336812603
+      },
+      {
+        "task_id": 3,
+        "event_type": "delivery",
+        "event_time_min": 86.38370399936814
+      },
+      {
+        "task_id": 12,
+        "event_type": "pickup",
+        "event_time_min": 87.57072225772772
+      },
+      {
+        "task_id": 12,
+        "event_type": "delivery",
+        "event_time_min": 93.22500065532462
+      }
+    ],
+    [
+      {
+        "task_id": 156,
+        "event_type": "pickup",
+        "event_time_min": 3.6788518069207337
+      },
+      {
+        "task_id": 44,
+        "event_type": "pickup",
+        "event_time_min": 4.693862601730448
+      },
+      {
+        "task_id": 156,
+        "event_type": "delivery",
+        "event_time_min": 9.55966668561176
+      },
+      {
+        "task_id": 54,
+        "event_type": "pickup",
+        "event_time_min": 9.788728109257185
+      },
+      {
+        "task_id": 44,
+        "event_type": "delivery",
+        "event_time_min": 10.158078556781511
+      },
+      {
+        "task_id": 143,
+        "event_type": "pickup",
+        "event_time_min": 10.591981316554103
+      },
+      {
+        "task_id": 54,
+        "event_type": "delivery",
+        "event_time_min": 12.478417632815175
+      },
+      {
+        "task_id": 64,
+        "event_type": "pickup",
+        "event_time_min": 12.860258527869387
+      },
+      {
+        "task_id": 143,
+        "event_type": "delivery",
+        "event_time_min": 14.604844509388665
+      },
+      {
+        "task_id": 106,
+        "event_type": "pickup",
+        "event_time_min": 14.6362714774414
+      },
+      {
+        "task_id": 64,
+        "event_type": "delivery",
+        "event_time_min": 17.684221608267034
+      },
+      {
+        "task_id": 121,
+        "event_type": "pickup",
+        "event_time_min": 18.62925410493214
+      },
+      {
+        "task_id": 121,
+        "event_type": "delivery",
+        "event_time_min": 20.10853487778707
+      },
+      {
+        "task_id": 2,
+        "event_type": "pickup",
+        "event_time_min": 20.395279053355157
+      },
+      {
+        "task_id": 106,
+        "event_type": "delivery",
+        "event_time_min": 21.306661126884485
+      },
+      {
+        "task_id": 37,
+        "event_type": "pickup",
+        "event_time_min": 22.000905542520634
+      },
+      {
+        "task_id": 2,
+        "event_type": "delivery",
+        "event_time_min": 27.574797504600475
+      },
+      {
+        "task_id": 130,
+        "event_type": "pickup",
+        "event_time_min": 27.771686895119025
+      },
+      {
+        "task_id": 37,
+        "event_type": "delivery",
+        "event_time_min": 29.98778958026498
+      },
+      {
+        "task_id": 160,
+        "event_type": "pickup",
+        "event_time_min": 30.57709760720614
+      },
+      {
+        "task_id": 130,
+        "event_type": "delivery",
+        "event_time_min": 32.44379734236297
+      },
+      {
+        "task_id": 70,
+        "event_type": "pickup",
+        "event_time_min": 33.729281350743655
+      },
+      {
+        "task_id": 160,
+        "event_type": "delivery",
+        "event_time_min": 34.34532207410495
+      },
+      {
+        "task_id": 198,
+        "event_type": "pickup",
+        "event_time_min": 34.893832965091505
+      },
+      {
+        "task_id": 198,
+        "event_type": "delivery",
+        "event_time_min": 38.37125573717466
+      },
+      {
+        "task_id": 27,
+        "event_type": "pickup",
+        "event_time_min": 38.60246298213782
+      },
+      {
+        "task_id": 27,
+        "event_type": "delivery",
+        "event_time_min": 41.08263123608779
+      },
+      {
+        "task_id": 70,
+        "event_type": "delivery",
+        "event_time_min": 41.72860642958773
+      },
+      {
+        "task_id": 58,
+        "event_type": "pickup",
+        "event_time_min": 42.443958367490836
+      },
+      {
+        "task_id": 94,
+        "event_type": "pickup",
+        "event_time_min": 45.426313886949316
+      },
+      {
+        "task_id": 58,
+        "event_type": "delivery",
+        "event_time_min": 46.73747207819442
+      },
+      {
+        "task_id": 113,
+        "event_type": "pickup",
+        "event_time_min": 48.1195889016143
+      },
+      {
+        "task_id": 94,
+        "event_type": "delivery",
+        "event_time_min": 49.40045473531845
+      },
+      {
+        "task_id": 31,
+        "event_type": "pickup",
+        "event_time_min": 49.734712712129365
+      },
+      {
+        "task_id": 31,
+        "event_type": "delivery",
+        "event_time_min": 55.989093892599364
+      },
+      {
+        "task_id": 178,
+        "event_type": "pickup",
+        "event_time_min": 57.28352641519587
+      },
+      {
+        "task_id": 178,
+        "event_type": "delivery",
+        "event_time_min": 61.60877528407935
+      },
+      {
+        "task_id": 113,
+        "event_type": "delivery",
+        "event_time_min": 62.65014190753357
+      },
+      {
+        "task_id": 190,
+        "event_type": "pickup",
+        "event_time_min": 64.00938098297156
+      },
+      {
+        "task_id": 23,
+        "event_type": "pickup",
+        "event_time_min": 66.1842656826258
+      },
+      {
+        "task_id": 23,
+        "event_type": "delivery",
+        "event_time_min": 73.26329923597069
+      },
+      {
+        "task_id": 144,
+        "event_type": "pickup",
+        "event_time_min": 73.42996590263736
+      },
+      {
+        "task_id": 190,
+        "event_type": "delivery",
+        "event_time_min": 73.84600246323402
+      },
+      {
+        "task_id": 17,
+        "event_type": "pickup",
+        "event_time_min": 75.82278123714566
+      },
+      {
+        "task_id": 144,
+        "event_type": "delivery",
+        "event_time_min": 79.78222065375847
+      },
+      {
+        "task_id": 96,
+        "event_type": "pickup",
+        "event_time_min": 80.22471638157491
+      },
+      {
+        "task_id": 17,
+        "event_type": "delivery",
+        "event_time_min": 85.36992870727569
+      },
+      {
+        "task_id": 96,
+        "event_type": "delivery",
+        "event_time_min": 92.63527857097635
+      },
+      {
+        "task_id": 195,
+        "event_type": "pickup",
+        "event_time_min": 93.52818615332589
+      },
+      {
+        "task_id": 195,
+        "event_type": "delivery",
+        "event_time_min": 99.175648163866
+      }
+    ],
+    [
+      {
+        "task_id": 181,
+        "event_type": "pickup",
+        "event_time_min": 3.0363436426151407
+      },
+      {
+        "task_id": 118,
+        "event_type": "pickup",
+        "event_time_min": 3.4863093477555096
+      },
+      {
+        "task_id": 118,
+        "event_type": "delivery",
+        "event_time_min": 4.445540006559805
+      },
+      {
+        "task_id": 132,
+        "event_type": "pickup",
+        "event_time_min": 5.656702084998077
+      },
+      {
+        "task_id": 181,
+        "event_type": "delivery",
+        "event_time_min": 8.016996061247855
+      },
+      {
+        "task_id": 159,
+        "event_type": "pickup",
+        "event_time_min": 8.240326630606098
+      },
+      {
+        "task_id": 132,
+        "event_type": "delivery",
+        "event_time_min": 9.939018938104887
+      },
+      {
+        "task_id": 33,
+        "event_type": "pickup",
+        "event_time_min": 10.044428193443833
+      },
+      {
+        "task_id": 159,
+        "event_type": "delivery",
+        "event_time_min": 11.135016436572
+      },
+      {
+        "task_id": 33,
+        "event_type": "delivery",
+        "event_time_min": 12.285968806578984
+      },
+      {
+        "task_id": 101,
+        "event_type": "pickup",
+        "event_time_min": 12.797079917690095
+      },
+      {
+        "task_id": 114,
+        "event_type": "pickup",
+        "event_time_min": 14.19266378152188
+      },
+      {
+        "task_id": 101,
+        "event_type": "delivery",
+        "event_time_min": 18.127958333379027
+      },
+      {
+        "task_id": 18,
+        "event_type": "pickup",
+        "event_time_min": 18.794810159517855
+      },
+      {
+        "task_id": 114,
+        "event_type": "delivery",
+        "event_time_min": 20.403735880397672
+      },
+      {
+        "task_id": 18,
+        "event_type": "delivery",
+        "event_time_min": 21.964995264419922
+      },
+      {
+        "task_id": 162,
+        "event_type": "pickup",
+        "event_time_min": 22.82486892726196
+      },
+      {
+        "task_id": 179,
+        "event_type": "pickup",
+        "event_time_min": 23.445998921011903
+      },
+      {
+        "task_id": 162,
+        "event_type": "delivery",
+        "event_time_min": 26.964082714818826
+      },
+      {
+        "task_id": 179,
+        "event_type": "delivery",
+        "event_time_min": 27.819926822003346
+      },
+      {
+        "task_id": 5,
+        "event_type": "pickup",
+        "event_time_min": 30.444807771684683
+      },
+      {
+        "task_id": 122,
+        "event_type": "pickup",
+        "event_time_min": 31.718521114243497
+      },
+      {
+        "task_id": 5,
+        "event_type": "delivery",
+        "event_time_min": 33.526186548163075
+      },
+      {
+        "task_id": 28,
+        "event_type": "pickup",
+        "event_time_min": 34.73775628803276
+      },
+      {
+        "task_id": 122,
+        "event_type": "delivery",
+        "event_time_min": 35.082379897349895
+      },
+      {
+        "task_id": 28,
+        "event_type": "delivery",
+        "event_time_min": 37.92773565414307
+      },
+      {
+        "task_id": 142,
+        "event_type": "pickup",
+        "event_time_min": 40.184194148835935
+      },
+      {
+        "task_id": 142,
+        "event_type": "delivery",
+        "event_time_min": 41.68234115245222
+      },
+      {
+        "task_id": 98,
+        "event_type": "pickup",
+        "event_time_min": 43.45357912365125
+      },
+      {
+        "task_id": 136,
+        "event_type": "pickup",
+        "event_time_min": 44.26742534930592
+      },
+      {
+        "task_id": 136,
+        "event_type": "delivery",
+        "event_time_min": 52.351100408902
+      },
+      {
+        "task_id": 83,
+        "event_type": "pickup",
+        "event_time_min": 52.9709371058345
+      },
+      {
+        "task_id": 98,
+        "event_type": "delivery",
+        "event_time_min": 53.2709371058345
+      },
+      {
+        "task_id": 187,
+        "event_type": "pickup",
+        "event_time_min": 54.69220414618969
+      },
+      {
+        "task_id": 83,
+        "event_type": "delivery",
+        "event_time_min": 61.31220750301999
+      },
+      {
+        "task_id": 187,
+        "event_type": "delivery",
+        "event_time_min": 61.76558985331117
+      },
+      {
+        "task_id": 91,
+        "event_type": "pickup",
+        "event_time_min": 63.3968432530995
+      },
+      {
+        "task_id": 71,
+        "event_type": "pickup",
+        "event_time_min": 66.55022669957312
+      },
+      {
+        "task_id": 91,
+        "event_type": "delivery",
+        "event_time_min": 67.26867839558766
+      },
+      {
+        "task_id": 74,
+        "event_type": "pickup",
+        "event_time_min": 67.79572467228239
+      },
+      {
+        "task_id": 71,
+        "event_type": "delivery",
+        "event_time_min": 74.35939196999499
+      },
+      {
+        "task_id": 74,
+        "event_type": "delivery",
+        "event_time_min": 76.29852757989447
+      },
+      {
+        "task_id": 29,
+        "event_type": "pickup",
+        "event_time_min": 76.91925992315952
+      },
+      {
+        "task_id": 57,
+        "event_type": "pickup",
+        "event_time_min": 77.80271554013214
+      },
+      {
+        "task_id": 29,
+        "event_type": "delivery",
+        "event_time_min": 80.87189727851289
+      },
+      {
+        "task_id": 57,
+        "event_type": "delivery",
+        "event_time_min": 82.73942353562084
+      },
+      {
+        "task_id": 108,
+        "event_type": "pickup",
+        "event_time_min": 90.0949874832495
+      },
+      {
+        "task_id": 16,
+        "event_type": "pickup",
+        "event_time_min": 91.88059524021304
+      },
+      {
+        "task_id": 108,
+        "event_type": "delivery",
+        "event_time_min": 96.382912887551
+      },
+      {
+        "task_id": 16,
+        "event_type": "delivery",
+        "event_time_min": 97.90383690818557
+      }
+    ],
+    [
+      {
+        "task_id": 75,
+        "event_type": "pickup",
+        "event_time_min": 2.2773712374328476
+      },
+      {
+        "task_id": 129,
+        "event_type": "pickup",
+        "event_time_min": 4.716582808088365
+      },
+      {
+        "task_id": 129,
+        "event_type": "delivery",
+        "event_time_min": 6.2061348991878225
+      },
+      {
+        "task_id": 9,
+        "event_type": "pickup",
+        "event_time_min": 7.692409552702109
+      },
+      {
+        "task_id": 75,
+        "event_type": "delivery",
+        "event_time_min": 9.163195015148352
+      },
+      {
+        "task_id": 169,
+        "event_type": "pickup",
+        "event_time_min": 9.815351930296316
+      },
+      {
+        "task_id": 9,
+        "event_type": "delivery",
+        "event_time_min": 11.744786057024337
+      },
+      {
+        "task_id": 200,
+        "event_type": "pickup",
+        "event_time_min": 12.192689265263144
+      },
+      {
+        "task_id": 200,
+        "event_type": "delivery",
+        "event_time_min": 12.630557276268433
+      },
+      {
+        "task_id": 169,
+        "event_type": "delivery",
+        "event_time_min": 12.964815253079351
+      },
+      {
+        "task_id": 46,
+        "event_type": "pickup",
+        "event_time_min": 13.483598254409518
+      },
+      {
+        "task_id": 1,
+        "event_type": "pickup",
+        "event_time_min": 14.50835356998008
+      },
+      {
+        "task_id": 46,
+        "event_type": "delivery",
+        "event_time_min": 14.996863524135206
+      },
+      {
+        "task_id": 111,
+        "event_type": "pickup",
+        "event_time_min": 16.030256592898443
+      },
+      {
+        "task_id": 111,
+        "event_type": "delivery",
+        "event_time_min": 18.310065984974354
+      },
+      {
+        "task_id": 164,
+        "event_type": "pickup",
+        "event_time_min": 18.65611957391652
+      },
+      {
+        "task_id": 1,
+        "event_type": "delivery",
+        "event_time_min": 20.312607007398572
+      },
+      {
+        "task_id": 66,
+        "event_type": "pickup",
+        "event_time_min": 20.66150297335652
+      },
+      {
+        "task_id": 66,
+        "event_type": "delivery",
+        "event_time_min": 22.099823324355825
+      },
+      {
+        "task_id": 140,
+        "event_type": "pickup",
+        "event_time_min": 23.122105931267956
+      },
+      {
+        "task_id": 140,
+        "event_type": "delivery",
+        "event_time_min": 24.189929378088753
+      },
+      {
+        "task_id": 63,
+        "event_type": "pickup",
+        "event_time_min": 25.44744996427864
+      },
+      {
+        "task_id": 164,
+        "event_type": "delivery",
+        "event_time_min": 25.811413061037733
+      },
+      {
+        "task_id": 84,
+        "event_type": "pickup",
+        "event_time_min": 27.707282515313086
+      },
+      {
+        "task_id": 84,
+        "event_type": "delivery",
+        "event_time_min": 30.80670500233973
+      },
+      {
+        "task_id": 100,
+        "event_type": "pickup",
+        "event_time_min": 31.521020698359525
+      },
+      {
+        "task_id": 100,
+        "event_type": "delivery",
+        "event_time_min": 35.23582258896147
+      },
+      {
+        "task_id": 63,
+        "event_type": "delivery",
+        "event_time_min": 35.64558012039671
+      },
+      {
+        "task_id": 95,
+        "event_type": "pickup",
+        "event_time_min": 35.75997601085212
+      },
+      {
+        "task_id": 95,
+        "event_type": "delivery",
+        "event_time_min": 36.41411761216479
+      },
+      {
+        "task_id": 21,
+        "event_type": "pickup",
+        "event_time_min": 38.40499185402779
+      },
+      {
+        "task_id": 93,
+        "event_type": "pickup",
+        "event_time_min": 39.07911680123301
+      },
+      {
+        "task_id": 21,
+        "event_type": "delivery",
+        "event_time_min": 40.95975236493396
+      },
+      {
+        "task_id": 105,
+        "event_type": "pickup",
+        "event_time_min": 43.35153355976568
+      },
+      {
+        "task_id": 93,
+        "event_type": "delivery",
+        "event_time_min": 45.31153481952844
+      },
+      {
+        "task_id": 158,
+        "event_type": "pickup",
+        "event_time_min": 46.578201486195105
+      },
+      {
+        "task_id": 105,
+        "event_type": "delivery",
+        "event_time_min": 48.645286270661586
+      },
+      {
+        "task_id": 182,
+        "event_type": "pickup",
+        "event_time_min": 49.27431648642684
+      },
+      {
+        "task_id": 158,
+        "event_type": "delivery",
+        "event_time_min": 53.992772500897445
+      },
+      {
+        "task_id": 128,
+        "event_type": "pickup",
+        "event_time_min": 54.652364593326595
+      },
+      {
+        "task_id": 182,
+        "event_type": "delivery",
+        "event_time_min": 56.9282988066135
+      },
+      {
+        "task_id": 128,
+        "event_type": "delivery",
+        "event_time_min": 57.69785856532118
+      },
+      {
+        "task_id": 186,
+        "event_type": "pickup",
+        "event_time_min": 59.408969676432285
+      },
+      {
+        "task_id": 189,
+        "event_type": "pickup",
+        "event_time_min": 62.3691164862717
+      },
+      {
+        "task_id": 186,
+        "event_type": "delivery",
+        "event_time_min": 64.53489978197574
+      },
+      {
+        "task_id": 189,
+        "event_type": "delivery",
+        "event_time_min": 66.29077176471056
+      },
+      {
+        "task_id": 45,
+        "event_type": "pickup",
+        "event_time_min": 68.32459077167415
+      },
+      {
+        "task_id": 157,
+        "event_type": "pickup",
+        "event_time_min": 68.6759549561373
+      },
+      {
+        "task_id": 157,
+        "event_type": "delivery",
+        "event_time_min": 72.44627439114215
+      },
+      {
+        "task_id": 45,
+        "event_type": "delivery",
+        "event_time_min": 73.67980790842962
+      }
+    ],
+    [
+      {
+        "task_id": 172,
+        "event_type": "pickup",
+        "event_time_min": 2.943186314016214
+      },
+      {
+        "task_id": 125,
+        "event_type": "pickup",
+        "event_time_min": 4.288365176784844
+      },
+      {
+        "task_id": 125,
+        "event_type": "delivery",
+        "event_time_min": 6.864705772319047
+      },
+      {
+        "task_id": 126,
+        "event_type": "pickup",
+        "event_time_min": 7.031742398745412
+      },
+      {
+        "task_id": 172,
+        "event_type": "delivery",
+        "event_time_min": 8.155283977420783
+      },
+      {
+        "task_id": 20,
+        "event_type": "pickup",
+        "event_time_min": 8.523294981013654
+      },
+      {
+        "task_id": 20,
+        "event_type": "delivery",
+        "event_time_min": 12.42506729119448
+      },
+      {
+        "task_id": 14,
+        "event_type": "pickup",
+        "event_time_min": 13.697859497330265
+      },
+      {
+        "task_id": 126,
+        "event_type": "delivery",
+        "event_time_min": 15.481807124308835
+      },
+      {
+        "task_id": 88,
+        "event_type": "pickup",
+        "event_time_min": 15.93300580218099
+      },
+      {
+        "task_id": 14,
+        "event_type": "delivery",
+        "event_time_min": 16.721972934451067
+      },
+      {
+        "task_id": 146,
+        "event_type": "pickup",
+        "event_time_min": 17.314623394588605
+      },
+      {
+        "task_id": 146,
+        "event_type": "delivery",
+        "event_time_min": 17.91018309606671
+      },
+      {
+        "task_id": 116,
+        "event_type": "pickup",
+        "event_time_min": 19.182296143298863
+      },
+      {
+        "task_id": 116,
+        "event_type": "delivery",
+        "event_time_min": 21.86596876965106
+      },
+      {
+        "task_id": 185,
+        "event_type": "pickup",
+        "event_time_min": 22.32274220945316
+      },
+      {
+        "task_id": 88,
+        "event_type": "delivery",
+        "event_time_min": 24.06183520421924
+      },
+      {
+        "task_id": 55,
+        "event_type": "pickup",
+        "event_time_min": 24.877802402785335
+      },
+      {
+        "task_id": 55,
+        "event_type": "delivery",
+        "event_time_min": 25.792969526428625
+      },
+      {
+        "task_id": 80,
+        "event_type": "pickup",
+        "event_time_min": 26.447394162989834
+      },
+      {
+        "task_id": 185,
+        "event_type": "delivery",
+        "event_time_min": 26.986826878275984
+      },
+      {
+        "task_id": 24,
+        "event_type": "pickup",
+        "event_time_min": 27.167702662677094
+      },
+      {
+        "task_id": 80,
+        "event_type": "delivery",
+        "event_time_min": 30.63659439874255
+      },
+      {
+        "task_id": 168,
+        "event_type": "pickup",
+        "event_time_min": 31.905646733030025
+      },
+      {
+        "task_id": 24,
+        "event_type": "delivery",
+        "event_time_min": 33.71334631475752
+      },
+      {
+        "task_id": 32,
+        "event_type": "pickup",
+        "event_time_min": 35.4865696474639
+      },
+      {
+        "task_id": 168,
+        "event_type": "delivery",
+        "event_time_min": 36.668793958239
+      },
+      {
+        "task_id": 154,
+        "event_type": "pickup",
+        "event_time_min": 38.817839109399955
+      },
+      {
+        "task_id": 32,
+        "event_type": "delivery",
+        "event_time_min": 43.169367860211075
+      },
+      {
+        "task_id": 137,
+        "event_type": "pickup",
+        "event_time_min": 43.633647469450544
+      },
+      {
+        "task_id": 154,
+        "event_type": "delivery",
+        "event_time_min": 44.42931474900468
+      },
+      {
+        "task_id": 173,
+        "event_type": "pickup",
+        "event_time_min": 45.60126047732296
+      },
+      {
+        "task_id": 173,
+        "event_type": "delivery",
+        "event_time_min": 47.55883519248253
+      },
+      {
+        "task_id": 69,
+        "event_type": "pickup",
+        "event_time_min": 47.91247586943452
+      },
+      {
+        "task_id": 69,
+        "event_type": "delivery",
+        "event_time_min": 50.40834900644477
+      },
+      {
+        "task_id": 137,
+        "event_type": "delivery",
+        "event_time_min": 52.230605103690884
+      },
+      {
+        "task_id": 147,
+        "event_type": "pickup",
+        "event_time_min": 53.36529927579081
+      },
+      {
+        "task_id": 26,
+        "event_type": "pickup",
+        "event_time_min": 55.410015441308865
+      },
+      {
+        "task_id": 147,
+        "event_type": "delivery",
+        "event_time_min": 58.36519503310242
+      },
+      {
+        "task_id": 34,
+        "event_type": "pickup",
+        "event_time_min": 60.41524772739657
+      },
+      {
+        "task_id": 26,
+        "event_type": "delivery",
+        "event_time_min": 62.867860342950706
+      },
+      {
+        "task_id": 41,
+        "event_type": "pickup",
+        "event_time_min": 64.68111742195741
+      },
+      {
+        "task_id": 34,
+        "event_type": "delivery",
+        "event_time_min": 68.23013919641238
+      },
+      {
+        "task_id": 104,
+        "event_type": "pickup",
+        "event_time_min": 71.12743465729557
+      },
+      {
+        "task_id": 41,
+        "event_type": "delivery",
+        "event_time_min": 75.31810624966137
+      },
+      {
+        "task_id": 117,
+        "event_type": "pickup",
+        "event_time_min": 77.71442544355277
+      },
+      {
+        "task_id": 104,
+        "event_type": "delivery",
+        "event_time_min": 80.44832330756748
+      },
+      {
+        "task_id": 25,
+        "event_type": "pickup",
+        "event_time_min": 81.15978155617113
+      },
+      {
+        "task_id": 117,
+        "event_type": "delivery",
+        "event_time_min": 86.20291648164587
+      },
+      {
+        "task_id": 25,
+        "event_type": "delivery",
+        "event_time_min": 88.37720506971267
+      }
+    ],
+    [
+      {
+        "task_id": 4,
+        "event_type": "pickup",
+        "event_time_min": 4.302640590309945
+      },
+      {
+        "task_id": 175,
+        "event_type": "pickup",
+        "event_time_min": 5.802352496800367
+      },
+      {
+        "task_id": 4,
+        "event_type": "delivery",
+        "event_time_min": 7.515770854684921
+      },
+      {
+        "task_id": 86,
+        "event_type": "pickup",
+        "event_time_min": 7.730362053749676
+      },
+      {
+        "task_id": 175,
+        "event_type": "delivery",
+        "event_time_min": 8.506948442861079
+      },
+      {
+        "task_id": 6,
+        "event_type": "pickup",
+        "event_time_min": 10.46694970262384
+      },
+      {
+        "task_id": 86,
+        "event_type": "delivery",
+        "event_time_min": 11.88452022038989
+      },
+      {
+        "task_id": 148,
+        "event_type": "pickup",
+        "event_time_min": 12.215996529060474
+      },
+      {
+        "task_id": 148,
+        "event_type": "delivery",
+        "event_time_min": 12.802680030502433
+      },
+      {
+        "task_id": 47,
+        "event_type": "pickup",
+        "event_time_min": 13.333344649891746
+      },
+      {
+        "task_id": 47,
+        "event_type": "delivery",
+        "event_time_min": 15.02402352588458
+      },
+      {
+        "task_id": 138,
+        "event_type": "pickup",
+        "event_time_min": 15.654621909158479
+      },
+      {
+        "task_id": 6,
+        "event_type": "delivery",
+        "event_time_min": 16.027299905408444
+      },
+      {
+        "task_id": 60,
+        "event_type": "pickup",
+        "event_time_min": 17.406689643438533
+      },
+      {
+        "task_id": 60,
+        "event_type": "delivery",
+        "event_time_min": 20.05556548233256
+      },
+      {
+        "task_id": 36,
+        "event_type": "pickup",
+        "event_time_min": 20.678679922013004
+      },
+      {
+        "task_id": 138,
+        "event_type": "delivery",
+        "event_time_min": 21.703134007289403
+      },
+      {
+        "task_id": 76,
+        "event_type": "pickup",
+        "event_time_min": 22.354154099524525
+      },
+      {
+        "task_id": 36,
+        "event_type": "delivery",
+        "event_time_min": 23.251956629436336
+      },
+      {
+        "task_id": 135,
+        "event_type": "pickup",
+        "event_time_min": 24.947411701455223
+      },
+      {
+        "task_id": 76,
+        "event_type": "delivery",
+        "event_time_min": 26.280235678237762
+      },
+      {
+        "task_id": 155,
+        "event_type": "pickup",
+        "event_time_min": 27.004591501038057
+      },
+      {
+        "task_id": 135,
+        "event_type": "delivery",
+        "event_time_min": 29.526520020403765
+      },
+      {
+        "task_id": 196,
+        "event_type": "pickup",
+        "event_time_min": 31.0533985436306
+      },
+      {
+        "task_id": 155,
+        "event_type": "delivery",
+        "event_time_min": 32.924095251501626
+      },
+      {
+        "task_id": 196,
+        "event_type": "delivery",
+        "event_time_min": 33.89082577301968
+      },
+      {
+        "task_id": 61,
+        "event_type": "pickup",
+        "event_time_min": 34.16860355079746
+      },
+      {
+        "task_id": 77,
+        "event_type": "pickup",
+        "event_time_min": 35.55926908114038
+      },
+      {
+        "task_id": 61,
+        "event_type": "delivery",
+        "event_time_min": 38.87010053838365
+      },
+      {
+        "task_id": 56,
+        "event_type": "pickup",
+        "event_time_min": 40.16099935435895
+      },
+      {
+        "task_id": 56,
+        "event_type": "delivery",
+        "event_time_min": 41.54164153809309
+      },
+      {
+        "task_id": 77,
+        "event_type": "delivery",
+        "event_time_min": 42.91843329996398
+      },
+      {
+        "task_id": 107,
+        "event_type": "pickup",
+        "event_time_min": 44.641085576018995
+      },
+      {
+        "task_id": 163,
+        "event_type": "pickup",
+        "event_time_min": 46.472532416870294
+      },
+      {
+        "task_id": 107,
+        "event_type": "delivery",
+        "event_time_min": 48.67480397142482
+      },
+      {
+        "task_id": 109,
+        "event_type": "pickup",
+        "event_time_min": 49.187000885718874
+      },
+      {
+        "task_id": 163,
+        "event_type": "delivery",
+        "event_time_min": 56.09380554614499
+      },
+      {
+        "task_id": 87,
+        "event_type": "pickup",
+        "event_time_min": 57.346604880771054
+      },
+      {
+        "task_id": 109,
+        "event_type": "delivery",
+        "event_time_min": 58.31327154743772
+      },
+      {
+        "task_id": 176,
+        "event_type": "pickup",
+        "event_time_min": 58.97641036127669
+      },
+      {
+        "task_id": 87,
+        "event_type": "delivery",
+        "event_time_min": 64.95864744232148
+      },
+      {
+        "task_id": 176,
+        "event_type": "delivery",
+        "event_time_min": 65.61486180055407
+      },
+      {
+        "task_id": 161,
+        "event_type": "pickup",
+        "event_time_min": 66.66308192633814
+      },
+      {
+        "task_id": 15,
+        "event_type": "pickup",
+        "event_time_min": 67.28570084749911
+      },
+      {
+        "task_id": 161,
+        "event_type": "delivery",
+        "event_time_min": 70.81406912703703
+      },
+      {
+        "task_id": 15,
+        "event_type": "delivery",
+        "event_time_min": 75.5348793734583
+      },
+      {
+        "task_id": 68,
+        "event_type": "pickup",
+        "event_time_min": 75.95195324854993
+      },
+      {
+        "task_id": 39,
+        "event_type": "pickup",
+        "event_time_min": 76.4655943299422
+      },
+      {
+        "task_id": 68,
+        "event_type": "delivery",
+        "event_time_min": 82.2476440327234
+      },
+      {
+        "task_id": 39,
+        "event_type": "delivery",
+        "event_time_min": 84.20679476835818
+      }
+    ],
+    [
+      {
+        "task_id": 42,
+        "event_type": "pickup",
+        "event_time_min": 2.2354329544468916
+      },
+      {
+        "task_id": 42,
+        "event_type": "delivery",
+        "event_time_min": 7.3784853218957185
+      },
+      {
+        "task_id": 35,
+        "event_type": "pickup",
+        "event_time_min": 7.520776971616449
+      },
+      {
+        "task_id": 165,
+        "event_type": "pickup",
+        "event_time_min": 8.503655083447235
+      },
+      {
+        "task_id": 35,
+        "event_type": "delivery",
+        "event_time_min": 11.357113024651595
+      },
+      {
+        "task_id": 165,
+        "event_type": "delivery",
+        "event_time_min": 13.282415630336423
+      },
+      {
+        "task_id": 139,
+        "event_type": "pickup",
+        "event_time_min": 13.503802950838326
+      },
+      {
+        "task_id": 22,
+        "event_type": "pickup",
+        "event_time_min": 14.094366607101362
+      },
+      {
+        "task_id": 139,
+        "event_type": "delivery",
+        "event_time_min": 16.479738695476673
+      },
+      {
+        "task_id": 22,
+        "event_type": "delivery",
+        "event_time_min": 18.41626224472417
+      },
+      {
+        "task_id": 48,
+        "event_type": "pickup",
+        "event_time_min": 18.900329376075103
+      },
+      {
+        "task_id": 10,
+        "event_type": "pickup",
+        "event_time_min": 19.422078570825054
+      },
+      {
+        "task_id": 10,
+        "event_type": "delivery",
+        "event_time_min": 21.56583205766669
+      },
+      {
+        "task_id": 194,
+        "event_type": "pickup",
+        "event_time_min": 23.41258429528832
+      },
+      {
+        "task_id": 48,
+        "event_type": "delivery",
+        "event_time_min": 26.051911744226032
+      },
+      {
+        "task_id": 131,
+        "event_type": "pickup",
+        "event_time_min": 27.02766722867493
+      },
+      {
+        "task_id": 194,
+        "event_type": "delivery",
+        "event_time_min": 28.676048402380562
+      },
+      {
+        "task_id": 131,
+        "event_type": "delivery",
+        "event_time_min": 31.330767005961274
+      },
+      {
+        "task_id": 97,
+        "event_type": "pickup",
+        "event_time_min": 31.842963920255322
+      },
+      {
+        "task_id": 191,
+        "event_type": "pickup",
+        "event_time_min": 32.172947084809046
+      },
+      {
+        "task_id": 97,
+        "event_type": "delivery",
+        "event_time_min": 33.345314111146976
+      },
+      {
+        "task_id": 191,
+        "event_type": "delivery",
+        "event_time_min": 36.45694105251097
+      },
+      {
+        "task_id": 123,
+        "event_type": "pickup",
+        "event_time_min": 37.83691242455255
+      },
+      {
+        "task_id": 119,
+        "event_type": "pickup",
+        "event_time_min": 39.28911381860535
+      },
+      {
+        "task_id": 119,
+        "event_type": "delivery",
+        "event_time_min": 41.613142887079135
+      },
+      {
+        "task_id": 123,
+        "event_type": "delivery",
+        "event_time_min": 45.652975422417725
+      },
+      {
+        "task_id": 7,
+        "event_type": "pickup",
+        "event_time_min": 46.36173890836515
+      },
+      {
+        "task_id": 81,
+        "event_type": "pickup",
+        "event_time_min": 53.28083040656734
+      },
+      {
+        "task_id": 7,
+        "event_type": "delivery",
+        "event_time_min": 53.73895325385819
+      },
+      {
+        "task_id": 102,
+        "event_type": "pickup",
+        "event_time_min": 54.54785435266714
+      },
+      {
+        "task_id": 81,
+        "event_type": "delivery",
+        "event_time_min": 57.29391775279665
+      },
+      {
+        "task_id": 52,
+        "event_type": "pickup",
+        "event_time_min": 58.228308687980146
+      },
+      {
+        "task_id": 52,
+        "event_type": "delivery",
+        "event_time_min": 61.27009584946966
+      },
+      {
+        "task_id": 50,
+        "event_type": "pickup",
+        "event_time_min": 63.38908699074187
+      },
+      {
+        "task_id": 102,
+        "event_type": "delivery",
+        "event_time_min": 67.52715178565671
+      },
+      {
+        "task_id": 49,
+        "event_type": "pickup",
+        "event_time_min": 68.43887244896386
+      },
+      {
+        "task_id": 50,
+        "event_type": "delivery",
+        "event_time_min": 68.66385530153404
+      },
+      {
+        "task_id": 90,
+        "event_type": "pickup",
+        "event_time_min": 68.89183624074164
+      },
+      {
+        "task_id": 90,
+        "event_type": "delivery",
+        "event_time_min": 73.87111428846535
+      },
+      {
+        "task_id": 49,
+        "event_type": "delivery",
+        "event_time_min": 75.12745622509263
+      },
+      {
+        "task_id": 79,
+        "event_type": "pickup",
+        "event_time_min": 75.80414022414085
+      },
+      {
+        "task_id": 62,
+        "event_type": "pickup",
+        "event_time_min": 76.61181941726913
+      },
+      {
+        "task_id": 79,
+        "event_type": "delivery",
+        "event_time_min": 81.72839861787273
+      },
+      {
+        "task_id": 67,
+        "event_type": "pickup",
+        "event_time_min": 81.91761402193858
+      },
+      {
+        "task_id": 62,
+        "event_type": "delivery",
+        "event_time_min": 82.31170619640454
+      },
+      {
+        "task_id": 177,
+        "event_type": "pickup",
+        "event_time_min": 83.51175763563127
+      },
+      {
+        "task_id": 67,
+        "event_type": "delivery",
+        "event_time_min": 88.15222642846717
+      },
+      {
+        "task_id": 177,
+        "event_type": "delivery",
+        "event_time_min": 88.25160722746716
+      },
+      {
+        "task_id": 180,
+        "event_type": "pickup",
+        "event_time_min": 90.30235234950344
+      },
+      {
+        "task_id": 180,
+        "event_type": "delivery",
+        "event_time_min": 96.10435285592735
+      }
+    ],
+    [
+      {
+        "task_id": 134,
+        "event_type": "pickup",
+        "event_time_min": 3.7978713986250017
+      },
+      {
+        "task_id": 134,
+        "event_type": "delivery",
+        "event_time_min": 4.256801985915299
+      },
+      {
+        "task_id": 184,
+        "event_type": "pickup",
+        "event_time_min": 6.5574728488926795
+      },
+      {
+        "task_id": 183,
+        "event_type": "pickup",
+        "event_time_min": 7.7740253549523235
+      },
+      {
+        "task_id": 183,
+        "event_type": "delivery",
+        "event_time_min": 8.905887144708966
+      },
+      {
+        "task_id": 103,
+        "event_type": "pickup",
+        "event_time_min": 9.016998255820077
+      },
+      {
+        "task_id": 184,
+        "event_type": "delivery",
+        "event_time_min": 12.765067717737509
+      },
+      {
+        "task_id": 11,
+        "event_type": "pickup",
+        "event_time_min": 12.953956606626399
+      },
+      {
+        "task_id": 103,
+        "event_type": "delivery",
+        "event_time_min": 13.711225904910343
+      },
+      {
+        "task_id": 11,
+        "event_type": "delivery",
+        "event_time_min": 13.940287328555769
+      },
+      {
+        "task_id": 127,
+        "event_type": "pickup",
+        "event_time_min": 15.706988935477899
+      },
+      {
+        "task_id": 38,
+        "event_type": "pickup",
+        "event_time_min": 16.44351397633019
+      },
+      {
+        "task_id": 38,
+        "event_type": "delivery",
+        "event_time_min": 18.819577740698833
+      },
+      {
+        "task_id": 127,
+        "event_type": "delivery",
+        "event_time_min": 19.16420135001596
+      },
+      {
+        "task_id": 120,
+        "event_type": "pickup",
+        "event_time_min": 20.258575290215404
+      },
+      {
+        "task_id": 99,
+        "event_type": "pickup",
+        "event_time_min": 20.652667464681365
+      },
+      {
+        "task_id": 120,
+        "event_type": "delivery",
+        "event_time_min": 24.637282940963505
+      },
+      {
+        "task_id": 167,
+        "event_type": "pickup",
+        "event_time_min": 26.698686034986938
+      },
+      {
+        "task_id": 167,
+        "event_type": "delivery",
+        "event_time_min": 28.948514560688782
+      },
+      {
+        "task_id": 99,
+        "event_type": "delivery",
+        "event_time_min": 30.008796377407432
+      },
+      {
+        "task_id": 110,
+        "event_type": "pickup",
+        "event_time_min": 30.873609209509212
+      },
+      {
+        "task_id": 72,
+        "event_type": "pickup",
+        "event_time_min": 33.183037015292165
+      },
+      {
+        "task_id": 110,
+        "event_type": "delivery",
+        "event_time_min": 37.02280616987605
+      },
+      {
+        "task_id": 40,
+        "event_type": "pickup",
+        "event_time_min": 40.00033518104381
+      },
+      {
+        "task_id": 72,
+        "event_type": "delivery",
+        "event_time_min": 42.486246097874854
+      },
+      {
+        "task_id": 53,
+        "event_type": "pickup",
+        "event_time_min": 42.93976457858504
+      },
+      {
+        "task_id": 40,
+        "event_type": "delivery",
+        "event_time_min": 45.27026550497431
+      },
+      {
+        "task_id": 85,
+        "event_type": "pickup",
+        "event_time_min": 46.38691835176552
+      },
+      {
+        "task_id": 53,
+        "event_type": "delivery",
+        "event_time_min": 51.87580724065441
+      },
+      {
+        "task_id": 30,
+        "event_type": "pickup",
+        "event_time_min": 52.94617120321372
+      },
+      {
+        "task_id": 85,
+        "event_type": "delivery",
+        "event_time_min": 53.94028970969988
+      },
+      {
+        "task_id": 13,
+        "event_type": "pickup",
+        "event_time_min": 56.82917859858877
+      },
+      {
+        "task_id": 30,
+        "event_type": "delivery",
+        "event_time_min": 58.75739660788077
+      },
+      {
+        "task_id": 170,
+        "event_type": "pickup",
+        "event_time_min": 59.49609750292942
+      },
+      {
+        "task_id": 13,
+        "event_type": "delivery",
+        "event_time_min": 63.34830546367603
+      },
+      {
+        "task_id": 166,
+        "event_type": "pickup",
+        "event_time_min": 64.06495059685813
+      },
+      {
+        "task_id": 170,
+        "event_type": "delivery",
+        "event_time_min": 65.42650381303949
+      },
+      {
+        "task_id": 199,
+        "event_type": "pickup",
+        "event_time_min": 67.56376870878076
+      },
+      {
+        "task_id": 166,
+        "event_type": "delivery",
+        "event_time_min": 71.10172864267305
+      },
+      {
+        "task_id": 199,
+        "event_type": "delivery",
+        "event_time_min": 72.38375057965915
+      },
+      {
+        "task_id": 149,
+        "event_type": "pickup",
+        "event_time_min": 75.07100903851482
+      },
+      {
+        "task_id": 149,
+        "event_type": "delivery",
+        "event_time_min": 77.78089036250734
+      },
+      {
+        "task_id": 145,
+        "event_type": "pickup",
+        "event_time_min": 80.69066528910506
+      },
+      {
+        "task_id": 8,
+        "event_type": "pickup",
+        "event_time_min": 82.08186336945359
+      },
+      {
+        "task_id": 8,
+        "event_type": "delivery",
+        "event_time_min": 88.35506720957811
+      },
+      {
+        "task_id": 145,
+        "event_type": "delivery",
+        "event_time_min": 88.85703863171484
+      },
+      {
+        "task_id": 151,
+        "event_type": "pickup",
+        "event_time_min": 90.44969151601718
+      },
+      {
+        "task_id": 133,
+        "event_type": "pickup",
+        "event_time_min": 92.34112770690429
+      },
+      {
+        "task_id": 151,
+        "event_type": "delivery",
+        "event_time_min": 97.84027466656545
+      },
+      {
+        "task_id": 133,
+        "event_type": "delivery",
+        "event_time_min": 98.61399423805672
+      }
+    ]
+  ]
+}
