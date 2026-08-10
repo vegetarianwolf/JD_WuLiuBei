@@ -50,7 +50,7 @@
 
 覆盖 late-risk 选择与完整 pair 删除、pool 上限/优先回插/终态清空、真实与 soft
 deadline 隔离、SearchScore 词典序、全路线 risk-aware 插入、baseline 热路径、五方法
-配置差异、预算合规、checkpoint 恢复和官方 paired comparison。最终全套测试为
+配置差异、预算合规、checkpoint 恢复和官方三项指标比较顺序。最终全套测试为
 `73 passed`。
 
 `algorithm/src/uav_dispatch/model.py`、`algorithm/src/uav_dispatch/validation.py`、
@@ -96,16 +96,18 @@ deadline 的迟到分钟与 deadline 紧迫度 priority 计算。官方 best 和
 配置：200 任务、8 架无人机、单机 25 任务、容量 2；seeds
 `2026080500..2026080502`；每次总预算 240 秒；相同输入、初始路线和官方评价。
 
-| method | mean late_count | mean total_lateness | mean distance | paired vs A2 |
-|---|---:|---:|---:|---:|
-| A2 baseline | 69.667 | 2328.494 | 645.747 | — |
-| A2 + late-risk destroy | **68.667** | **2310.280** | 645.854 | **2 胜 / 1 负** |
-| A2 + rejection pool | 74.000 | 2503.373 | 669.156 | 0 胜 / 3 负 |
-| A2 + soft deadline | 74.333 | 2412.587 | 653.681 | 0 胜 / 3 负 |
-| A2 + 三者组合 | 76.333 | 2652.729 | 679.202 | 0 胜 / 3 负 |
+| method | mean late_count | mean total_lateness | mean distance |
+|---|---:|---:|---:|
+| A2 baseline | 69.667 | 2328.494 | 645.747 |
+| A2 + late-risk destroy | **68.667** | **2310.280** | 645.854 |
+| A2 + rejection pool | 74.000 | 2503.373 | 669.156 |
+| A2 + soft deadline | 74.333 | 2412.587 | 653.681 |
+| A2 + 三者组合 | 76.333 | 2652.729 | 679.202 |
 
-late-risk destroy 相对 A2 平均少 1 个逾期订单、少 18.214 分钟总逾期，只增加
-0.107 km；三个 seed 的 late_count 变化为 `0/-3/0`，没有 seed 增加逾期数。
+late-risk destroy 的三个 seed `late_count` 为 `70/66/70`，A2 baseline 为
+`70/69/70`。跨 main 之外全部历史分支的同口径正式结果审计见
+`algorithm/reports/adaptive_deadline_rejection_report.md`；报告只使用题目官方的
+`late_count`、`total_lateness`、`distance`。
 
 15/15 个正式解均合法且未超过 240 秒。所有最终 `rejected_tasks` 均为 0；启用
 pool 的运行临时峰值为 20，未超过 10% 上限。

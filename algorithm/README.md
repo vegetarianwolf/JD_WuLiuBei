@@ -115,6 +115,7 @@ PYTHONPATH=algorithm/src python3 \
 ```
 
 断点续跑增加 `--resume`；恢复时会校验输入、源码、完整配置、路线文件哈希、
-官方得分、预算与拒绝池终态。正式结果支持仅启用 `late_risk_destroy`：其三 seed
-平均少 1 个逾期订单、官方配对 2 胜 1 负；其余新增模块应保持关闭。完整结论见
+官方得分、预算与拒绝池终态。报告同时审计 main 之外所有历史分支，并只比较题目
+官方三项指标。正式结果支持仅启用 `late_risk_destroy`：其三-seed均值为
+`(68.667, 2310.280, 645.854)`；其余新增模块应保持关闭。完整结论见
 [adaptive_deadline_rejection_report.md](reports/adaptive_deadline_rejection_report.md)。
