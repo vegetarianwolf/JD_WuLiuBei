@@ -68,6 +68,34 @@ def test_exact_solver_respects_lexicographic_deadline_priority():
     assert result.evaluation.score.distance_km == pytest.approx(22.0)
 
 
+def test_exact_solver_rejects_relay_or_non_origin_semantics():
+    tasks = (Task(1, Point(1, 0), Point(2, 0), 100),)
+    non_origin = Problem(
+        tasks,
+        drone_count=1,
+        max_tasks_per_drone=1,
+        drone_homes=(Point(1, 1),),
+    )
+    with pytest.raises(ValueError, match="原点起飞"):
+        solve_exact(non_origin)
+
+    from uav_dispatch import RelayStation, TransportLeg
+
+    relay = Problem(
+        tasks,
+        drone_count=1,
+        max_tasks_per_drone=1,
+        relay_stations=(RelayStation(1, 0.5, 0.0),),
+        leg_registry={
+            2: TransportLeg(2, 1, "RELAY_IN", 1),
+            3: TransportLeg(3, 1, "RELAY_OUT", 1),
+        },
+        task_relay_candidates={1: (1,)},
+    )
+    with pytest.raises(ValueError, match="Direct"):
+        solve_exact(relay)
+
+
 def test_best_insertion_rejects_more_routes_than_available_drones():
     tasks = (
         Task(1, Point(1, 0), Point(2, 0), 100),

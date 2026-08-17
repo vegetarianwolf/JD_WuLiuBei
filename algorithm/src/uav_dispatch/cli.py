@@ -16,7 +16,6 @@ from .alns import (
     construct_nearest_adjacent,
     construct_regret_initial,
     solve_alns,
-    solve_alns_core,
     solve_relay_staged,
 )
 from .deployment import (
@@ -375,10 +374,8 @@ def _parser() -> argparse.ArgumentParser:
         "nearest",
         "greedy",
         "regret2",
-        "alns-core",
-        "basic-alns",
-        "halns",
-    ), default="halns")
+        "alns",
+    ), default="alns")
     solve.add_argument("--tasks", type=int)
     solve.add_argument("--drones", type=int, default=8)
     solve.add_argument("--max-tasks", type=int, default=25)
@@ -429,11 +426,6 @@ def _parser() -> argparse.ArgumentParser:
         help="stations 场景关闭 home 感知初始构造（就近播种 + home 偏向）",
     )
     solve.add_argument(
-        "--enable-home-displaced",
-        action="store_true",
-        help="启用 home_displaced 破坏算子：优先移除被分配到离自己起点较远的机的任务",
-    )
-    solve.add_argument(
         "--relay-direct-warmup",
         type=float,
         default=0.80,
@@ -479,9 +471,13 @@ def _solve(args: argparse.Namespace) -> SolverResult:
         if args.tasks <= 0:
             raise ValueError("--tasks 必须为正整数")
         tasks = tasks[: args.tasks]
+    # The Pareto-DP oracle is deliberately origin-based Direct only.  Force
+    # that domain instead of silently building a relay network from CLI
+    # defaults and then claiming an "exact" result for unsupported semantics.
+    exact_direct = args.method == "exact"
     relay_count = (
         0
-        if args.disable_relay
+        if args.disable_relay or exact_direct
         else resolve_relay_count(
             tasks,
             args.drones,
@@ -490,7 +486,7 @@ def _solve(args: argparse.Namespace) -> SolverResult:
             location_method=args.relay_location_method,
         )
     )
-    if args.relay_count == "auto" and not args.disable_relay:
+    if args.relay_count == "auto" and not args.disable_relay and not exact_direct:
         print(
             f"[relay] 动态建站数（需求驱动）: {relay_count}",
             file=sys.stderr,
@@ -527,7 +523,7 @@ def _solve(args: argparse.Namespace) -> SolverResult:
         )
     depot = Point(args.depot_x, args.depot_y)
     deployment_plan: DeploymentPlan | None = None
-    if args.drone_homes == "stations":
+    if args.drone_homes == "stations" and not exact_direct:
         deployment_plan = compute_dynamic_uav_homes(
             tasks,
             network.stations,
@@ -597,21 +593,13 @@ def _solve(args: argparse.Namespace) -> SolverResult:
             relay_refine_task_limit=args.relay_refine_task_limit,
             relay_debug=args.relay_debug,
             enable_home_seed=args.enable_home_seed or home_aware,
-            enable_home_displaced=args.enable_home_displaced,
             enable_home_bias=args.enable_home_bias or home_aware,
         )
-        if args.method in {"alns-core", "basic-alns"}:
-            result = (
-                solve_relay_staged(problem, config=config, core=True)
-                if problem.has_relays
-                else solve_alns_core(problem, config=config)
-            )
-        else:
-            result = (
-                solve_relay_staged(problem, config=config)
-                if problem.has_relays
-                else solve_alns(problem, config=config)
-            )
+        result = (
+            solve_relay_staged(problem, config=config)
+            if problem.has_relays
+            else solve_alns(problem, config=config)
+        )
     payload = result_payload(problem, result, source=args.input)
     rendered = json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
     if args.output:

@@ -8,7 +8,6 @@ from uav_dispatch import (
     construct_regret_initial,
     evaluate_solution,
     solve_alns,
-    solve_alns_core,
 )
 from uav_dispatch.alns import _RepairCache
 
@@ -68,8 +67,6 @@ def test_fixed_iteration_alns_is_reproducible_and_preserves_best_so_far():
         time_limit_seconds=None,
         seed=20260805,
         candidate_limit=None,
-        route_pool_interval=10,
-        ejection_interval=10,
         weight_update_interval=8,
     )
 
@@ -95,6 +92,61 @@ def test_fixed_iteration_alns_is_reproducible_and_preserves_best_so_far():
     )
 
 
+def test_public_alns_reports_only_the_supported_14_operator_core():
+    problem = _fleet_problem()
+
+    result = solve_alns(
+        problem,
+        config=ALNSConfig(
+            max_iterations=2,
+            seed=20260805,
+            candidate_limit=None,
+        ),
+    )
+
+    assert result.metadata["method"] == "C2-Lex-ALNS"
+    assert set(result.metadata["operator_uses"]) == {
+        "destroy:random",
+        "destroy:worst_distance",
+        "destroy:worst_lex",
+        "destroy:spatial_related",
+        "destroy:deadline_related",
+        "destroy:late_critical",
+        "destroy:route_segment",
+        "destroy:capacity_conflict",
+        "destroy:assignment_destroy",
+        "repair:greedy",
+        "repair:regret2",
+        "repair:regret3",
+        "repair:deadline",
+        "repair:slack",
+    }
+    assert "enable_ejection" not in result.metadata
+    assert "enable_route_pool" not in result.metadata
+    assert "enable_vnd" not in result.metadata
+    assert "enable_cluster_repair" not in result.metadata
+
+
+def test_operator_effectiveness_statistics_are_reported_for_every_core_operator():
+    result = solve_alns(
+        _fleet_problem(),
+        config=ALNSConfig(
+            max_iterations=20,
+            seed=20260805,
+            candidate_limit=None,
+        ),
+    )
+
+    stats = result.metadata["operator_statistics"]
+    assert set(stats) == set(result.metadata["operator_uses"])
+    for name, values in stats.items():
+        assert values["uses"] == result.metadata["operator_uses"][name]
+        assert 0 <= values["accepted"] <= values["uses"]
+        assert 0 <= values["current_improvements"] <= values["accepted"]
+        assert 0 <= values["best_improvements"] <= values["current_improvements"]
+        assert values["total_reward"] >= 0.0
+
+
 def test_warm_start_with_unused_drones_is_padded_with_empty_routes():
     tasks = (
         Task(1, Point(1, 0), Point(2, 0), 100),
@@ -112,25 +164,6 @@ def test_warm_start_with_unused_drones_is_padded_with_empty_routes():
     assert len(result.routes) == 2
     assert result.routes[1] == ()
     assert result.evaluation.valid
-
-
-def test_alns_core_public_solver_disables_hybrid_reinforcement():
-    problem = _fleet_problem()
-    config = ALNSConfig(
-        max_iterations=20,
-        seed=20260805,
-        candidate_limit=None,
-        enable_route_pool=True,
-        enable_ejection=True,
-    )
-
-    result = solve_alns_core(problem, config=config)
-
-    assert result.evaluation.valid
-    assert result.metadata["method"] == "C2-Lex-ALNS-Core"
-    assert result.metadata["enable_route_pool"] is False
-    assert result.metadata["enable_ejection"] is False
-    assert result.metadata["route_pool_columns"] == 0
 
 
 def test_expired_search_budget_does_not_start_an_iteration():

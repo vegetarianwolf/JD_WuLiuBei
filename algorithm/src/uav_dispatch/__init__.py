@@ -10,7 +10,6 @@ from .alns import (
     construct_regret_initial,
     destroy_solution,
     solve_alns,
-    solve_alns_core,
     solve_relay_staged,
 )
 from .model import (
@@ -58,6 +57,5 @@ __all__ = [
     "load_tasks_csv",
     "solve_exact",
     "solve_alns",
-    "solve_alns_core",
     "solve_relay_staged",
 ]

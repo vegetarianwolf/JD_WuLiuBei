@@ -50,10 +50,19 @@ def _add_label(frontier: list[_Label], candidate: _Label) -> None:
 
 
 def solve_exact(problem: Problem, max_tasks: int = 10) -> SolverResult:
-    """Solve a small single-drone instance exactly with non-dominated labels."""
+    """Solve a small origin-based Direct instance with Pareto labels.
+
+    The state clock starts at the common depot and does not model relay legs
+    or heterogeneous homes.  Rejecting those semantics explicitly prevents
+    an apparently exact result from being used outside the oracle's domain.
+    """
 
     if problem.drone_count != 1:
         raise ValueError("精确动态规划当前只支持单架无人机")
+    if problem.has_relays:
+        raise ValueError("精确动态规划当前只支持 Direct 任务")
+    if any(node != 0 for node in problem.drone_home_nodes):
+        raise ValueError("精确动态规划当前只支持从公共原点起飞")
     task_count = len(problem.tasks)
     if task_count > max_tasks:
         raise ValueError(f"精确求解最多支持 {max_tasks} 个任务")

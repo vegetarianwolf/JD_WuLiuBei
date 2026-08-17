@@ -1,29 +1,24 @@
-"""Reproduce the exact, single-drone, and 200-task fleet experiments."""
+"""Final Section 5 experiments: exact oracle and relaxed multi-UAV scales."""
 
 from __future__ import annotations
 
 import argparse
 import csv
-import gc
 import hashlib
 import json
 import math
-import platform
-import statistics
-import sys
-from collections import defaultdict
-from dataclasses import replace
+import time
+from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Sequence
 
 from uav_dispatch import (
     ALNSConfig,
+    Point,
     Problem,
     SolverResult,
-    construct_edd_adjacent,
-    construct_greedy_initial,
-    construct_nearest_adjacent,
+    Task,
     construct_regret_initial,
     load_tasks_csv,
     solve_alns,
@@ -31,21 +26,32 @@ from uav_dispatch import (
 )
 from uav_dispatch.cli import result_payload
 
+from algorithm.experiments.run_scenario_comparison import (
+    _environment_manifest,
+    _git_state,
+    _optional_sha256,
+    _sha256,
+    _solver_source_sha256,
+)
+from algorithm.experiments.run_sensitivity_analysis import scale_deadlines
+
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_INPUT = ROOT / "algorithm" / "命题1-低空经济场景下的物流无人机调度算法数据.csv"
-DEFAULT_OUTPUT = ROOT / "algorithm" / "results"
-T_CRITICAL_95 = {
-    1: 12.706,
-    2: 4.303,
-    3: 3.182,
-    4: 2.776,
-    5: 2.571,
-    6: 2.447,
-    7: 2.365,
-    8: 2.306,
-    9: 2.262,
-    10: 2.228,
+DEFAULT_INPUT = (
+    ROOT / "algorithm" / "命题1-低空经济场景下的物流无人机调度算法数据.csv"
+)
+DEFAULT_OUTPUT = ROOT / "algorithm" / "results" / "final_benchmarks"
+EXACT_SIZES = (5, 8, 10, 12)
+MULTISCALE_TASK_COUNTS = (50, 100, 150, 200)
+RELAXED_DEADLINE_MULTIPLIER = 2.5
+EXACT_ALNS_ITERATIONS = 1_000
+QUICK_EXACT_ALNS_ITERATIONS = 100
+MAX_TASKS_PER_DRONE = 25
+FORMAL_PROTOCOL_CONFIG: dict[str, int | float] = {
+    "seed": 2026081701,
+    "scale_seconds": 30.0,
+    "max_iterations": 10_000_000,
+    "candidate_limit": 48,
 }
 
 
@@ -57,7 +63,7 @@ def _score_tuple(result: SolverResult) -> tuple[int, float, float]:
 def _best_within_budget(
     results: list[SolverResult], budget_seconds: float
 ) -> SolverResult:
-    """Return the lexicographic best run that met the total wall-clock budget."""
+    """Return the lexicographic best run that met its wall-clock budget."""
 
     compliant = [
         result for result in results if result.runtime_seconds <= budget_seconds
@@ -69,500 +75,383 @@ def _best_within_budget(
     return min(compliant, key=_score_tuple)
 
 
-def _with_total_runtime(
-    result: SolverResult, initial: SolverResult | None
-) -> SolverResult:
-    if initial is None:
-        return result
-    metadata = dict(result.metadata)
-    metadata["search_runtime_seconds"] = result.runtime_seconds
-    metadata["initial_construction_seconds"] = initial.runtime_seconds
-    if "time_to_best_seconds" in metadata:
-        metadata["time_to_best_seconds"] += initial.runtime_seconds
-    return replace(
-        result,
-        runtime_seconds=result.runtime_seconds + initial.runtime_seconds,
-        metadata=metadata,
+def report_example_problem() -> Problem:
+    """Return the title's two-task distance-matrix example."""
+
+    matrix = (
+        (0, 5, 9, 8, 9),
+        (5, 0, 4, 1, 5),
+        (9, 4, 0, 4, 3),
+        (8, 1, 4, 0, 2),
+        (9, 5, 3, 2, 0),
+    )
+    tasks = (
+        Task(1, Point(0, 0), Point(0, 0), 100),
+        Task(2, Point(0, 0), Point(0, 0), 100),
+    )
+    return Problem(
+        tasks,
+        drone_count=1,
+        max_tasks_per_drone=2,
+        distance_matrix_km=matrix,
     )
 
 
-def _record(
-    rows: list[dict[str, Any]],
+def _row(
     *,
-    scenario: str,
+    experiment: str,
     method: str,
     problem: Problem,
     result: SolverResult,
     seed: int | None,
+    deadline_multiplier: float,
     oracle: SolverResult | None = None,
-) -> None:
-    evaluation = result.evaluation
+) -> dict[str, Any]:
+    score = result.evaluation.score
     row: dict[str, Any] = {
-        "scenario": scenario,
+        "experiment": experiment,
         "method": method,
-        "seed": "" if seed is None else seed,
         "task_count": len(problem.tasks),
         "drone_count": problem.drone_count,
-        "max_tasks_per_drone": problem.max_tasks_per_drone,
-        "valid": evaluation.valid,
-        "late_count": evaluation.score.late_count,
-        "on_time_rate": evaluation.on_time_rate,
-        "total_lateness_min": evaluation.score.total_lateness_min,
-        "max_lateness_min": evaluation.max_lateness_min,
-        "distance_km": evaluation.score.distance_km,
-        "max_route_distance_km": evaluation.max_route_distance_km,
+        "deadline_multiplier": deadline_multiplier,
+        "seed": seed,
+        "late_count": score.late_count,
+        "total_lateness_min": score.total_lateness_min,
+        "distance_km": score.distance_km,
         "runtime_seconds": result.runtime_seconds,
         "iterations": result.iterations,
-        "time_to_best_seconds": result.metadata.get(
-            "time_to_best_seconds", result.runtime_seconds
-        ),
-        "accepted_solutions": result.metadata.get("accepted_solutions", ""),
-        "route_pool_columns": result.metadata.get("route_pool_columns", ""),
+        "valid": result.evaluation.valid,
+        "operator_statistics": {
+            key: dict(value)
+            for key, value in result.metadata.get(
+                "operator_statistics", {}
+            ).items()
+        },
     }
     if oracle is not None:
-        oracle_score = oracle.evaluation.score
+        exact_score = oracle.evaluation.score
         row.update(
             {
-                "oracle_late_count": oracle_score.late_count,
-                "oracle_total_lateness_min": oracle_score.total_lateness_min,
-                "oracle_distance_km": oracle_score.distance_km,
-                "late_count_gap": evaluation.score.late_count
-                - oracle_score.late_count,
-                "lateness_gap_min": evaluation.score.total_lateness_min
-                - oracle_score.total_lateness_min,
-                "distance_gap_percent": (
-                    100
-                    * (evaluation.score.distance_km - oracle_score.distance_km)
-                    / oracle_score.distance_km
-                    if evaluation.score.late_count == oracle_score.late_count
-                    and math.isclose(
-                        evaluation.score.total_lateness_min,
-                        oracle_score.total_lateness_min,
-                        abs_tol=1e-9,
-                    )
-                    else ""
-                ),
+                "oracle_late_count": exact_score.late_count,
+                "oracle_total_lateness_min": exact_score.total_lateness_min,
+                "oracle_distance_km": exact_score.distance_km,
+                "matches_oracle": score == exact_score,
             }
         )
-    rows.append(row)
-    print(
-        f"{scenario:12s} {method:24s} seed={str(seed):>10s} "
-        f"score={_score_tuple(result)} runtime={result.runtime_seconds:.3f}s",
-        flush=True,
-    )
+    return row
 
 
-def _ci_half_width(values: list[float]) -> float:
-    if len(values) < 2:
-        return 0.0
-    critical = T_CRITICAL_95.get(len(values) - 1, 1.96)
-    return critical * statistics.stdev(values) / math.sqrt(len(values))
-
-
-def _summaries(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    groups: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
-    for row in rows:
-        groups[(row["scenario"], row["method"])].append(row)
-    summaries = []
-    numeric_fields = (
-        "late_count",
-        "on_time_rate",
-        "total_lateness_min",
-        "max_lateness_min",
-        "distance_km",
-        "max_route_distance_km",
-        "runtime_seconds",
-        "time_to_best_seconds",
-    )
-    for (scenario, method), group in sorted(groups.items()):
-        best = min(
-            group,
-            key=lambda row: (
-                row["late_count"],
-                row["total_lateness_min"],
-                row["distance_km"],
-            ),
-        )
-        summary: dict[str, Any] = {
-            "scenario": scenario,
-            "method": method,
-            "runs": len(group),
-            "valid_rate": sum(bool(row["valid"]) for row in group) / len(group),
-            "best_late_count": best["late_count"],
-            "best_total_lateness_min": best["total_lateness_min"],
-            "best_distance_km": best["distance_km"],
+def _write_csv(path: Path, rows: Sequence[dict[str, Any]]) -> None:
+    scalar = [
+        {
+            key: value
+            for key, value in row.items()
+            if not isinstance(value, (dict, list, tuple))
         }
-        for field in numeric_fields:
-            values = [float(row[field]) for row in group]
-            summary[f"mean_{field}"] = statistics.fmean(values)
-            summary[f"sd_{field}"] = statistics.stdev(values) if len(values) > 1 else 0.0
-            summary[f"ci95_half_width_{field}"] = _ci_half_width(values)
-        summaries.append(summary)
-    return summaries
-
-
-def _paired_lex_counts(rows: list[dict[str, Any]], scenario: str) -> dict[str, int]:
-    paired: dict[int, dict[str, tuple[int, float, float]]] = defaultdict(dict)
-    for row in rows:
-        if row["scenario"] != scenario or row["seed"] == "":
-            continue
-        if row["method"] not in {"C2-Lex-ALNS", "C2-Lex-HALNS"}:
-            continue
-        paired[int(row["seed"])][row["method"]] = (
-            int(row["late_count"]),
-            float(row["total_lateness_min"]),
-            float(row["distance_km"]),
-        )
-    counts = {"halns_win": 0, "tie": 0, "halns_loss": 0}
-    for methods in paired.values():
-        if len(methods) != 2:
-            continue
-        full = methods["C2-Lex-HALNS"]
-        basic = methods["C2-Lex-ALNS"]
-        if full < basic:
-            counts["halns_win"] += 1
-        elif full > basic:
-            counts["halns_loss"] += 1
-        else:
-            counts["tie"] += 1
-    return counts
-
-
-def _data_audit(tasks, source: Path) -> dict[str, Any]:
-    service_points = []
-    for task in tasks:
-        service_points.append((f"P{task.id}", task.pickup))
-        service_points.append((f"D{task.id}", task.delivery))
-    pair_count = 0
-    below_one = 0
-    minimum = (float("inf"), "", "")
-    maximum = (0.0, "", "")
-    for left in range(len(service_points)):
-        for right in range(left + 1, len(service_points)):
-            pair_count += 1
-            distance = service_points[left][1].distance_to(service_points[right][1])
-            if distance < 1.0:
-                below_one += 1
-            if distance < minimum[0]:
-                minimum = (distance, service_points[left][0], service_points[right][0])
-            if distance > maximum[0]:
-                maximum = (distance, service_points[left][0], service_points[right][0])
-    problem = Problem(tuple(tasks), drone_count=8, max_tasks_per_drone=25)
-    slacks = [
-        task.deadline_min - problem.direct_completion_min(task.id) for task in tasks
+        for row in rows
     ]
-    direct_distances = [task.pickup.distance_to(task.delivery) for task in tasks]
-    return {
-        "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
-        "task_count": len(tasks),
-        "deadline_min": min(task.deadline_min for task in tasks),
-        "deadline_mean": statistics.fmean(task.deadline_min for task in tasks),
-        "deadline_median": statistics.median(task.deadline_min for task in tasks),
-        "deadline_max": max(task.deadline_min for task in tasks),
-        "service_node_pair_count": pair_count,
-        "service_node_pairs_below_1km": below_one,
-        "service_node_pairs_below_1km_rate": below_one / pair_count,
-        "minimum_service_pair_km": minimum[0],
-        "minimum_service_pair": [minimum[1], minimum[2]],
-        "maximum_service_pair_km": maximum[0],
-        "maximum_service_pair": [maximum[1], maximum[2]],
-        "direct_task_distance_min_km": min(direct_distances),
-        "direct_task_distance_mean_km": statistics.fmean(direct_distances),
-        "direct_task_distance_max_km": max(direct_distances),
-        "direct_tasks_below_1km": [
-            task.id
-            for task, distance in zip(tasks, direct_distances)
-            if distance < 1.0
-        ],
-        "minimum_solo_slack_min_at_depot_0_0": min(slacks),
-    }
-
-
-def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
-    fieldnames = sorted({key for row in rows for key in row})
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+    with path.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(scalar[0]))
         writer.writeheader()
-        writer.writerows(rows)
+        writer.writerows(scalar)
 
 
-def run(args: argparse.Namespace) -> None:
-    for name, value in (
-        ("--single-time-limit", args.single_time_limit),
-        ("--fleet-time-limit", args.fleet_time_limit),
-    ):
-        if not math.isfinite(value) or value <= 0:
-            raise ValueError(f"{name} 必须是有限正数")
-
-    tasks = load_tasks_csv(args.input)
-    seeds = [args.seed_base + offset for offset in range(args.seed_count)]
-    exact_sizes = [5, 8] if args.quick else [5, 8, 10, 12]
-    fleet_iterations = 20 if args.quick else args.fleet_iterations
-    single_iterations = 50 if args.quick else args.single_iterations
-    extended_iterations = 0 if args.quick else args.extended_iterations
-    rows: list[dict[str, Any]] = []
-
-    for size in exact_sizes:
-        scenario = f"exact_n{size}"
-        problem = Problem(tasks[:size], drone_count=1, max_tasks_per_drone=size)
-        oracle = solve_exact(problem, max_tasks=max(exact_sizes))
-        _record(
-            rows,
-            scenario=scenario,
-            method="Pareto-DP",
-            problem=problem,
-            result=oracle,
-            seed=None,
-            oracle=oracle,
+def _write_report(path: Path, rows: Sequence[dict[str, Any]]) -> None:
+    lines = [
+        "# 第5章算法验证结果",
+        "",
+        "## 精确求解与小规模对照",
+        "",
+        "| 算例 | 方法 | 任务 | 逾期数 | 总逾期/min | 航程/km | 时间/s | 与精确解一致 |",
+        "|---|---|---:|---:|---:|---:|---:|---:|",
+    ]
+    for row in rows:
+        if row["deadline_multiplier"] != 1.0:
+            continue
+        lines.append(
+            f"| {row['experiment']} | {row['method']} | {row['task_count']} | "
+            f"{row['late_count']} | {row['total_lateness_min']:.3f} | "
+            f"{row['distance_km']:.3f} | {row['runtime_seconds']:.4f} | "
+            f"{row.get('matches_oracle', '—')} |"
         )
-        initial = construct_regret_initial(problem, candidate_limit=None)
-        _record(
-            rows,
-            scenario=scenario,
-            method="Regret-2",
-            problem=problem,
-            result=initial,
-            seed=None,
-            oracle=oracle,
-        )
-        heuristic = solve_alns(
-            problem,
-            config=ALNSConfig(
-                max_iterations=1000,
-                seed=args.seed_base,
-                candidate_limit=None,
-                enable_route_pool=True,
-                enable_ejection=True,
-                enable_assignment_destroy=False,
-                enable_deadline_risk=False,
-                enable_vnd=False,
-                enable_cluster_repair=False,
-                route_pool_interval=50,
-                ejection_interval=25,
-            ),
-            initial_routes=initial.routes,
-        )
-        heuristic = _with_total_runtime(heuristic, initial)
-        _record(
-            rows,
-            scenario=scenario,
-            method="C2-Lex-HALNS",
-            problem=problem,
-            result=heuristic,
-            seed=args.seed_base,
-            oracle=oracle,
-        )
-
-    def run_scale(
-        scenario: str,
-        problem: Problem,
-        iterations: int,
-        time_limit_seconds: float,
-    ) -> tuple[SolverResult, list[SolverResult]]:
-        deterministic: tuple[
-            tuple[str, Callable[[], SolverResult]], ...
-        ] = (
-            ("EDD-adjacent", lambda: construct_edd_adjacent(problem)),
-            ("Nearest-adjacent", lambda: construct_nearest_adjacent(problem)),
-            (
-                "Greedy-full-position",
-                lambda: construct_greedy_initial(
-                    problem, candidate_limit=args.candidate_limit
-                ),
-            ),
-        )
-        for method, builder in deterministic:
-            _record(
-                rows,
-                scenario=scenario,
-                method=method,
-                problem=problem,
-                result=builder(),
-                seed=None,
-            )
-        initial = construct_regret_initial(
-            problem, candidate_limit=args.candidate_limit
-        )
-        _record(
-            rows,
-            scenario=scenario,
-            method="Regret-2",
-            problem=problem,
-            result=initial,
-            seed=None,
-        )
-        remaining_search_seconds = max(
-            1e-9, time_limit_seconds - initial.runtime_seconds
-        )
-        full_results = []
-        for seed in seeds:
-            for method, full in (
-                ("C2-Lex-ALNS", False),
-                ("C2-Lex-HALNS", True),
-            ):
-                result = solve_alns(
-                    problem,
-                    config=ALNSConfig(
-                        max_iterations=iterations,
-                        time_limit_seconds=remaining_search_seconds,
-                        seed=seed,
-                        candidate_limit=args.candidate_limit,
-                        enable_route_pool=full,
-                        enable_ejection=full,
-                        enable_assignment_destroy=False,
-                        enable_deadline_risk=False,
-                        enable_vnd=False,
-                        enable_cluster_repair=False,
-                        route_pool_interval=50,
-                        ejection_interval=25,
-                    ),
-                    initial_routes=initial.routes,
-                )
-                result = _with_total_runtime(result, initial)
-                _record(
-                    rows,
-                    scenario=scenario,
-                    method=method,
-                    problem=problem,
-                    result=result,
-                    seed=seed,
-                )
-                if full:
-                    full_results.append(result)
-                gc.collect()
-        return initial, full_results
-
-    single_problem = Problem(tasks[:25], drone_count=1, max_tasks_per_drone=25)
-    run_scale(
-        "single_n25",
-        single_problem,
-        single_iterations,
-        args.single_time_limit,
+    lines.extend(
+        [
+            "",
+            "## 宽松截止期多机规模实验",
+            "",
+            "截止期统一乘以2.5，仅用于验证算法在非紧张多机算例上的规模适应性。",
+            "",
+            "| 任务 | 无人机 | 逾期数 | 总逾期/min | 航程/km | 时间/s | 迭代 |",
+            "|---:|---:|---:|---:|---:|---:|---:|",
+        ]
     )
-
-    fleet_problem = Problem(tasks, drone_count=8, max_tasks_per_drone=25)
-    fleet_initial, full_results = run_scale(
-        "fleet_n200",
-        fleet_problem,
-        fleet_iterations,
-        args.fleet_time_limit,
-    )
-    best_compliant = _best_within_budget(
-        full_results, args.fleet_time_limit
-    )
-    if extended_iterations:
-        extended = solve_alns(
-            fleet_problem,
-            config=ALNSConfig(
-                max_iterations=extended_iterations,
-                seed=args.seed_base,
-                candidate_limit=args.candidate_limit,
-                enable_route_pool=True,
-                enable_ejection=True,
-                enable_assignment_destroy=False,
-                enable_deadline_risk=False,
-                enable_vnd=False,
-                enable_cluster_repair=False,
-                route_pool_interval=50,
-                ejection_interval=25,
-            ),
-            initial_routes=fleet_initial.routes,
+    for row in rows:
+        if row["deadline_multiplier"] == 1.0:
+            continue
+        lines.append(
+            f"| {row['task_count']} | {row['drone_count']} | "
+            f"{row['late_count']} | {row['total_lateness_min']:.3f} | "
+            f"{row['distance_km']:.3f} | {row['runtime_seconds']:.2f} | "
+            f"{row['iterations']} |"
         )
-        extended = _with_total_runtime(extended, fleet_initial)
-        full_results.append(extended)
-        _record(
-            rows,
-            scenario="fleet_n200",
-            method="C2-Lex-HALNS-extended",
-            problem=fleet_problem,
-            result=extended,
-            seed=args.seed_base,
-        )
-
-    best_fleet = min(full_results, key=_score_tuple)
-    args.output_dir.mkdir(parents=True, exist_ok=True)
-    summaries = _summaries(rows)
-    paired = {
-        scenario: _paired_lex_counts(rows, scenario)
-        for scenario in ("single_n25", "fleet_n200")
-    }
-    manifest = {
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-        "python": sys.version,
-        "platform": platform.platform(),
-        "machine": platform.machine(),
-        "input": str(args.input),
-        "assumptions": {
-            "depot_km": [0.0, 0.0],
-            "speed_km_per_min": 0.9,
-            "capacity": 2,
-            "open_routes": True,
-            "service_time_min": 0.0,
-            "deadlines_are_soft": True,
-        },
-        "settings": {
-            "seed_base": args.seed_base,
-            "seed_count": args.seed_count,
-            "seeds": seeds,
-            "candidate_limit": args.candidate_limit,
-            "single_iterations": single_iterations,
-            "single_time_limit_seconds": args.single_time_limit,
-            "fleet_iterations": fleet_iterations,
-            "fleet_time_limit_seconds": args.fleet_time_limit,
-            "extended_iterations": extended_iterations,
-        },
-        "data_audit": _data_audit(tasks, args.input),
-        "paired_lexicographic_comparison": paired,
-    }
-    raw = {
-        "manifest": manifest,
-        "runs": rows,
-        "summaries": summaries,
-    }
-    (args.output_dir / "benchmark_results.json").write_text(
-        json.dumps(raw, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-    )
-    _write_csv(args.output_dir / "benchmark_runs.csv", rows)
-    _write_csv(args.output_dir / "benchmark_summary.csv", summaries)
-    (args.output_dir / "best_fleet_solution.json").write_text(
-        json.dumps(
-            result_payload(fleet_problem, best_fleet, source=args.input),
-            ensure_ascii=False,
-            indent=2,
-        )
-        + "\n",
-        encoding="utf-8",
-    )
-    (args.output_dir / "best_fleet_solution_compliant.json").write_text(
-        json.dumps(
-            result_payload(
-                fleet_problem,
-                best_compliant,
-                source=args.input,
-            ),
-            ensure_ascii=False,
-            indent=2,
-        )
-        + "\n",
-        encoding="utf-8",
-    )
+    lines.append("")
+    path.write_text("\n".join(lines), encoding="utf-8")
 
 
-def _parse_args() -> argparse.Namespace:
+def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT)
-    parser.add_argument("--seed-base", type=int, default=2026080500)
-    parser.add_argument("--seed-count", type=int, default=5)
+    parser.add_argument("--seed", type=int, default=2026081701)
+    parser.add_argument("--scale-seconds", type=float, default=30.0)
+    parser.add_argument("--max-iterations", type=int, default=10_000_000)
     parser.add_argument("--candidate-limit", type=int, default=48)
-    parser.add_argument("--single-iterations", type=int, default=1500)
-    parser.add_argument("--single-time-limit", type=float, default=120.0)
-    parser.add_argument("--fleet-iterations", type=int, default=400)
-    parser.add_argument("--fleet-time-limit", type=float, default=240.0)
-    parser.add_argument("--extended-iterations", type=int, default=1500)
     parser.add_argument("--quick", action="store_true")
-    return parser.parse_args()
+    return parser
+
+
+def validate_formal_protocol(args: argparse.Namespace) -> None:
+    """Reject non-final Section 5 settings unless explicitly marked quick."""
+
+    if args.quick:
+        return
+    mismatches = [
+        f"{name}={getattr(args, name)!r}（应为 {expected!r}）"
+        for name, expected in FORMAL_PROTOCOL_CONFIG.items()
+        if getattr(args, name) != expected
+    ]
+    if not args.input.is_file():
+        mismatches.append(f"input={args.input!s}（文件不存在）")
+    elif hashlib.sha256(args.input.read_bytes()).digest() != hashlib.sha256(
+        DEFAULT_INPUT.read_bytes()
+    ).digest():
+        mismatches.append("input_sha256 与官方数据不一致")
+    if mismatches:
+        raise ValueError("正式第5章协议参数不可覆盖：" + "；".join(mismatches))
+
+
+def build_manifest(
+    args: argparse.Namespace,
+    *,
+    exact_sizes: Sequence[int],
+    scale_counts: Sequence[int],
+    input_task_count: int,
+) -> dict[str, Any]:
+    """Build the versioned, self-auditing Section 5 manifest."""
+
+    exact_alns = asdict(
+        ALNSConfig(
+            max_iterations=(
+                QUICK_EXACT_ALNS_ITERATIONS
+                if args.quick
+                else EXACT_ALNS_ITERATIONS
+            ),
+            seed=args.seed,
+            candidate_limit=None,
+        )
+    )
+    multiscale_alns = asdict(
+        ALNSConfig(
+            max_iterations=args.max_iterations,
+            time_limit_seconds=args.scale_seconds,
+            seed=args.seed,
+            candidate_limit=args.candidate_limit,
+        )
+    )
+    git_commit, git_dirty = _git_state()
+    environment = _environment_manifest()
+    return {
+        "schema_version": 1,
+        "protocol": "section5_exact_and_relaxed_multiscale",
+        "formal": not args.quick,
+        "created_at_utc": datetime.now(timezone.utc).isoformat(),
+        "git_commit": git_commit,
+        "git_dirty": git_dirty,
+        "experiment_script_sha256": _sha256(Path(__file__)),
+        "solver_source_sha256": _solver_source_sha256(),
+        "pyproject_sha256": _optional_sha256(ROOT / "pyproject.toml"),
+        "requirements_dev_sha256": _optional_sha256(
+            ROOT / "requirements-dev.txt"
+        ),
+        "environment": environment,
+        "python": environment["python_version"],
+        "platform": environment["platform"],
+        "input": str(args.input),
+        "input_sha256": _sha256(args.input),
+        "input_task_count": input_task_count,
+        "exact_sizes": list(exact_sizes),
+        "multiscale_task_counts": list(scale_counts),
+        "relaxed_deadline_multiplier": RELAXED_DEADLINE_MULTIPLIER,
+        "scale_seconds": args.scale_seconds,
+        "seed": args.seed,
+        "operator_count": 14,
+        "solver_config": {
+            "exact_method": "Pareto-label dynamic programming",
+            "exact_max_tasks": max(EXACT_SIZES),
+            "exact_initial_method": "regret2",
+            "multiscale_initial_method": "regret2",
+            "max_tasks_per_drone": MAX_TASKS_PER_DRONE,
+            "drone_count_policy": (
+                "ceil(task_count / max_tasks_per_drone)"
+            ),
+            "capacity": 2,
+            "speed_km_per_min": 0.9,
+            "depot_km": [0.0, 0.0],
+            "input_transform": (
+                "official task prefix; deadline_min multiplied by "
+                "relaxed_deadline_multiplier for multiscale runs"
+            ),
+            "time_limit_policy": (
+                "scale_seconds includes initial construction; ALNS receives "
+                "the positive remaining budget"
+            ),
+            "exact_alns": exact_alns,
+            "multiscale_alns": multiscale_alns,
+        },
+    }
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    args = _parser().parse_args(argv)
+    validate_formal_protocol(args)
+    if not math.isfinite(args.scale_seconds) or args.scale_seconds <= 0:
+        raise ValueError("规模实验时间预算必须为有限正数")
+    if args.quick:
+        args.scale_seconds = min(args.scale_seconds, 0.5)
+    tasks = load_tasks_csv(args.input)
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    solution_dir = args.output_dir / "solutions"
+    solution_dir.mkdir(parents=True, exist_ok=True)
+    rows: list[dict[str, Any]] = []
+
+    example = report_example_problem()
+    example_exact = solve_exact(example)
+    rows.append(
+        _row(
+            experiment="title_example_n2",
+            method="Pareto-DP",
+            problem=example,
+            result=example_exact,
+            seed=None,
+            deadline_multiplier=1.0,
+            oracle=example_exact,
+        )
+    )
+
+    exact_sizes = EXACT_SIZES[:2] if args.quick else EXACT_SIZES
+    for size in exact_sizes:
+        problem = Problem(
+            tasks[:size], drone_count=1, max_tasks_per_drone=size
+        )
+        oracle = solve_exact(problem, max_tasks=max(EXACT_SIZES))
+        rows.append(
+            _row(
+                experiment=f"official_prefix_n{size}",
+                method="Pareto-DP",
+                problem=problem,
+                result=oracle,
+                seed=None,
+                deadline_multiplier=1.0,
+                oracle=oracle,
+            )
+        )
+        initial = construct_regret_initial(problem, candidate_limit=None)
+        heuristic = solve_alns(
+            problem,
+            config=ALNSConfig(
+                max_iterations=(
+                    QUICK_EXACT_ALNS_ITERATIONS
+                    if args.quick
+                    else EXACT_ALNS_ITERATIONS
+                ),
+                seed=args.seed,
+                candidate_limit=None,
+            ),
+            initial_routes=initial.routes,
+        )
+        rows.append(
+            _row(
+                experiment=f"official_prefix_n{size}",
+                method="C2-Lex-ALNS",
+                problem=problem,
+                result=heuristic,
+                seed=args.seed,
+                deadline_multiplier=1.0,
+                oracle=oracle,
+            )
+        )
+
+    scale_counts = MULTISCALE_TASK_COUNTS[:2] if args.quick else MULTISCALE_TASK_COUNTS
+    for task_count in scale_counts:
+        relaxed = scale_deadlines(
+            tasks[:task_count], RELAXED_DEADLINE_MULTIPLIER
+        )
+        drone_count = math.ceil(task_count / MAX_TASKS_PER_DRONE)
+        problem = Problem(
+            relaxed,
+            drone_count=drone_count,
+            max_tasks_per_drone=MAX_TASKS_PER_DRONE,
+        )
+        wall_started = time.perf_counter()
+        initial = construct_regret_initial(
+            problem, candidate_limit=args.candidate_limit
+        )
+        remaining = max(
+            1e-6,
+            args.scale_seconds - (time.perf_counter() - wall_started),
+        )
+        result = solve_alns(
+            problem,
+            config=ALNSConfig(
+                max_iterations=args.max_iterations,
+                time_limit_seconds=remaining,
+                seed=args.seed,
+                candidate_limit=args.candidate_limit,
+            ),
+            initial_routes=initial.routes,
+        )
+        rows.append(
+            _row(
+                experiment=f"relaxed_multiuav_n{task_count}",
+                method="C2-Lex-ALNS",
+                problem=problem,
+                result=result,
+                seed=args.seed,
+                deadline_multiplier=RELAXED_DEADLINE_MULTIPLIER,
+            )
+        )
+        solution_path = solution_dir / f"relaxed_multiuav_n{task_count}.json"
+        solution_path.write_text(
+            json.dumps(
+                result_payload(problem, result, source=str(args.input)),
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        print(
+            f"[relaxed n={task_count:3d}] drones={drone_count} "
+            f"score={result.evaluation.score} runtime={result.runtime_seconds:.1f}s",
+            flush=True,
+        )
+
+    manifest = build_manifest(
+        args,
+        exact_sizes=exact_sizes,
+        scale_counts=scale_counts,
+        input_task_count=len(tasks),
+    )
+    payload = {"manifest": manifest, "runs": rows}
+    (args.output_dir / "results.json").write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    _write_csv(args.output_dir / "runs.csv", rows)
+    _write_report(args.output_dir / "REPORT.md", rows)
+    print(f"结果已写入 {args.output_dir}", flush=True)
+    return 0
 
 
 if __name__ == "__main__":
-    run(_parse_args())
+    raise SystemExit(main())

@@ -21,7 +21,7 @@ from uav_dispatch import (
     evaluate_solution,
     load_tasks_csv,
     relay_statistics,
-    solve_alns_core,
+    solve_alns,
     solve_relay_staged,
 )
 from uav_dispatch.search import (
@@ -37,6 +37,7 @@ from uav_dispatch.alns import (
     _compose_relay_combo,
     _repair,
 )
+from uav_dispatch.deployment import compute_dynamic_uav_homes
 
 
 DATA_FILE = (
@@ -276,7 +277,7 @@ def test_staged_relay_preserves_direct_warmup_incumbent_and_total_budget():
         candidate_limit=None,
         relay_direct_warmup_fraction=0.80,
     )
-    direct_warmup = solve_alns_core(
+    direct_warmup = solve_alns(
         problem,
         config=ALNSConfig(
             max_iterations=10,
@@ -292,7 +293,6 @@ def test_staged_relay_preserves_direct_warmup_incumbent_and_total_budget():
         problem,
         config=config,
         initial_routes=initial.routes,
-        core=True,
     )
 
     assert result.evaluation.valid
@@ -622,8 +622,8 @@ def test_disable_relay_produces_a_direct_only_problem_identical_to_no_network():
     plain_problem = Problem(tasks, drone_count=1, max_tasks_per_drone=3)
 
     config = ALNSConfig(max_iterations=15, seed=20260805, candidate_limit=None)
-    with_relay_flag = solve_alns_core(disabled_problem, config=config)
-    without_relay_flag = solve_alns_core(plain_problem, config=config)
+    with_relay_flag = solve_alns(disabled_problem, config=config)
+    without_relay_flag = solve_alns(plain_problem, config=config)
 
     assert not disabled_problem.has_relays
     assert with_relay_flag.routes == without_relay_flag.routes
@@ -648,7 +648,7 @@ def test_disable_relay_produces_a_direct_only_problem_identical_to_no_network():
                 "--output",
                 str(output),
                 "--method",
-                "alns-core",
+                "alns",
                 "--iterations",
                 "5",
                 "--drones",
@@ -966,7 +966,7 @@ def test_same_uav_buffer_relay_solution_is_valid():
 
 def test_alns_adopts_cross_uav_relay_in_a_constructed_winning_scenario():
     problem = _bridge_problem()
-    result = solve_alns_core(
+    result = solve_alns(
         problem,
         config=ALNSConfig(
             max_iterations=120, seed=20260805, candidate_limit=None
@@ -982,12 +982,12 @@ def test_alns_adopts_cross_uav_relay_in_a_constructed_winning_scenario():
 
 def test_relay_initial_solution_may_already_contain_relay_tasks():
     problem = _bridge_problem()
-    from uav_dispatch import solve_alns_core
+    from uav_dispatch import solve_alns
 
     initial = construct_regret_initial(problem, candidate_limit=None)
     assert evaluate_solution(problem, initial.routes).valid
 
-    result = solve_alns_core(
+    result = solve_alns(
         problem,
         config=ALNSConfig(
             max_iterations=0, seed=20260805, candidate_limit=None
@@ -1073,7 +1073,7 @@ def test_predeployed_construction_and_search_are_valid():
     )
     initial = construct_regret_initial(problem, candidate_limit=None)
     assert initial.evaluation.valid
-    result = solve_alns_core(
+    result = solve_alns(
         problem,
         config=ALNSConfig(
             max_iterations=30, seed=20260805, candidate_limit=None
@@ -1100,3 +1100,76 @@ def test_origin_homes_preserve_legacy_distance_semantics():
     assert RouteEvaluator(problem).evaluate(routes[0]).score.distance_km == pytest.approx(
         2.0
     )
+
+
+def test_relay_repair_preserves_complete_leg_pairs_with_shared_station_homes():
+    """Cached leg insertions must never overwrite another task's relay leg."""
+
+    tasks = load_tasks_csv(DATA_FILE)[:24]
+    network = build_relay_network(
+        tasks,
+        relay_count=4,
+        candidates_per_task=2,
+        detour_ratio=2.0,
+        location_seed=42,
+        location_method="weighted_kmedoids",
+    )
+    deployment = compute_dynamic_uav_homes(
+        tasks,
+        network.stations,
+        10,
+        Point(0.0, 0.0),
+        speed_km_per_min=0.9,
+    )
+    problem = Problem(
+        tasks,
+        drone_count=10,
+        max_tasks_per_drone=25,
+        capacity=2,
+        speed_km_per_min=0.9,
+        depot=Point(0.0, 0.0),
+        relay_stations=network.stations,
+        leg_registry=network.leg_registry,
+        task_relay_candidates=network.task_relay_candidates,
+        drone_homes=deployment.homes,
+    )
+    common = dict(
+        seed=2026081701,
+        candidate_limit=48,
+        relay_candidates_per_task=2,
+        relay_plan_beam=4,
+        relay_leg_beam=5,
+        relay_event_cap=60,
+        relay_sample_every=3,
+        relay_global_limit=3,
+        relay_probe_fraction=0.25,
+        relay_probe_min=1,
+        relay_probe_max_tasks=2,
+        relay_seed_task_limit=200,
+        relay_refine_interval=10,
+        relay_refine_task_limit=8,
+        enable_home_seed=True,
+        enable_home_bias=True,
+    )
+    warm = solve_alns(
+        problem,
+        config=ALNSConfig(
+            max_iterations=1200,
+            relay_enabled=False,
+            **common,
+        ),
+    )
+
+    result = solve_alns(
+        problem,
+        config=ALNSConfig(
+            max_iterations=50,
+            relay_enabled=True,
+            **common,
+        ),
+        initial_routes=warm.routes,
+    )
+
+    plan_index = build_plan_index(problem, result.routes)
+    assert result.evaluation.valid
+    assert set(plan_index.task_plans) == set(problem.task_ids)

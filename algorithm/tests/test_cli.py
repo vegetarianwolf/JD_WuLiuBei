@@ -21,6 +21,26 @@ def test_cli_requires_an_explicit_input_path():
     assert exc_info.value.code == 2
 
 
+def test_cli_exposes_one_alns_product_method_and_rejects_removed_hybrid_names():
+    parsed = _parser().parse_args(
+        ["solve", "--input", "tasks.csv", "--method", "alns"]
+    )
+
+    assert parsed.method == "alns"
+    for removed_name in ("halns", "basic-alns"):
+        with pytest.raises(SystemExit) as exc_info:
+            _parser().parse_args(
+                [
+                    "solve",
+                    "--input",
+                    "tasks.csv",
+                    "--method",
+                    removed_name,
+                ]
+            )
+        assert exc_info.value.code == 2
+
+
 def test_cli_solves_a_csv_and_writes_a_reproducible_json(tmp_path):
     source = tmp_path / "tasks.csv"
     source.write_text(
@@ -60,7 +80,7 @@ def test_cli_solves_a_csv_and_writes_a_reproducible_json(tmp_path):
     assert payload["routes"][0]["task_count"] == 3
 
 
-def test_cli_exposes_an_explicit_alns_core_method(tmp_path):
+def test_cli_runs_the_single_alns_method_with_relay_staging(tmp_path):
     source = tmp_path / "tasks.csv"
     source.write_text(
         "task_id,pickup_x,pickup_y,delivery_x,delivery_y,deadline_min\n"
@@ -78,7 +98,7 @@ def test_cli_exposes_an_explicit_alns_core_method(tmp_path):
             "--output",
             str(output),
             "--method",
-            "alns-core",
+            "alns",
             "--iterations",
             "2",
             "--drones",
@@ -91,10 +111,10 @@ def test_cli_exposes_an_explicit_alns_core_method(tmp_path):
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert exit_code == 0
     assert payload["valid"] is True
-    assert payload["metadata"]["method"] == "C2-Lex-Relay-Staged-Core"
+    assert payload["metadata"]["method"] == "C2-Lex-ALNS-Staged"
     assert payload["metadata"]["staged_relay"] is True
-    assert payload["metadata"]["enable_route_pool"] is False
-    assert payload["metadata"]["enable_ejection"] is False
+    assert "enable_route_pool" not in payload["metadata"]
+    assert "enable_ejection" not in payload["metadata"]
 
 
 def test_result_payload_uses_global_handoff_times_for_each_route():

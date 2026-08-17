@@ -1,10 +1,9 @@
-"""Capacity-2 lexicographic hybrid adaptive large-neighbourhood search."""
+"""Capacity-2 lexicographic adaptive large-neighbourhood search."""
 
 from __future__ import annotations
 
 from collections import OrderedDict
 from dataclasses import dataclass, replace
-from itertools import permutations
 from math import ceil, exp, isfinite
 from random import Random
 from time import perf_counter
@@ -45,8 +44,6 @@ DESTROY_OPERATORS = (
     "route_segment",
     "capacity_conflict",
     "assignment_destroy",
-    "home_displaced",
-    "route_clear",
 )
 REPAIR_OPERATORS = (
     "greedy",
@@ -54,7 +51,6 @@ REPAIR_OPERATORS = (
     "regret3",
     "deadline",
     "slack",
-    "cluster_regret",
 )
 
 
@@ -79,26 +75,10 @@ class ALNSConfig:
     initial_temperature: float = 0.03
     minimum_temperature: float = 0.0005
     cooling_rate: float = 0.995
-    route_pool_interval: int = 50
-    route_pool_node_limit: int = 5_000
-    ejection_interval: int = 25
-    ejection_trials: int = 24
-    enable_route_pool: bool = False
-    enable_ejection: bool = True
-    enable_assignment_destroy: bool = True
-    # Home-aware switches (default off so legacy behaviour is bit-identical).
+    # Home-aware initial construction for the station-predeployment scenario.
     enable_home_seed: bool = False
-    enable_home_displaced: bool = False
     enable_home_bias: bool = False
     enable_deadline_risk: bool = True
-    enable_vnd: bool = False
-    vnd_max_moves: int = 2
-    vnd_task_limit: int = 12
-    vnd_swap_pair_limit: int = 24
-    vnd_block_window_limit: int = 16
-    enable_cluster_repair: bool = False
-    cluster_bundle_candidate_limit: int = 12
-    cluster_pair_limit: int = 6
     relay_enabled: bool = True
     # A relay-aware search has a much larger neighbourhood than DIRECT.
     # Spend most of a fixed budget building a strong DIRECT incumbent, then
@@ -167,19 +147,6 @@ class ALNSConfig:
             or self.minimum_temperature > self.initial_temperature
         ):
             raise ValueError("温度和最小权重必须为有限正数")
-        if self.route_pool_interval < 0 or self.ejection_interval < 0:
-            raise ValueError("强化周期不能为负")
-        if self.route_pool_node_limit < 0 or self.ejection_trials < 0:
-            raise ValueError("强化搜索预算不能为负")
-        if min(
-            self.vnd_max_moves,
-            self.vnd_task_limit,
-            self.vnd_swap_pair_limit,
-            self.vnd_block_window_limit,
-            self.cluster_bundle_candidate_limit,
-            self.cluster_pair_limit,
-        ) < 0:
-            raise ValueError("VND 与聚类修复搜索预算不能为负")
         if self.relay_candidates_per_task <= 0:
             raise ValueError("每个任务的中继候选数必须为正整数")
         if (
@@ -286,10 +253,11 @@ class TaskInsertionOption:
 class _LegOptionCache:
     """Cross-iteration bounded memo for relay leg insertion options.
 
-    Leg options are pure functions of (route snapshot, home node, leg pair,
-    limits); only one or two routes change per ALNS iteration, so route
-    snapshots repeat heavily and keying the memo by the route content (not a
-    per-repair version counter) makes it valid across repair passes.
+    Leg options are pure functions of (route index, route snapshot, home node,
+    leg pair, limits).  The route index is part of the value embedded in each
+    ``RouteInsertionOption`` and therefore must also be part of the key: two
+    predeployed UAVs can share both an empty route and the same station home.
+    Keying by route content still makes the memo valid across repair passes.
     """
 
     __slots__ = ("data", "maxsize", "hits", "misses")
@@ -646,28 +614,6 @@ def _deadline_risk(delivered_at: float, deadline: float) -> float:
     return delivered_at / deadline
 
 
-def _score_strictly_better(
-    candidate: Score,
-    incumbent: Score,
-    *,
-    tolerance: float = 1e-9,
-) -> bool:
-    """Compare local moves lexicographically while ignoring round-off noise."""
-
-    if not candidate < incumbent:
-        return False
-    if candidate.late_count != incumbent.late_count:
-        return True
-    lateness_delta = (
-        candidate.total_lateness_min - incumbent.total_lateness_min
-    )
-    if lateness_delta < -tolerance:
-        return True
-    if lateness_delta != 0.0:
-        return False
-    return candidate.distance_km < incumbent.distance_km - tolerance
-
-
 class _DirectPlanIndex:
     """Minimal plan-index stand-in for DIRECT-only problems.
 
@@ -896,18 +842,6 @@ def destroy_solution(
                 exponent=3.0,
             )
         )
-    elif operator == "home_displaced":
-        homes = problem.home_points()
-
-        def displacement(task_id: int) -> tuple[float, int]:
-            route_index = route_by_task[task_id]
-            own_home = homes[route_index]
-            pickup = problem.task(task_id).pickup
-            nearest = min(home.distance_to(pickup) for home in homes)
-            return own_home.distance_to(pickup) - nearest, -task_id
-
-        ranked = sorted(task_ids, key=displacement, reverse=True)
-        removed = _choose_ranked(ranked, count, rng, exponent=2.0)
     elif operator in {"worst_distance", "worst_lex"}:
         ranked: list[tuple[Score | float, int]] = []
         for task_id in task_ids:
@@ -985,16 +919,6 @@ def destroy_solution(
                 conflicts.append((overlap, _visit_task_id(problem, visit_id)))
         conflicts.sort(key=lambda item: (item[0], -item[1]), reverse=True)
         removed = _choose_ranked([item[1] for item in conflicts], count, rng)
-    elif operator == "route_clear":
-        candidates = [route for route in routes if route]
-        route = rng.choice(candidates)
-        local = list(
-            dict.fromkeys(_visit_task_id(problem, visit) for visit in route)
-        )
-        rng.shuffle(local)
-        remaining = [task for task in task_ids if task not in local]
-        rng.shuffle(remaining)
-        removed = (local + remaining)[:count]
     else:
         raise ValueError(f"未知破坏算子 {operator}")
 
@@ -1256,6 +1180,7 @@ def _best_leg_options(
             # passes because the options are pure functions of the route
             # snapshot, which only one or two routes change per iteration.
             key = (
+                route_index,
                 route,
                 problem.home_node(route_index),
                 start_visit,
@@ -2186,226 +2111,6 @@ def _repair_relay(
     return routes
 
 
-@dataclass(frozen=True, slots=True)
-class _BundleInsertionOption:
-    delta: Score
-    route_index: int
-    route: Route
-    task_ids: tuple[int, int]
-
-
-def _bundle_insertion_options(
-    problem: Problem,
-    evaluator: RouteEvaluator,
-    routes: Routes,
-    task_ids: tuple[int, int],
-    *,
-    candidate_limit: int | None,
-    bundle_candidate_limit: int,
-    deadline: float | None,
-) -> tuple[_BundleInsertionOption, ...]:
-    local_limit = (
-        bundle_candidate_limit
-        if candidate_limit is None
-        else min(candidate_limit, bundle_candidate_limit)
-    )
-    beam_width = max(2, min(6, bundle_candidate_limit))
-    options: dict[tuple[int, Route], _BundleInsertionOption] = {}
-    for route_index, route in enumerate(routes):
-        if deadline is not None and perf_counter() >= deadline:
-            raise _SearchDeadlineReached
-        task_count = sum(visit > 0 for visit in route)
-        if task_count + 2 > problem.max_tasks_per_drone:
-            continue
-        old_score = evaluator.evaluate(
-            route, start_node=problem.home_node(route_index)
-        ).score
-        for first_task, second_task in (task_ids, task_ids[::-1]):
-            first_options = route_insertion_options(
-                problem,
-                evaluator,
-                route,
-                route_index,
-                first_task,
-                candidate_limit=local_limit,
-                option_count=beam_width,
-            )
-            for first in first_options:
-                if deadline is not None and perf_counter() >= deadline:
-                    raise _SearchDeadlineReached
-                second_options = route_insertion_options(
-                    problem,
-                    evaluator,
-                    first.route,
-                    route_index,
-                    second_task,
-                    candidate_limit=local_limit,
-                    option_count=beam_width,
-                )
-                for second in second_options:
-                    option = _BundleInsertionOption(
-                        evaluator.evaluate(
-                            second.route,
-                            start_node=problem.home_node(route_index),
-                        ).score
-                        - old_score,
-                        route_index,
-                        second.route,
-                        tuple(sorted(task_ids)),
-                    )
-                    key = (route_index, second.route)
-                    existing = options.get(key)
-                    if existing is None or option.delta < existing.delta:
-                        options[key] = option
-    return tuple(
-        sorted(
-            options.values(),
-            key=lambda option: (
-                option.delta,
-                option.route_index,
-                option.route,
-            ),
-        )
-    )
-
-
-def cluster_regret_repair(
-    problem: Problem,
-    evaluator: RouteEvaluator,
-    partial_routes: Routes,
-    removed_task_ids: Iterable[int],
-    *,
-    candidate_limit: int | None,
-    original_route_by_task: dict[int, int] | None = None,
-    use_deadline_risk: bool = True,
-    bundle_candidate_limit: int = 12,
-    pair_limit: int = 6,
-    deadline: float | None = None,
-) -> Routes:
-    """Repair related task pairs jointly with a bounded bundle-regret rule."""
-
-    routes = tuple(tuple(route) for route in partial_routes)
-    remaining = set(removed_task_ids)
-    original_routes = original_route_by_task or {}
-
-    def relatedness(left_task: int, right_task: int) -> tuple[float, int]:
-        left = problem.task(left_task)
-        right = problem.task(right_task)
-        same_route_bonus = (
-            -2.0
-            if left_task in original_routes
-            and right_task in original_routes
-            and original_routes[left_task] == original_routes[right_task]
-            else 0.0
-        )
-        value = (
-            left.pickup.distance_to(right.pickup)
-            + 0.5 * left.delivery.distance_to(right.delivery)
-            + 0.15 * abs(left.deadline_min - right.deadline_min)
-            + same_route_bonus
-        )
-        return value, right_task
-
-    while len(remaining) >= 2:
-        if deadline is not None and perf_counter() >= deadline:
-            raise _SearchDeadlineReached
-        candidate_pairs: set[tuple[int, int]] = set()
-        for task_id in sorted(remaining):
-            partner = min(
-                (other for other in remaining if other != task_id),
-                key=lambda other: relatedness(task_id, other),
-            )
-            candidate_pairs.add(tuple(sorted((task_id, partner))))
-        ranked_pairs = sorted(
-            candidate_pairs,
-            key=lambda pair: (relatedness(*pair), pair),
-        )[:pair_limit]
-
-        choices: list[
-            tuple[tuple[float, ...], _BundleInsertionOption]
-        ] = []
-        for pair in ranked_pairs:
-            options = _bundle_insertion_options(
-                problem,
-                evaluator,
-                routes,
-                pair,
-                candidate_limit=candidate_limit,
-                bundle_candidate_limit=bundle_candidate_limit,
-                deadline=deadline,
-            )
-            if not options:
-                continue
-            best = options[0]
-            alternative = next(
-                (
-                    option
-                    for option in options[1:]
-                    if option.route_index != best.route_index
-                ),
-                None,
-            )
-            if alternative is None:
-                regret = (float("inf"),) * 3
-            else:
-                alternative_delta = alternative.delta
-                regret = (
-                    float(alternative_delta.late_count - best.delta.late_count),
-                    alternative_delta.total_lateness_min
-                    - best.delta.total_lateness_min,
-                    alternative_delta.distance_km - best.delta.distance_km,
-                )
-            metrics = evaluator.evaluate(
-                best.route, start_node=problem.home_node(best.route_index)
-            )
-            risk = max(
-                (
-                    _deadline_risk(
-                        metrics.delivery_times_min[task_id],
-                        problem.task(task_id).deadline_min,
-                    )
-                    for task_id in pair
-                ),
-                default=0.0,
-            )
-            choices.append(
-                (
-                    (
-                        regret[0],
-                        risk if use_deadline_risk else 0.0,
-                        regret[1],
-                        regret[2],
-                        -relatedness(*pair)[0],
-                        -float(pair[0]),
-                        -float(pair[1]),
-                    ),
-                    best,
-                )
-            )
-        if not choices:
-            break
-        _, chosen = max(choices, key=lambda item: item[0])
-        mutable = list(routes)
-        mutable[chosen.route_index] = chosen.route
-        routes = tuple(mutable)
-        remaining.difference_update(chosen.task_ids)
-
-    if remaining:
-        if deadline is not None and perf_counter() >= deadline:
-            raise _SearchDeadlineReached
-        routes = _repair(
-            problem,
-            evaluator,
-            routes,
-            remaining,
-            "regret2",
-            candidate_limit,
-            use_deadline_risk=use_deadline_risk,
-            deadline=deadline,
-        )
-    return routes
-
-
 def _repair(
     problem: Problem,
     evaluator: RouteEvaluator,
@@ -2414,9 +2119,6 @@ def _repair(
     strategy: str,
     candidate_limit: int | None,
     use_deadline_risk: bool = False,
-    original_route_by_task: dict[int, int] | None = None,
-    cluster_bundle_candidate_limit: int = 12,
-    cluster_pair_limit: int = 6,
     deadline: float | None = None,
     *,
     relay_cfg: _RelaySearchConfig | None = None,
@@ -2431,16 +2133,13 @@ def _repair(
         and relay_cfg.enabled
         and problem.has_relays
     ):
-        relay_strategy = (
-            "regret2" if strategy == "cluster_regret" else strategy
-        )
         return _repair_relay(
             problem,
             evaluator,
             global_evaluator,
             partial_routes,
             removed_task_ids,
-            relay_strategy,
+            strategy,
             candidate_limit,
             use_deadline_risk,
             relay_cfg,
@@ -2448,19 +2147,6 @@ def _repair(
             repair_rank_candidate_limit,
             repair_exact_candidate_limit,
             direct_exact_top_k,
-        )
-    if strategy == "cluster_regret":
-        return cluster_regret_repair(
-            problem,
-            evaluator,
-            partial_routes,
-            removed_task_ids,
-            candidate_limit=candidate_limit,
-            original_route_by_task=original_route_by_task,
-            use_deadline_risk=use_deadline_risk,
-            bundle_candidate_limit=cluster_bundle_candidate_limit,
-            pair_limit=cluster_pair_limit,
-            deadline=deadline,
         )
     routes = tuple(tuple(route) for route in partial_routes)
     remaining = set(removed_task_ids)
@@ -2842,554 +2528,6 @@ def construct_greedy_initial(
     return _finish_constructor(problem, routes, started, "greedy-full-position")
 
 
-@dataclass(frozen=True, slots=True)
-class _RouteColumn:
-    tasks: frozenset[int]
-    route: Route
-    score: Score
-
-
-class _RoutePool:
-    """Restricted set-partitioning reinforcement solved by bounded DFS."""
-
-    def __init__(self, problem: Problem, evaluator: RouteEvaluator) -> None:
-        self.problem = problem
-        self.evaluator = evaluator
-        self.columns: dict[frozenset[int], _RouteColumn] = {}
-        self.last_nodes = 0
-
-    def add(self, routes: Routes) -> None:
-        for route_index, route in enumerate(routes):
-            tasks = frozenset(visit for visit in route if visit > 0)
-            if not tasks:
-                continue
-            column = _RouteColumn(
-                tasks,
-                route,
-                self.evaluator.evaluate(
-                    route, start_node=self.problem.home_node(route_index)
-                ).score,
-            )
-            existing = self.columns.get(tasks)
-            if existing is None or (column.score, column.route) < (
-                existing.score,
-                existing.route,
-            ):
-                self.columns[tasks] = column
-
-    def recombine(
-        self,
-        incumbent: Routes,
-        node_limit: int,
-        deadline: float | None = None,
-    ) -> Routes:
-        self.add(incumbent)
-        if deadline is not None and perf_counter() >= deadline:
-            return incumbent
-        columns = tuple(
-            sorted(self.columns.values(), key=lambda col: (col.score, col.route))
-        )
-        by_task: dict[int, list[_RouteColumn]] = {
-            task_id: [] for task_id in self.problem.task_ids
-        }
-        for column in columns:
-            for task_id in column.tasks:
-                by_task[task_id].append(column)
-
-        incumbent_score = routes_score(self.evaluator, incumbent)
-        best_score = incumbent_score
-        best_routes = incumbent
-        nodes = 0
-
-        def dfs(
-            uncovered: frozenset[int],
-            selected: tuple[_RouteColumn, ...],
-            partial_score: Score,
-        ) -> None:
-            nonlocal best_score, best_routes, nodes
-            if nodes >= node_limit or (
-                deadline is not None and perf_counter() >= deadline
-            ):
-                return
-            nodes += 1
-            if not uncovered:
-                ordered = tuple(
-                    column.route
-                    for column in sorted(
-                        selected,
-                        key=lambda col: (min(col.tasks), col.route),
-                    )
-                )
-                candidate = ordered + tuple(
-                    () for _ in range(self.problem.drone_count - len(ordered))
-                )
-                # Exact home-aware score at the leaf; ``partial_score`` is a
-                # source-home bound kept only for pruning.
-                exact = routes_score(self.evaluator, candidate)
-                if exact < best_score:
-                    best_score = exact
-                    best_routes = candidate
-                return
-            if len(selected) >= self.problem.drone_count or partial_score >= best_score:
-                return
-
-            task_id = min(
-                uncovered,
-                key=lambda task: sum(
-                    column.tasks <= uncovered for column in by_task[task]
-                ),
-            )
-            compatible = [
-                column
-                for column in by_task[task_id]
-                if column.tasks <= uncovered
-            ]
-            for column in compatible:
-                dfs(
-                    uncovered - column.tasks,
-                    selected + (column,),
-                    partial_score + column.score,
-                )
-                if nodes >= node_limit or (
-                    deadline is not None and perf_counter() >= deadline
-                ):
-                    break
-
-        dfs(frozenset(self.problem.task_ids), (), Score(0, 0.0, 0.0))
-        self.last_nodes = nodes
-        return best_routes
-
-
-def _local_search_task_order(
-    problem: Problem,
-    evaluator: RouteEvaluator,
-    routes: Routes,
-    *,
-    use_deadline_risk: bool,
-) -> tuple[int, ...]:
-    priorities: list[tuple[tuple[float, ...], int]] = []
-    for route_index, route in enumerate(routes):
-        metrics = evaluator.evaluate(
-            route, start_node=problem.home_node(route_index)
-        )
-        for task_id, delivered_at in metrics.delivery_times_min.items():
-            deadline = problem.task(task_id).deadline_min
-            reduced = tuple(visit for visit in route if abs(visit) != task_id)
-            distance_gain = (
-                metrics.score.distance_km
-                - evaluator.evaluate(
-                    reduced, start_node=problem.home_node(route_index)
-                ).score.distance_km
-            )
-            priorities.append(
-                (
-                    (
-                        _deadline_risk(delivered_at, deadline)
-                        if use_deadline_risk
-                        else 0.0,
-                        max(0.0, delivered_at - deadline),
-                        distance_gain,
-                        -deadline,
-                        -task_id,
-                    ),
-                    task_id,
-                )
-            )
-    priorities.sort(reverse=True)
-    return tuple(task_id for _, task_id in priorities)
-
-
-def inter_uav_relocate_once(
-    problem: Problem,
-    evaluator: RouteEvaluator,
-    routes: Routes,
-    *,
-    candidate_limit: int | None,
-    use_deadline_risk: bool = True,
-    task_limit: int | None = 12,
-    deadline: float | None = None,
-) -> Routes:
-    """Return the best bounded strict-improving one-pair inter-UAV relocate."""
-
-    materialized = tuple(tuple(route) for route in routes)
-    if all(
-        sum(visit > 0 for visit in route) >= problem.max_tasks_per_drone
-        for route in materialized
-    ):
-        return materialized
-    current_score = routes_score(evaluator, materialized)
-    best_score = current_score
-    best_routes = materialized
-    route_by_task = _task_route_index(materialized)
-    ordered_tasks = _local_search_task_order(
-        problem,
-        evaluator,
-        materialized,
-        use_deadline_risk=use_deadline_risk,
-    )
-    if task_limit is not None:
-        ordered_tasks = ordered_tasks[:task_limit]
-
-    for task_id in ordered_tasks:
-        if deadline is not None and perf_counter() >= deadline:
-            return best_routes
-        source_index = route_by_task[task_id]
-        source = tuple(
-            visit
-            for visit in materialized[source_index]
-            if abs(visit) != task_id
-        )
-        for target_index, target in enumerate(materialized):
-            if target_index == source_index:
-                continue
-            if sum(visit > 0 for visit in target) >= problem.max_tasks_per_drone:
-                continue
-            if deadline is not None and perf_counter() >= deadline:
-                return best_routes
-            options = route_insertion_options(
-                problem,
-                evaluator,
-                target,
-                target_index,
-                task_id,
-                candidate_limit=candidate_limit,
-                option_count=1,
-            )
-            if not options:
-                continue
-            candidate = list(materialized)
-            candidate[source_index] = source
-            candidate[target_index] = options[0].route
-            candidate_routes = tuple(candidate)
-            candidate_score = routes_score(evaluator, candidate_routes)
-            if _score_strictly_better(candidate_score, best_score):
-                best_score = candidate_score
-                best_routes = candidate_routes
-    return best_routes
-
-
-def inter_uav_swap_once(
-    problem: Problem,
-    evaluator: RouteEvaluator,
-    routes: Routes,
-    *,
-    candidate_limit: int | None,
-    use_deadline_risk: bool = True,
-    task_limit: int | None = 12,
-    pair_limit: int | None = 24,
-    deadline: float | None = None,
-) -> Routes:
-    """Return the best bounded strict-improving exchange of two UAV task pairs."""
-
-    materialized = tuple(tuple(route) for route in routes)
-    current_score = routes_score(evaluator, materialized)
-    best_score = current_score
-    best_routes = materialized
-    route_by_task = _task_route_index(materialized)
-    ordered_tasks = _local_search_task_order(
-        problem,
-        evaluator,
-        materialized,
-        use_deadline_risk=use_deadline_risk,
-    )
-    if task_limit is not None:
-        ordered_tasks = ordered_tasks[:task_limit]
-
-    evaluated_pairs = 0
-    for left_position, left_task in enumerate(ordered_tasks):
-        left_route_index = route_by_task[left_task]
-        for right_task in ordered_tasks[left_position + 1 :]:
-            right_route_index = route_by_task[right_task]
-            if left_route_index == right_route_index:
-                continue
-            if pair_limit is not None and evaluated_pairs >= pair_limit:
-                return best_routes
-            if deadline is not None and perf_counter() >= deadline:
-                return best_routes
-            evaluated_pairs += 1
-            left_reduced = tuple(
-                visit
-                for visit in materialized[left_route_index]
-                if abs(visit) != left_task
-            )
-            right_reduced = tuple(
-                visit
-                for visit in materialized[right_route_index]
-                if abs(visit) != right_task
-            )
-            right_into_left = route_insertion_options(
-                problem,
-                evaluator,
-                left_reduced,
-                left_route_index,
-                right_task,
-                candidate_limit=candidate_limit,
-                option_count=1,
-            )
-            left_into_right = route_insertion_options(
-                problem,
-                evaluator,
-                right_reduced,
-                right_route_index,
-                left_task,
-                candidate_limit=candidate_limit,
-                option_count=1,
-            )
-            if not right_into_left or not left_into_right:
-                continue
-            candidate = list(materialized)
-            candidate[left_route_index] = right_into_left[0].route
-            candidate[right_route_index] = left_into_right[0].route
-            candidate_routes = tuple(candidate)
-            candidate_score = routes_score(evaluator, candidate_routes)
-            if _score_strictly_better(candidate_score, best_score):
-                best_score = candidate_score
-                best_routes = candidate_routes
-    return best_routes
-
-
-def intra_route_block_improve_once(
-    problem: Problem,
-    evaluator: RouteEvaluator,
-    routes: Routes,
-    *,
-    use_deadline_risk: bool = True,
-    window_limit: int | None = 16,
-    deadline: float | None = None,
-) -> Routes:
-    """Reorder bounded capacity-2 PPDD blocks while preserving pair precedence."""
-
-    materialized = tuple(tuple(route) for route in routes)
-    if problem.capacity != 2:
-        return materialized
-    current_score = routes_score(evaluator, materialized)
-    best_score = current_score
-    best_routes = materialized
-    ranked_windows: list[tuple[tuple[float, ...], int, int]] = []
-    for route_index, route in enumerate(materialized):
-        metrics = evaluator.evaluate(
-            route, start_node=problem.home_node(route_index)
-        )
-        for start in range(max(0, len(route) - 3)):
-            block = route[start : start + 4]
-            if tuple(visit > 0 for visit in block) != (
-                True,
-                True,
-                False,
-                False,
-            ):
-                continue
-            pickups = {visit for visit in block if visit > 0}
-            deliveries = {abs(visit) for visit in block if visit < 0}
-            if pickups != deliveries or len(pickups) != 2:
-                continue
-            risk = max(
-                (
-                    _deadline_risk(
-                        metrics.delivery_times_min[task_id],
-                        problem.task(task_id).deadline_min,
-                    )
-                    for task_id in pickups
-                ),
-                default=0.0,
-            )
-            ranked_windows.append(
-                (
-                    (
-                        risk if use_deadline_risk else 0.0,
-                        -float(route_index),
-                        -float(start),
-                    ),
-                    route_index,
-                    start,
-                )
-            )
-    ranked_windows.sort(reverse=True)
-    if window_limit is not None:
-        ranked_windows = ranked_windows[:window_limit]
-
-    for _, route_index, start in ranked_windows:
-        if deadline is not None and perf_counter() >= deadline:
-            return best_routes
-        route = materialized[route_index]
-        block = route[start : start + 4]
-        for reordered in sorted(set(permutations(block))):
-            if reordered == block:
-                continue
-            candidate_route = route[:start] + reordered + route[start + 4 :]
-            try:
-                evaluator.evaluate(
-                    candidate_route,
-                    start_node=problem.home_node(route_index),
-                )
-            except ValueError:
-                continue
-            candidate = list(materialized)
-            candidate[route_index] = candidate_route
-            candidate_routes = tuple(candidate)
-            candidate_score = routes_score(evaluator, candidate_routes)
-            if _score_strictly_better(candidate_score, best_score):
-                best_score = candidate_score
-                best_routes = candidate_routes
-    return best_routes
-
-
-def vnd_improve(
-    problem: Problem,
-    evaluator: RouteEvaluator,
-    routes: Routes,
-    *,
-    candidate_limit: int | None,
-    use_deadline_risk: bool = True,
-    max_moves: int = 2,
-    task_limit: int | None = 12,
-    swap_pair_limit: int | None = 24,
-    block_window_limit: int | None = 16,
-    deadline: float | None = None,
-) -> Routes:
-    """Run bounded VND over relocate, swap, and capacity-2 block moves."""
-
-    current = tuple(tuple(route) for route in routes)
-    current_score = routes_score(evaluator, current)
-    accepted_moves = 0
-    neighborhood = 0
-    while neighborhood < 3 and accepted_moves < max_moves:
-        if deadline is not None and perf_counter() >= deadline:
-            break
-        if neighborhood == 0:
-            candidate = inter_uav_relocate_once(
-                problem,
-                evaluator,
-                current,
-                candidate_limit=candidate_limit,
-                use_deadline_risk=use_deadline_risk,
-                task_limit=task_limit,
-                deadline=deadline,
-            )
-        elif neighborhood == 1:
-            candidate = inter_uav_swap_once(
-                problem,
-                evaluator,
-                current,
-                candidate_limit=candidate_limit,
-                use_deadline_risk=use_deadline_risk,
-                task_limit=task_limit,
-                pair_limit=swap_pair_limit,
-                deadline=deadline,
-            )
-        else:
-            candidate = intra_route_block_improve_once(
-                problem,
-                evaluator,
-                current,
-                use_deadline_risk=use_deadline_risk,
-                window_limit=block_window_limit,
-                deadline=deadline,
-            )
-        candidate_score = routes_score(evaluator, candidate)
-        if _score_strictly_better(candidate_score, current_score):
-            current = candidate
-            current_score = candidate_score
-            accepted_moves += 1
-            neighborhood = 0
-        else:
-            neighborhood += 1
-    return current
-
-
-def _ejection_swap_improve(
-    problem: Problem,
-    evaluator: RouteEvaluator,
-    routes: Routes,
-    candidate_limit: int | None,
-    rng: Random,
-    max_trials: int,
-    deadline: float | None = None,
-) -> Routes:
-    current_score = routes_score(evaluator, routes)
-    best_routes = routes
-    best_score = current_score
-    route_by_task = _task_route_index(routes)
-    late_tasks: list[tuple[float, int]] = []
-    for route_index, route in enumerate(routes):
-        metrics = evaluator.evaluate(
-            route, start_node=problem.home_node(route_index)
-        )
-        for task_id in metrics.late_task_ids:
-            late_tasks.append(
-                (
-                    metrics.delivery_times_min[task_id]
-                    - problem.task(task_id).deadline_min,
-                    task_id,
-                )
-            )
-    late_tasks.sort(reverse=True)
-    trials = 0
-    for _, urgent_task in late_tasks:
-        if deadline is not None and perf_counter() >= deadline:
-            return best_routes
-        source_index = route_by_task[urgent_task]
-        target_indices = [
-            index for index in range(len(routes)) if index != source_index
-        ]
-        rng.shuffle(target_indices)
-        for target_index in target_indices:
-            if deadline is not None and perf_counter() >= deadline:
-                return best_routes
-            ejectable = [visit for visit in routes[target_index] if visit > 0]
-            ejectable.sort(
-                key=lambda task_id: (
-                    problem.task(task_id).deadline_min,
-                    task_id,
-                ),
-                reverse=True,
-            )
-            for ejected_task in ejectable[:6]:
-                if deadline is not None and perf_counter() >= deadline:
-                    return best_routes
-                trials += 1
-                source = tuple(
-                    visit
-                    for visit in routes[source_index]
-                    if abs(visit) != urgent_task
-                )
-                target = tuple(
-                    visit
-                    for visit in routes[target_index]
-                    if abs(visit) != ejected_task
-                )
-                urgent_options = route_insertion_options(
-                    problem,
-                    evaluator,
-                    target,
-                    target_index,
-                    urgent_task,
-                    candidate_limit=candidate_limit,
-                    option_count=1,
-                )
-                ejected_options = route_insertion_options(
-                    problem,
-                    evaluator,
-                    source,
-                    source_index,
-                    ejected_task,
-                    candidate_limit=candidate_limit,
-                    option_count=1,
-                )
-                if urgent_options and ejected_options:
-                    candidate = list(routes)
-                    candidate[target_index] = urgent_options[0].route
-                    candidate[source_index] = ejected_options[0].route
-                    candidate_routes = tuple(candidate)
-                    score = routes_score(evaluator, candidate_routes)
-                    if score < best_score:
-                        best_score = score
-                        best_routes = candidate_routes
-                if trials >= max_trials:
-                    return best_routes
-    return best_routes
-
-
 def _roulette(weights: dict[str, float], rng: Random) -> str:
     names = tuple(weights)
     values = [weights[name] for name in names]
@@ -3425,7 +2563,7 @@ def solve_alns(
     config: ALNSConfig | None = None,
     initial_routes: Sequence[Sequence[int]] | None = None,
 ) -> SolverResult:
-    """Run C2-Lex-HALNS and independently validate its best-so-far result."""
+    """Run the 9-destroy/5-repair ALNS and validate its best-so-far result."""
 
     cfg = config or ALNSConfig()
     started = perf_counter()
@@ -3530,42 +2668,28 @@ def solve_alns(
         )
     ]
 
-    destroy_operators = tuple(
-        name
-        for name in DESTROY_OPERATORS
-        if (
-            (
-                name != "route_clear"
-                if cfg.enable_assignment_destroy
-                else name != "assignment_destroy"
-            )
-            and (cfg.enable_home_displaced or name != "home_displaced")
-        )
-    )
+    destroy_operators = DESTROY_OPERATORS
     destroy_weights = {name: 1.0 for name in destroy_operators}
-    repair_operators = tuple(
-        name
-        for name in REPAIR_OPERATORS
-        if cfg.enable_cluster_repair or name != "cluster_regret"
-    )
+    repair_operators = REPAIR_OPERATORS
     repair_weights = {name: 1.0 for name in repair_operators}
     total_uses = {
         **{f"destroy:{name}": 0 for name in destroy_operators},
         **{f"repair:{name}": 0 for name in repair_operators},
     }
+    operator_statistics = {
+        key: {
+            "uses": 0,
+            "accepted": 0,
+            "current_improvements": 0,
+            "best_improvements": 0,
+            "total_reward": 0.0,
+        }
+        for key in total_uses
+    }
     segment_uses = {key: 0 for key in total_uses}
     segment_rewards = {key: 0.0 for key in total_uses}
     accepted_count = 0
-    vnd_calls = 0
-    vnd_improved_iterations = 0
     temperature = cfg.initial_temperature
-    route_pool = (
-        _RoutePool(problem, evaluator)
-        if cfg.enable_route_pool and relay_cfg is None
-        else None
-    )
-    if route_pool is not None:
-        route_pool.add(best)
     completed_iterations = 0
 
     for iteration in range(1, cfg.max_iterations + 1):
@@ -3618,11 +2742,6 @@ def solve_alns(
                 round(len(problem.tasks) * cfg.max_destroy_fraction),
             )
         remove_count = rng.randint(lower, upper)
-        if relay_cfg is not None:
-            plan_index = build_plan_index(problem, current)
-            original_route_by_task = dict(plan_index.delivery_route_by_task)
-        else:
-            original_route_by_task = _task_route_index(current)
         partial, removed = destroy_solution(
             problem,
             evaluator,
@@ -3643,9 +2762,6 @@ def solve_alns(
                 repair_name,
                 cfg.candidate_limit,
                 use_deadline_risk=cfg.enable_deadline_risk,
-                original_route_by_task=original_route_by_task,
-                cluster_bundle_candidate_limit=cfg.cluster_bundle_candidate_limit,
-                cluster_pair_limit=cfg.cluster_pair_limit,
                 deadline=deadline,
                 relay_cfg=relay_cfg,
                 global_evaluator=global_evaluator,
@@ -3676,47 +2792,6 @@ def solve_alns(
             except _SearchDeadlineReached:
                 break
             timed_out = deadline is not None and perf_counter() >= deadline
-        if (
-            not timed_out
-            and relay_cfg is None
-            and cfg.enable_vnd
-            and cfg.vnd_max_moves > 0
-        ):
-            repaired_score = routes_score(evaluator, candidate)
-            candidate = vnd_improve(
-                problem,
-                evaluator,
-                candidate,
-                candidate_limit=cfg.candidate_limit,
-                use_deadline_risk=cfg.enable_deadline_risk,
-                max_moves=cfg.vnd_max_moves,
-                task_limit=cfg.vnd_task_limit,
-                swap_pair_limit=cfg.vnd_swap_pair_limit,
-                block_window_limit=cfg.vnd_block_window_limit,
-                deadline=deadline,
-            )
-            vnd_calls += 1
-            if routes_score(evaluator, candidate) < repaired_score:
-                vnd_improved_iterations += 1
-        timed_out = timed_out or (
-            deadline is not None and perf_counter() >= deadline
-        )
-        if (
-            not timed_out
-            and relay_cfg is None
-            and cfg.enable_ejection
-            and cfg.ejection_interval > 0
-            and iteration % cfg.ejection_interval == 0
-        ):
-            candidate = _ejection_swap_improve(
-                problem,
-                evaluator,
-                candidate,
-                cfg.candidate_limit,
-                rng,
-                cfg.ejection_trials,
-                deadline,
-            )
         timed_out = timed_out or (
             deadline is not None and perf_counter() >= deadline
         )
@@ -3725,6 +2800,7 @@ def solve_alns(
             deadline is not None and perf_counter() >= deadline
         )
         improved_current = candidate_score < current_score
+        improved_best = not timed_out and candidate_score < best_score
         accepted = False if timed_out else _accept_worse(
             candidate_score, current_score, problem, temperature, rng
         )
@@ -3734,9 +2810,7 @@ def solve_alns(
             current_score = candidate_score
             accepted_count += 1
             reward = 4.0 if improved_current else 1.0
-            if route_pool is not None:
-                route_pool.add(current)
-        if not timed_out and candidate_score < best_score:
+        if improved_best:
             best = candidate
             best_score = candidate_score
             time_to_best = perf_counter() - started
@@ -3750,8 +2824,6 @@ def solve_alns(
                 )
             )
             reward = 8.0
-            if route_pool is not None:
-                route_pool.add(best)
 
         destroy_key = f"destroy:{destroy_name}"
         repair_key = f"repair:{repair_name}"
@@ -3759,41 +2831,18 @@ def solve_alns(
             total_uses[key] += 1
             segment_uses[key] += 1
             segment_rewards[key] += reward
+            stats = operator_statistics[key]
+            stats["uses"] += 1
+            stats["accepted"] += int(accepted)
+            stats["current_improvements"] += int(
+                accepted and improved_current
+            )
+            stats["best_improvements"] += int(improved_best)
+            stats["total_reward"] += reward
 
         if timed_out:
             completed_iterations = iteration
             break
-
-        if (
-            route_pool is not None
-            and cfg.route_pool_interval > 0
-            and iteration % cfg.route_pool_interval == 0
-        ):
-            recombined = route_pool.recombine(
-                best,
-                cfg.route_pool_node_limit,
-                deadline,
-            )
-            if deadline is not None and perf_counter() >= deadline:
-                completed_iterations = iteration
-                break
-            recombined_score = routes_score(evaluator, recombined)
-            if recombined_score < best_score:
-                best = recombined
-                best_score = recombined_score
-                current = recombined
-                current_score = recombined_score
-                time_to_best = perf_counter() - started
-                best_trajectory.append(
-                    (
-                        iteration,
-                        time_to_best,
-                        best_score.late_count,
-                        best_score.total_lateness_min,
-                        best_score.distance_km,
-                    )
-                )
-                route_pool.add(best)
 
         if iteration % cfg.weight_update_interval == 0:
             for name in destroy_operators:
@@ -3834,23 +2883,11 @@ def solve_alns(
     runtime_seconds = perf_counter() - started
     metadata = MappingProxyType(
         {
-            "method": (
-                "C2-Lex-ALNS-Core"
-                if not cfg.enable_route_pool and not cfg.enable_ejection
-                else "C2-Lex-HALNS"
-            ),
+            "method": "C2-Lex-ALNS",
             "seed": cfg.seed,
-            "enable_route_pool": cfg.enable_route_pool,
-            "enable_ejection": cfg.enable_ejection,
-            "enable_assignment_destroy": cfg.enable_assignment_destroy,
             "enable_home_seed": cfg.enable_home_seed,
-            "enable_home_displaced": cfg.enable_home_displaced,
             "enable_deadline_risk": cfg.enable_deadline_risk,
-            "enable_vnd": cfg.enable_vnd,
-            "enable_cluster_repair": cfg.enable_cluster_repair,
             "relay_enabled": bool(relay_active),
-            "vnd_calls": vnd_calls,
-            "vnd_improved_iterations": vnd_improved_iterations,
             "time_limit_seconds": cfg.time_limit_seconds,
             "initial_score": (
                 initial_score.late_count,
@@ -3867,9 +2904,13 @@ def solve_alns(
                 else 0.0
             ),
             "operator_uses": MappingProxyType(dict(total_uses)),
+            "operator_statistics": MappingProxyType(
+                {
+                    key: MappingProxyType(dict(values))
+                    for key, values in operator_statistics.items()
+                }
+            ),
             "operator_weights": MappingProxyType(all_weights),
-            "route_pool_columns": len(route_pool.columns) if route_pool else 0,
-            "route_pool_last_nodes": route_pool.last_nodes if route_pool else 0,
             "profiling": MappingProxyType(counters.as_dict()),
         }
     )
@@ -3914,32 +2955,11 @@ def solve_alns(
     )
 
 
-def solve_alns_core(
-    problem: Problem,
-    *,
-    config: ALNSConfig | None = None,
-    initial_routes: Sequence[Sequence[int]] | None = None,
-) -> SolverResult:
-    """Run the adaptive LNS core without route-pool or ejection reinforcement."""
-
-    core_config = replace(
-        config or ALNSConfig(),
-        enable_route_pool=False,
-        enable_ejection=False,
-    )
-    return solve_alns(
-        problem,
-        config=core_config,
-        initial_routes=initial_routes,
-    )
-
-
 def solve_relay_staged(
     problem: Problem,
     *,
     config: ALNSConfig | None = None,
     initial_routes: Sequence[Sequence[int]] | None = None,
-    core: bool = False,
 ) -> SolverResult:
     """Run DIRECT warm-up followed by relay-aware search in one total budget.
 
@@ -3955,7 +2975,7 @@ def solve_relay_staged(
     """
 
     cfg = config or ALNSConfig()
-    solver = solve_alns_core if core else solve_alns
+    solver = solve_alns
     fraction = cfg.relay_direct_warmup_fraction
     if not problem.has_relays or not cfg.relay_enabled or fraction <= 0:
         return solver(problem, config=cfg, initial_routes=initial_routes)
@@ -4027,15 +3047,39 @@ def solve_relay_staged(
         key: warm_uses.get(key, 0) + relay_uses.get(key, 0)
         for key in warm_uses.keys() | relay_uses.keys()
     }
+    warm_statistics = {
+        key: dict(value)
+        for key, value in warm_result.metadata.get(
+            "operator_statistics", {}
+        ).items()
+    }
+    relay_statistics_by_operator = {
+        key: dict(value)
+        for key, value in relay_result.metadata.get(
+            "operator_statistics", {}
+        ).items()
+    }
+    combined_statistics = {
+        key: MappingProxyType(
+            {
+                metric: warm_statistics.get(key, {}).get(metric, 0)
+                + relay_statistics_by_operator.get(key, {}).get(metric, 0)
+                for metric in (
+                    "uses",
+                    "accepted",
+                    "current_improvements",
+                    "best_improvements",
+                    "total_reward",
+                )
+            }
+        )
+        for key in warm_statistics.keys() | relay_statistics_by_operator.keys()
+    }
     runtime_seconds = warm_result.runtime_seconds + relay_result.runtime_seconds
     iterations = warm_result.iterations + relay_result.iterations
     metadata = {
         **dict(relay_result.metadata),
-        "method": (
-            "C2-Lex-Relay-Staged-Core"
-            if core
-            else "C2-Lex-Relay-Staged-HALNS"
-        ),
+        "method": "C2-Lex-ALNS-Staged",
         "time_limit_seconds": cfg.time_limit_seconds,
         "initial_score": warm_result.metadata.get("initial_score"),
         "time_to_best_seconds": (
@@ -4051,6 +3095,7 @@ def solve_relay_staged(
             iterations / runtime_seconds if runtime_seconds > 0 else 0.0
         ),
         "operator_uses": MappingProxyType(combined_uses),
+        "operator_statistics": MappingProxyType(combined_statistics),
         "profiling": MappingProxyType(combined_profile),
         "staged_relay": True,
         "relay_direct_warmup_fraction": fraction,

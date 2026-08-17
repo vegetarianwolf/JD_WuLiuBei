@@ -14,7 +14,6 @@ from uav_dispatch import (
     Problem,
     Task,
     construct_regret_initial,
-    solve_alns_core,
 )
 from uav_dispatch.cli import build_drone_homes
 from uav_dispatch.deploy import k_means_homes, k_means_points
@@ -210,7 +209,7 @@ def test_diagnostics_mismatch_detects_bad_assignment():
     assert gap == pytest.approx(math.sqrt(32) - math.sqrt(2))
 
 
-# --------------------------------------------------- home-aware switches
+# -------------------------------------------------------- home-aware seed
 
 def test_home_seed_construction_is_valid_and_complete():
     problem = _tiny_problem(homes=(Point(0, 0), Point(5, 5)))
@@ -224,23 +223,3 @@ def test_home_seed_construction_is_valid_and_complete():
         if visit > 0
     }
     assert served == set(problem.task_ids)
-
-
-def test_home_displaced_operator_gating():
-    problem = _tiny_problem(homes=(Point(0, 0), Point(5, 5)))
-    cfg_off = ALNSConfig(max_iterations=5, seed=1, candidate_limit=8)
-    result_off = solve_alns_core(problem, config=cfg_off)
-    assert result_off.evaluation.valid
-    assert "destroy:home_displaced" not in result_off.metadata[
-        "operator_weights"
-    ]
-
-    cfg_on = ALNSConfig(
-        max_iterations=5,
-        seed=1,
-        candidate_limit=8,
-        enable_home_displaced=True,
-    )
-    result_on = solve_alns_core(problem, config=cfg_on)
-    assert result_on.evaluation.valid
-    assert "destroy:home_displaced" in result_on.metadata["operator_weights"]
