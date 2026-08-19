@@ -40,7 +40,6 @@ _用途：将现有 DOCX 的写作计划改造成可直接成稿的章节结构�
 - `pure_direct` 名义预算为 `240 s`
 - 只要启用 Relay 或 Station，名义预算增加一次 `60 s`；两者同时启用也只增加一次，不累加
 - 因而四场景名义预算依次为 `240/300/300/300 s`
-- Relay 场景在可用求解预算内采用 `80% DIRECT` 预热与 `20% Relay` 搜索
 - 构造时间计入总预算，并保留安全余量；正文报告名义预算和实测总墙钟时间
 - 第6.2节只运行组合场景 `direct_relay_stations`
 - 第6.2节每个参数设置4—5个水平，仅使用一个固定种子；其结论限定为趋势与机制验证，不作统计显著性推断
@@ -130,10 +129,6 @@ _用途：将现有 DOCX 的写作计划改造成可直接成稿的章节结构�
 
 说明 Relay 只在 DIRECT 可行解基础上扩展搜索空间：先保留强 DIRECT incumbent，再通过候选站筛选、中继播种和周期性跨机精化生成接力计划。任何接力候选都必须通过全局 DAG 评价后才能参与三层字典序比较。
 
-#### 第四段：分阶段预算
-
-Relay 场景采用80/20分阶段搜索。正文应写“名义300秒协议下，约240秒用于 DIRECT 预热、约60秒用于 Relay 搜索；实际分段受构造时间和安全余量影响”，不得写成所有场景同为240秒。
-
 ### 4.4 需求驱动的无人机初始预部署
 
 #### 第一段：候选起点与需求得分
@@ -157,8 +152,8 @@ Relay 场景采用80/20分阶段搜索。正文应写“名义300秒协议下，
 #### 图4-1 总体求解流程图
 
 - 放置位置：4.4节末
-- 内容字段：`task_data`、`depot`、`relay_network`、`drone_homes`、`regret2_initial`、`direct_warmup`、`alns_search`、`relay_search`、`global_dag_evaluation`、`best_score`
-- 必须显示：原点/Station分支、Relay开关、80/20分段、三层字典序比较、可行性失败回退
+- 内容字段：`task_data`、`depot`、`relay_network`、`drone_homes`、`regret2_initial`、`alns_search`、`global_dag_evaluation`、`best_score`
+- 必须显示：原点/Station分支、Relay开关、三层字典序比较、可行性失败回退
 - 回答问题：从输入数据到最终路线的完整求解链路是什么
 - 图形类型：流程图；论文中导出为矢量图，Markdown源可先用 Mermaid 保存
 
@@ -322,12 +317,12 @@ Relay 场景采用80/20分阶段搜索。正文应写“名义300秒协议下，
 
 #### 6.1.2 四场景定义
 
-| 场景 | Relay | 无人机起点 | 名义预算 | 分阶段搜索 |
-| --- | --- | --- | ---: | --- |
-| `pure_direct` | 关闭 | 全部原点 | 240 s | 无 |
-| `direct_relay` | 开启 | 全部原点 | 300 s | 80% DIRECT + 20% Relay |
-| `direct_stations` | 关闭 | 需求驱动预部署 | 300 s | 全程 DIRECT |
-| `direct_relay_stations` | 开启 | 需求驱动预部署 | 300 s | 80% DIRECT + 20% Relay |
+| 场景 | Relay | 无人机起点 | 名义预算 |
+| --- | --- | --- | ---: |
+| `pure_direct` | 关闭 | 全部原点 | 240 s |
+| `direct_relay` | 开启 | 全部原点 | 300 s |
+| `direct_stations` | 关闭 | 需求驱动预部署 | 300 s |
+| `direct_relay_stations` | 开启 | 需求驱动预部署 | 300 s |
 
 #### 6.1.3 解质量比较
 
@@ -392,7 +387,7 @@ Relay 场景采用80/20分阶段搜索。正文应写“名义300秒协议下，
 
 #### 表6-1 四场景定义与预算协议
 
-- 结果字段：`scenario`、`relay_enabled`、`drone_homes`、`warmup_fraction`、`base_budget_seconds`、`bonus_seconds`、`effective_time_limit_seconds`、`seed_count`
+- 结果字段：`scenario`、`relay_enabled`、`drone_homes`、`base_budget_seconds`、`bonus_seconds`、`effective_time_limit_seconds`、`seed_count`
 - 必须显示：额外60秒只加一次
 - 回答问题：四个场景在机制和计算预算上有什么差异
 
@@ -550,7 +545,7 @@ Relay 场景采用80/20分阶段搜索。正文应写“名义300秒协议下，
 - 同机经站与跨机交接
 - 路线边和交接边构图
 - 环检测、拓扑时间传播、等待时间计算
-- DIRECT预热、中继播种和跨机精化
+- 中继播种和跨机精化
 
 ### A.7 需求驱动预部署算法
 
@@ -585,7 +580,7 @@ Relay 场景采用80/20分阶段搜索。正文应写“名义300秒协议下，
 #### 表A-1 完整算法参数
 
 - 字段：`parameter`、`symbol_or_cli_key`、`value`、`unit`、`scope`、`source`
-- 参数组：ALNS、Relay网络、80/20分段、预部署、候选剪枝、停止条件
+- 参数组：ALNS、Relay网络、预部署、候选剪枝、停止条件
 
 ## 📚 附录B 完整实验结果与复现材料
 

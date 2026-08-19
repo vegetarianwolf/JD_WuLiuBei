@@ -1691,9 +1691,7 @@ def write_chapter_four(writer: ManuscriptWriter, bundle: Bundle) -> None:
     writer.paragraph(
         "Relay搜索以强DIRECT incumbent为起点，通过候选站筛选、中继播种和周期性"
         "跨机精化扩展服务计划。任何接力候选均须通过全局DAG无环检查和时间传播，"
-        "然后再参与三层目标比较。正式Relay协议把可用搜索时间约按80%/20%分为"
-        "DIRECT预热和Relay扩展；名义300 s时约对应240 s与60 s，实际分段还会扣除"
-        "构造时间和安全余量。"
+        "然后再参与三层目标比较。"
     )
 
     writer.heading("4.4 需求驱动的无人机初始预部署", 2)
@@ -1716,7 +1714,6 @@ def write_chapter_four(writer: ManuscriptWriter, bundle: Bundle) -> None:
             "任务数据、调度中心与候选固定中继网络",
             "按场景固定无人机home：原点或需求驱动Station预部署",
             "Station场景home-first播种；对其余任务regret-2构造完整DIRECT初始解",
-            "Relay关闭：单阶段ALNS；Relay开启：约80% DIRECT预热 + 20% Relay搜索",
             "局部路线校验 + 全局DAG无环与时刻传播",
             "按（逾期数，总逾期，航程）严格字典序保留最优解",
         ),
@@ -1971,8 +1968,6 @@ def write_chapter_six(writer: ManuscriptWriter, bundle: Bundle) -> None:
                 scenario,
                 "开" if spec["relay"] else "关",
                 "需求驱动Station" if spec["drone_homes"] == "stations" else "原点",
-                f"{float(spec['warmup']) * 100:.0f}% DIRECT + {100 - float(spec['warmup']) * 100:.0f}% Relay"
-                if spec["relay"] else "全程DIRECT",
                 _fmt(manifest["base_seconds"]),
                 _fmt(manifest["bonus_seconds"]) if uses_extension else "0",
                 _fmt(manifest["scenario_budgets_seconds"][scenario]),
@@ -1981,15 +1976,14 @@ def write_chapter_six(writer: ManuscriptWriter, bundle: Bundle) -> None:
         )
     writer.table(
         "表6-1 四场景定义与预算协议",
-        ("场景", "Relay", "无人机起点", "分阶段搜索", "基础/s", "加时/s", "名义预算/s", "种子数"),
+        ("场景", "Relay", "无人机起点", "基础/s", "加时/s", "名义预算/s", "种子数"),
         protocol_rows,
-        ratios=(1.6, 0.55, 1.25, 1.45, 0.65, 0.6, 0.85, 0.6),
-        font_size=7.1,
+        ratios=(1.75, 0.6, 1.45, 0.75, 0.7, 0.95, 0.7),
+        font_size=7.5,
     )
     writer.paragraph(
         "表6-1中的加时按“是否使用Relay或Station”判断，只增加一次。构造时间计入"
-        "名义预算，搜索时间还扣除安全余量；Relay场景在剩余预算内执行80% DIRECT"
-        "预热与20% Relay搜索。"
+        "名义预算，搜索时间还扣除安全余量。"
     )
 
     writer.heading("6.1.3 解质量与稳定性", 3)
@@ -2441,7 +2435,6 @@ def write_appendix_a(writer: ManuscriptWriter, bundle: Bundle) -> None:
         ("单机任务上限", "max_tasks_per_drone", scenario_manifest["max_tasks_per_drone"], "项", "第6.1节", "四场景manifest"),
         ("基础预算", "base_seconds", _fmt(scenario_manifest["base_seconds"]), "s", "四场景", "四场景manifest"),
         ("Relay/Station加时", "bonus_seconds", _fmt(scenario_manifest["bonus_seconds"]), "s", "扩展场景，只加一次", "四场景manifest"),
-        ("Relay预热比例", "scenario.warmup", "0.80", "比例", "Relay场景", "四场景manifest"),
         ("正式站点数", "station_count", ", ".join(map(str, station_counts)), "站", "第6.1节", "四场景runs"),
         ("敏感性单次预算", "effective_seconds_per_run", _fmt(sensitivity_manifest["effective_seconds_per_run"]), "s", "第6.2节", "敏感性manifest"),
         ("多机宽松倍率", "relaxed_deadline_multiplier", _fmt(bundle.benchmark_manifest["relaxed_deadline_multiplier"]), "倍", "第5.3节", "第5章manifest"),
