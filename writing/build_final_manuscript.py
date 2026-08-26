@@ -2,8 +2,8 @@
 """Build the final manuscript from the audited source DOCX and formal outputs.
 
 This program is deliberately strict: it accepts only the fresh, formal
-``final_benchmarks``, ``final_scenario_comparison`` and ``final_sensitivity``
-artefacts, verifies their experiment protocols and linked solution files,
+``final_benchmarks``, ``virtual_ablation``, ``final_scenario_comparison`` and
+``final_sensitivity`` artefacts, verifies their experiment protocols and linked solution files,
 then replaces the first Chapter 4 through the paragraph immediately before
 "参考文献".  Chapters 1--3, references, sections, margins, headers, footers and
 page-number fields are left in the source package.
@@ -111,6 +111,21 @@ EXPECTED_SENSITIVITY_LEVELS = {
     "deadline_multiplier": (0.8, 0.9, 1.0, 1.1, 1.2),
     "station_count": (2.0, 3.0, 4.0, 5.0, 6.0),
 }
+EXPECTED_VIRTUAL_SIZES = (30, 60, 90)
+EXPECTED_VIRTUAL_SEEDS = tuple(range(2026082601, 2026082606))
+VIRTUAL_METHOD_IDS = (
+    "nearest_adjacent",
+    "edd_adjacent",
+    "greedy_full_position",
+    "full_alns",
+)
+VIRTUAL_VARIANT_IDS = (
+    "full_alns",
+    "no_time_awareness",
+    "no_capacity_conflict",
+    "no_assignment_destroy",
+    "uniform_operator_weights",
+)
 FIGURE_FILES = (
     "fig5_1_title_example.png",
     "fig5_2_exact_validation.png",
@@ -148,12 +163,17 @@ class ArtefactError(RuntimeError):
 @dataclass(frozen=True)
 class Bundle:
     benchmark_dir: Path
+    virtual_dir: Path
     scenario_dir: Path
     sensitivity_dir: Path
     figure_dir: Path
     benchmark_manifest: dict[str, Any]
     benchmark_rows: tuple[dict[str, Any], ...]
     benchmark_solutions: dict[str, dict[str, Any]]
+    virtual_manifest: dict[str, Any]
+    virtual_runs: tuple[dict[str, Any], ...]
+    virtual_method_summary: tuple[dict[str, Any], ...]
+    virtual_ablation_summary: tuple[dict[str, Any], ...]
     scenario_manifest: dict[str, Any]
     scenario_rows: tuple[dict[str, Any], ...]
     scenario_summary_rows: tuple[dict[str, Any], ...]
@@ -167,6 +187,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-docx", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--results-root", type=Path, default=DEFAULT_RESULTS)
     parser.add_argument("--benchmarks-dir", type=Path)
+    parser.add_argument("--virtual-dir", type=Path)
     parser.add_argument("--scenarios-dir", type=Path)
     parser.add_argument("--sensitivity-dir", type=Path)
     parser.add_argument("--figures-dir", type=Path, default=DEFAULT_FIGURES)
@@ -491,6 +512,484 @@ def _validate_benchmarks(directory: Path) -> tuple[
                 raise ArtefactError(f"多机扩展{experiment}.{key}与解文件不一致")
         solutions[experiment] = solution
     return manifest, rows, solutions
+
+
+def _validate_virtual_ablation(directory: Path) -> tuple[
+    dict[str, Any],
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+]:
+    payload = _mapping(
+        _load_json(directory / "results.json", "第5章虚拟消融结果"),
+        "第5章虚拟消融结果",
+    )
+    checksums = _mapping(
+        _load_json(directory / "checksums.json", "第5章虚拟消融校验和"),
+        "第5章虚拟消融校验和",
+    )
+    expected_checksum_files = {
+        "results.json",
+        "manifest.json",
+        "runs.csv",
+        "method_summary.csv",
+        "ablation_summary.csv",
+        "REPORT.md",
+    }
+    if set(checksums) != expected_checksum_files:
+        raise ArtefactError("虚拟消融checksums.json文件集合不完整")
+    for filename, expected_hash in checksums.items():
+        if str(expected_hash) != _sha256(directory / filename):
+            raise ArtefactError(f"虚拟消融产物校验失败：{filename}")
+    _require_keys(
+        payload,
+        ("manifest", "instances", "runs", "method_summary", "ablation_summary"),
+        "第5章虚拟消融结果",
+    )
+    manifest = _mapping(payload["manifest"], "虚拟消融manifest")
+    standalone_manifest = _mapping(
+        _load_json(directory / "manifest.json", "第5章虚拟消融manifest文件"),
+        "第5章虚拟消融manifest文件",
+    )
+    if standalone_manifest != manifest:
+        raise ArtefactError("虚拟消融results.json与manifest.json不一致")
+    instances = _rows(payload["instances"], "虚拟消融instances")
+    runs = _rows(payload["runs"], "虚拟消融runs")
+    method_summary = _rows(payload["method_summary"], "虚拟消融method_summary")
+    ablation_summary = _rows(
+        payload["ablation_summary"], "虚拟消融ablation_summary"
+    )
+    _require_keys(
+        manifest,
+        (
+            "protocol",
+            "formal",
+            "data_kind",
+            "instance_sizes",
+            "instance_seeds",
+            "instance_count",
+            "run_count",
+            "budget_mode",
+            "search_budget_seconds",
+            "candidate_limit",
+            "max_iterations",
+            "paired_design",
+            "generator",
+            "method_ids",
+            "variants",
+            "experiment_script_sha256",
+            "solver_source_sha256",
+            "interpretation_boundary",
+        ),
+        "虚拟消融manifest",
+    )
+    if (
+        manifest["protocol"]
+        != "section5_virtual_algorithm_and_component_ablation"
+        or manifest["formal"] is not False
+        or manifest["data_kind"] != "synthetic_virtual"
+    ):
+        raise ArtefactError("虚拟消融结果没有明确标注为synthetic_virtual非正式协议")
+    if [int(value) for value in manifest["instance_sizes"]] != list(
+        EXPECTED_VIRTUAL_SIZES
+    ):
+        raise ArtefactError("虚拟消融任务规模必须为30、60、90")
+    if [int(value) for value in manifest["instance_seeds"]] != list(
+        EXPECTED_VIRTUAL_SEEDS
+    ):
+        raise ArtefactError("虚拟消融实例种子必须覆盖预设5个固定种子")
+    if manifest["budget_mode"] != "fixed_iterations":
+        raise ArtefactError("虚拟消融正式结果必须使用固定迭代预算")
+    if manifest["search_budget_seconds"] is not None:
+        raise ArtefactError("固定迭代虚拟消融不得同时设置墙钟截断")
+    if int(manifest["max_iterations"]) != 1000:
+        raise ArtefactError("虚拟消融固定迭代预算必须为1000")
+    if int(manifest["candidate_limit"]) != 32:
+        raise ArtefactError("虚拟消融candidate_limit必须为32")
+    if set(str(value) for value in manifest["method_ids"]) != set(
+        VIRTUAL_METHOD_IDS
+    ):
+        raise ArtefactError("虚拟消融算法对照集合不正确")
+    variant_specs = _mapping(manifest["variants"], "虚拟消融manifest.variants")
+    if set(variant_specs) != set(VIRTUAL_VARIANT_IDS):
+        raise ArtefactError("虚拟消融变体集合不正确")
+    generator = _mapping(manifest["generator"], "虚拟消融manifest.generator")
+    _require_keys(
+        generator,
+        (
+            "region_km",
+            "depot_km",
+            "cluster_centres_km",
+            "cross_cluster_delivery_probability",
+            "pickup_jitter_sd_km",
+            "delivery_jitter_sd_km",
+            "urgent_task_probability",
+            "urgent_slack_min",
+            "flexible_slack_min",
+            "drone_count_policy",
+            "max_tasks_per_drone",
+            "capacity",
+            "speed_km_per_min",
+        ),
+        "虚拟消融manifest.generator",
+    )
+    if generator["region_km"] != [20.0, 20.0] or generator["depot_km"] != [10.0, 10.0]:
+        raise ArtefactError("虚拟消融区域或调度中心与协议不一致")
+    if generator["urgent_slack_min"] != [28.0, 70.0] or generator[
+        "flexible_slack_min"
+    ] != [70.0, 145.0]:
+        raise ArtefactError("虚拟消融截止期松弛区间与协议不一致")
+    _close(
+        generator["cross_cluster_delivery_probability"],
+        0.70,
+        "虚拟消融跨簇概率",
+    )
+    _close(generator["urgent_task_probability"], 0.35, "虚拟消融紧急任务概率")
+    runner = ROOT / "algorithm" / "experiments" / "run_virtual_ablation.py"
+    if str(manifest["experiment_script_sha256"]) != _sha256(runner):
+        raise ArtefactError("虚拟消融manifest记录的实验脚本SHA-256与当前脚本不一致")
+    if str(manifest["solver_source_sha256"]) != _solver_source_sha256():
+        raise ArtefactError("虚拟消融manifest记录的求解器源码SHA-256与当前源码不一致")
+
+    expected_cells = {
+        (task_count, seed)
+        for task_count in EXPECTED_VIRTUAL_SIZES
+        for seed in EXPECTED_VIRTUAL_SEEDS
+    }
+    instance_by_id: dict[str, dict[str, Any]] = {}
+    observed_cells: set[tuple[int, int]] = set()
+    for index, instance in enumerate(instances):
+        label = f"虚拟消融instances[{index}]"
+        _require_keys(
+            instance,
+            (
+                "instance_id",
+                "task_count",
+                "instance_seed",
+                "drone_count",
+                "max_tasks_per_drone",
+                "capacity",
+                "speed_km_per_min",
+                "region_km",
+                "depot_km",
+                "task_sha256",
+                "tasks",
+            ),
+            label,
+        )
+        instance_id = str(instance["instance_id"])
+        if instance_id in instance_by_id:
+            raise ArtefactError(f"虚拟实例编号重复：{instance_id}")
+        task_count = int(instance["task_count"])
+        seed = int(instance["instance_seed"])
+        observed_cells.add((task_count, seed))
+        if int(instance["drone_count"]) != math.ceil(task_count / 15):
+            raise ArtefactError(f"{label}.drone_count不满足ceil(N/15)")
+        if int(instance["max_tasks_per_drone"]) != 15 or int(
+            instance["capacity"]
+        ) != 2:
+            raise ArtefactError(f"{label}的K或Q与虚拟协议不一致")
+        _close(instance["speed_km_per_min"], 0.9, f"{label}.speed_km_per_min")
+        if instance["region_km"] != [20.0, 20.0] or instance["depot_km"] != [10.0, 10.0]:
+            raise ArtefactError(f"{label}的区域或调度中心与协议不一致")
+        task_rows = instance["tasks"]
+        if not isinstance(task_rows, list) or len(task_rows) != task_count:
+            raise ArtefactError(f"{label}.tasks数量与task_count不一致")
+        canonical = json.dumps(
+            task_rows,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        if hashlib.sha256(canonical).hexdigest() != str(instance["task_sha256"]):
+            raise ArtefactError(f"{label}.task_sha256无法复核")
+        instance_by_id[instance_id] = instance
+    if observed_cells != expected_cells or len(instances) != len(expected_cells):
+        raise ArtefactError("虚拟消融实例没有完整覆盖3规模×5种子")
+    if int(manifest["instance_count"]) != len(instances):
+        raise ArtefactError("虚拟消融manifest.instance_count与实例数不一致")
+    for seed in EXPECTED_VIRTUAL_SEEDS:
+        nested = [
+            instance_by_id[f"virtual_n{task_count}_seed{seed}"]["tasks"]
+            for task_count in EXPECTED_VIRTUAL_SIZES
+        ]
+        if nested[0] != nested[1][:30] or nested[1] != nested[2][:60]:
+            raise ArtefactError(f"虚拟消融种子{seed}没有形成预期的嵌套规模")
+
+    expected_methods = set(VIRTUAL_METHOD_IDS) | set(VIRTUAL_VARIANT_IDS)
+    methods_by_instance: dict[str, set[str]] = defaultdict(set)
+    initial_hashes_by_instance: dict[str, set[str]] = defaultdict(set)
+    for index, row in enumerate(runs):
+        label = f"虚拟消融runs[{index}]"
+        _require_keys(
+            row,
+            (
+                "instance_id",
+                "task_count",
+                "instance_seed",
+                "method_id",
+                "initial_routes_sha256",
+                "late_count",
+                "late_rate",
+                "total_lateness_min",
+                "distance_km",
+                "total_runtime_seconds",
+                "iterations",
+                "valid",
+                "active_destroy_operators",
+                "active_repair_operators",
+                "routes",
+            ),
+            label,
+        )
+        instance_id = str(row["instance_id"])
+        if instance_id not in instance_by_id:
+            raise ArtefactError(f"{label}引用未知虚拟实例{instance_id}")
+        method_id = str(row["method_id"])
+        if method_id not in expected_methods:
+            raise ArtefactError(f"{label}.method_id未知：{method_id}")
+        if method_id in methods_by_instance[instance_id]:
+            raise ArtefactError(f"{instance_id}重复运行方法{method_id}")
+        methods_by_instance[instance_id].add(method_id)
+        if row["valid"] is not True:
+            raise ArtefactError(f"{label}不是有效解")
+        for key in (
+            "late_count",
+            "late_rate",
+            "total_lateness_min",
+            "distance_km",
+            "total_runtime_seconds",
+            "iterations",
+        ):
+            _number(row[key], f"{label}.{key}")
+        expected_iterations = (
+            int(manifest["max_iterations"])
+            if method_id in VIRTUAL_VARIANT_IDS
+            else 0
+        )
+        if int(row["iterations"]) != expected_iterations:
+            raise ArtefactError(
+                f"{label}.iterations应为{expected_iterations}，实际为{row['iterations']}"
+            )
+        instance = instance_by_id[instance_id]
+        if int(row["task_count"]) != int(instance["task_count"]) or int(
+            row["instance_seed"]
+        ) != int(instance["instance_seed"]):
+            raise ArtefactError(f"{label}的规模或种子与实例记录不一致")
+        _close(
+            row["late_rate"],
+            int(row["late_count"]) / int(row["task_count"]),
+            f"{label}.late_rate",
+        )
+        if method_id in VIRTUAL_VARIANT_IDS:
+            spec = _mapping(variant_specs[method_id], f"变体{method_id}")
+            initial_hash = row["initial_routes_sha256"]
+            if not isinstance(initial_hash, str) or len(initial_hash) != 64:
+                raise ArtefactError(f"{label}缺少有效的初始路线SHA-256")
+            initial_hashes_by_instance[instance_id].add(initial_hash)
+            if list(row["active_destroy_operators"]) != list(spec["destroy"]):
+                raise ArtefactError(f"{label}的破坏算子集合与manifest不一致")
+            if list(row["active_repair_operators"]) != list(spec["repair"]):
+                raise ArtefactError(f"{label}的修复算子集合与manifest不一致")
+    if any(methods != expected_methods for methods in methods_by_instance.values()):
+        raise ArtefactError("每个虚拟实例必须恰含3个基线和5个ALNS变体")
+    if any(len(values) != 1 for values in initial_hashes_by_instance.values()):
+        raise ArtefactError("同一虚拟实例的ALNS变体没有复用同一初始路线")
+    if len(runs) != len(expected_cells) * len(expected_methods):
+        raise ArtefactError("虚拟消融runs数量与15实例×8方法不一致")
+    if int(manifest["run_count"]) != len(runs):
+        raise ArtefactError("虚拟消融manifest.run_count与逐运行结果不一致")
+
+    if {str(row["method_id"]) for row in method_summary} != set(
+        VIRTUAL_METHOD_IDS
+    ):
+        raise ArtefactError("虚拟算法对照汇总没有覆盖4种方法")
+    for row in method_summary:
+        _require_keys(
+            row,
+            (
+                "method_id",
+                "runs",
+                "lexicographic_best_cells",
+                "mean_late_rate",
+                "sd_late_rate",
+                "mean_lateness_per_task_min",
+                "sd_lateness_per_task_min",
+                "mean_distance_per_task_km",
+                "sd_distance_per_task_km",
+                "mean_total_runtime_seconds",
+                "sd_total_runtime_seconds",
+                "valid_rate",
+            ),
+            "虚拟算法对照汇总行",
+        )
+        if int(row["runs"]) != len(expected_cells):
+            raise ArtefactError("虚拟算法对照每种方法必须有15次运行")
+        _close(row["valid_rate"], 1.0, "虚拟算法对照有效率")
+
+    method_summary_by_id = {
+        str(row["method_id"]): row for row in method_summary
+    }
+    comparison_by_instance: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in runs:
+        if str(row["method_id"]) in VIRTUAL_METHOD_IDS:
+            comparison_by_instance[str(row["instance_id"])].append(row)
+    expected_best_counts = {method_id: 0 for method_id in VIRTUAL_METHOD_IDS}
+    for selected in comparison_by_instance.values():
+        best_score = min(
+            (
+                int(row["late_count"]),
+                float(row["total_lateness_min"]),
+                float(row["distance_km"]),
+            )
+            for row in selected
+        )
+        for row in selected:
+            score = (
+                int(row["late_count"]),
+                float(row["total_lateness_min"]),
+                float(row["distance_km"]),
+            )
+            if score == best_score:
+                expected_best_counts[str(row["method_id"])] += 1
+    method_metric_fields = (
+        ("late_rate", "mean_late_rate", "sd_late_rate"),
+        (
+            "lateness_per_task_min",
+            "mean_lateness_per_task_min",
+            "sd_lateness_per_task_min",
+        ),
+        (
+            "distance_per_task_km",
+            "mean_distance_per_task_km",
+            "sd_distance_per_task_km",
+        ),
+        (
+            "total_runtime_seconds",
+            "mean_total_runtime_seconds",
+            "sd_total_runtime_seconds",
+        ),
+    )
+    for method_id in VIRTUAL_METHOD_IDS:
+        summary_row = method_summary_by_id[method_id]
+        selected = [
+            row for row in runs if str(row["method_id"]) == method_id
+        ]
+        if int(summary_row["lexicographic_best_cells"]) != expected_best_counts[method_id]:
+            raise ArtefactError(f"虚拟算法汇总{method_id}的最佳单元计数无法复算")
+        for source_key, mean_key, sd_key in method_metric_fields:
+            values = [float(row[source_key]) for row in selected]
+            _close(
+                summary_row[mean_key],
+                statistics.fmean(values),
+                f"虚拟算法汇总{method_id}.{mean_key}",
+            )
+            _close(
+                summary_row[sd_key],
+                statistics.stdev(values),
+                f"虚拟算法汇总{method_id}.{sd_key}",
+            )
+
+    if {str(row["variant_id"]) for row in ablation_summary} != set(
+        VIRTUAL_VARIANT_IDS
+    ):
+        raise ArtefactError("虚拟组件消融汇总没有覆盖5种变体")
+    for row in ablation_summary:
+        _require_keys(
+            row,
+            (
+                "variant_id",
+                "runs",
+                "full_wins",
+                "ties",
+                "variant_wins",
+                "mean_delta_late_count_vs_full",
+                "mean_delta_total_lateness_min_vs_full",
+                "mean_delta_distance_km_vs_full",
+                "mean_delta_late_rate_percentage_points_vs_full",
+                "mean_delta_lateness_per_task_min_vs_full",
+                "mean_delta_distance_per_task_km_vs_full",
+                "valid_rate",
+            ),
+            "虚拟组件消融汇总行",
+        )
+        if int(row["runs"]) != len(expected_cells):
+            raise ArtefactError("虚拟组件消融每种变体必须有15次运行")
+        if (
+            int(row["full_wins"])
+            + int(row["ties"])
+            + int(row["variant_wins"])
+            != len(expected_cells)
+        ):
+            raise ArtefactError("虚拟组件消融胜平负计数与15个配对不一致")
+        _close(row["valid_rate"], 1.0, "虚拟组件消融有效率")
+
+    full_by_instance = {
+        str(row["instance_id"]): row
+        for row in runs
+        if str(row["method_id"]) == "full_alns"
+    }
+    for summary_row in ablation_summary:
+        variant_id = str(summary_row["variant_id"])
+        selected = [
+            row for row in runs if str(row["method_id"]) == variant_id
+        ]
+        expected_counts = {"full_wins": 0, "ties": 0, "variant_wins": 0}
+        delta_late_rate_pp: list[float] = []
+        delta_lateness_per_task: list[float] = []
+        delta_distance_per_task: list[float] = []
+        for row in selected:
+            full = full_by_instance[str(row["instance_id"])]
+            full_score = (
+                int(full["late_count"]),
+                float(full["total_lateness_min"]),
+                float(full["distance_km"]),
+            )
+            variant_score = (
+                int(row["late_count"]),
+                float(row["total_lateness_min"]),
+                float(row["distance_km"]),
+            )
+            if full_score < variant_score:
+                expected_counts["full_wins"] += 1
+            elif full_score > variant_score:
+                expected_counts["variant_wins"] += 1
+            else:
+                expected_counts["ties"] += 1
+            delta_late_rate_pp.append(
+                100.0 * (float(row["late_rate"]) - float(full["late_rate"]))
+            )
+            delta_lateness_per_task.append(
+                float(row["lateness_per_task_min"])
+                - float(full["lateness_per_task_min"])
+            )
+            delta_distance_per_task.append(
+                float(row["distance_per_task_km"])
+                - float(full["distance_per_task_km"])
+            )
+        for key, expected in expected_counts.items():
+            if int(summary_row[key]) != expected:
+                raise ArtefactError(f"虚拟消融汇总{variant_id}.{key}无法复算")
+        for key, values in (
+            (
+                "mean_delta_late_rate_percentage_points_vs_full",
+                delta_late_rate_pp,
+            ),
+            (
+                "mean_delta_lateness_per_task_min_vs_full",
+                delta_lateness_per_task,
+            ),
+            (
+                "mean_delta_distance_per_task_km_vs_full",
+                delta_distance_per_task,
+            ),
+        ):
+            _close(
+                summary_row[key],
+                statistics.fmean(values),
+                f"虚拟消融汇总{variant_id}.{key}",
+            )
+    return manifest, runs, method_summary, ablation_summary
 
 
 def _validate_scenarios(directory: Path) -> tuple[
@@ -994,17 +1493,25 @@ def _validate_figure_manifest(
 
 def load_bundle(
     benchmark_dir: Path,
+    virtual_dir: Path,
     scenario_dir: Path,
     sensitivity_dir: Path,
     figure_dir: Path,
 ) -> Bundle:
     for directory, label in (
         (benchmark_dir, "final_benchmarks"),
+        (virtual_dir, "virtual_ablation"),
         (scenario_dir, "final_scenario_comparison"),
     ):
         if not directory.is_dir():
             raise ArtefactError(f"缺少正式结果目录{label}：{directory}")
     benchmark_manifest, benchmark_rows, benchmark_solutions = _validate_benchmarks(benchmark_dir)
+    (
+        virtual_manifest,
+        virtual_runs,
+        virtual_method_summary,
+        virtual_ablation_summary,
+    ) = _validate_virtual_ablation(virtual_dir)
     scenario_manifest, scenario_rows, scenario_summary_rows = _validate_scenarios(scenario_dir)
     sensitivity_manifest, sensitivity_rows = _validate_sensitivity(sensitivity_dir)
     for manifest, label in (
@@ -1028,12 +1535,17 @@ def load_bundle(
     )
     return Bundle(
         benchmark_dir=benchmark_dir,
+        virtual_dir=virtual_dir,
         scenario_dir=scenario_dir,
         sensitivity_dir=sensitivity_dir,
         figure_dir=figure_dir,
         benchmark_manifest=benchmark_manifest,
         benchmark_rows=tuple(benchmark_rows),
         benchmark_solutions=benchmark_solutions,
+        virtual_manifest=virtual_manifest,
+        virtual_runs=tuple(virtual_runs),
+        virtual_method_summary=tuple(virtual_method_summary),
+        virtual_ablation_summary=tuple(virtual_ablation_summary),
         scenario_manifest=scenario_manifest,
         scenario_rows=tuple(scenario_rows),
         scenario_summary_rows=tuple(scenario_summary_rows),
@@ -1818,12 +2330,14 @@ def write_chapter_four(writer: ManuscriptWriter, bundle: Bundle) -> None:
 def write_chapter_five(writer: ManuscriptWriter, bundle: Bundle) -> None:
     manifest = bundle.benchmark_manifest
     rows = list(bundle.benchmark_rows)
-    writer.heading("5 数值实验与算法有效性", 1, page_break=True)
+    virtual_manifest = bundle.virtual_manifest
+    writer.heading("5 虚拟实验与算法有效性", 1, page_break=True)
     writer.paragraph(
-        "本章以正式final_benchmarks结果验证模型、精确求解器、ALNS主算法和14个"
-        "核心算子，不把200任务业务策略差异提前解释为机制结论。实验包括单机小规模"
-        "精确对照与截止期统一放宽的多机规模扩展两组；除图5-1为题设路线示意外，"
-        "其余结果表图均直接读取正式JSON。"
+        "本章把验证证据分为两层：首先以正式final_benchmarks结果核对模型、精确"
+        "求解器、ALNS主算法和14个核心算子的运行记录；随后使用确定性生成的虚拟"
+        "数据补充算法基准比较和组件关闭消融。题设距离矩阵与正式数据前缀只承担"
+        "正确性锚点，虚拟实例只承担受控算法压力测试。所有模拟结果均直接读取"
+        "virtual_ablation的JSON/CSV，不代表真实订单、飞行成本或业务因果效应。"
     )
 
     writer.heading("5.1 实验设计、实例与评价指标", 2)
@@ -1995,12 +2509,165 @@ def write_chapter_five(writer: ManuscriptWriter, bundle: Bundle) -> None:
         "图5-4 14个核心算子的调用结果构成（先按运行归一化，再等权汇总）",
     )
 
-    writer.heading("5.5 本章小结", 2)
+    writer.heading("5.5 虚拟数据上的算法对比与组件消融", 2)
+    generator = _mapping(virtual_manifest["generator"], "虚拟消融generator")
+    urgent_slack = list(generator["urgent_slack_min"])
+    flexible_slack = list(generator["flexible_slack_min"])
+    writer.paragraph(
+        "本节用完全模拟数据补充算法对照和组件关闭实验。取送点生成于"
+        "20 km×20 km四簇区域，调度中心为(10,10) km，"
+        f"{100 * float(generator['cross_cluster_delivery_probability']):.0f}%任务跨簇；"
+        "截止期等于单任务直送最早完成时间加松弛量，其中"
+        f"{100 * float(generator['urgent_task_probability']):.0f}%任务取"
+        f"{_fmt(urgent_slack[0])}‑{_fmt(urgent_slack[1])}\u00a0min，其余取"
+        f"{_fmt(flexible_slack[0])}‑{_fmt(flexible_slack[1])}\u00a0min。生成规则独立于算法。"
+    )
+    writer.table(
+        "表5-5 虚拟实验设计与配对控制",
+        ("项目", "设置", "控制目的"),
+        (
+            (
+                "任务规模",
+                ", ".join(str(value) for value in virtual_manifest["instance_sizes"]),
+                "覆盖小、中、较大虚拟实例",
+            ),
+            (
+                "重复与运力",
+                "5条固定随机流×3个嵌套规模；M=ceil(N/15)，K=15，Q=2",
+                "形成15个规模–种子配对单元",
+            ),
+            (
+                "空间与速度",
+                "20 km×20 km，4个需求簇，v=0.9 km/min，Direct-only",
+                "隔离中继与预部署机制",
+            ),
+            (
+                "截止期",
+                "单任务直送时间+混合均匀松弛量",
+                "同时保留紧急和宽松请求",
+            ),
+            (
+                "ALNS预算",
+                f"相同regret-2初始路线SHA-256、相同求解种子、固定{virtual_manifest['max_iterations']}次迭代、candidate_limit={virtual_manifest['candidate_limit']}",
+                "保证组件变体成对可比",
+            ),
+        ),
+        ratios=(1.05, 3.0, 1.65),
+        font_size=7.8,
+    )
+    writer.paragraph(
+        "对照采用仓库内可审计的最近邻成对贪心、最早截止期成对贪心、全位置"
+        "词典序贪心和完整C2-Lex-ALNS。仓库没有独立定义的“容量利用型贪心”，"
+        "故不将其名称套用于其他实现。模型也无综合成本或α、β加权目标，各单元"
+        "仍按（逾期任务数、总逾期时长、航程）严格字典序比较。"
+    )
+    method_rows = list(bundle.virtual_method_summary)
+    writer.table(
+        "表5-6 虚拟实例上的四算法比较",
+        (
+            "方法",
+            "运行",
+            "四方法中最佳单元",
+            "平均逾期率/%",
+            "单任务逾期/min",
+            "单任务航程/km",
+            "平均总时间/s",
+            "有效率/%",
+        ),
+        [
+            [
+                row["method_label"],
+                row["runs"],
+                row["lexicographic_best_cells"],
+                f"{100 * float(row['mean_late_rate']):.2f}±{100 * float(row['sd_late_rate']):.2f}",
+                f"{float(row['mean_lateness_per_task_min']):.3f}±{float(row['sd_lateness_per_task_min']):.3f}",
+                f"{float(row['mean_distance_per_task_km']):.3f}±{float(row['sd_distance_per_task_km']):.3f}",
+                f"{float(row['mean_total_runtime_seconds']):.3f}",
+                f"{100 * float(row['valid_rate']):.1f}",
+            ]
+            for row in method_rows
+        ],
+        ratios=(1.5, 0.55, 0.9, 1.0, 1.1, 1.1, 0.9, 0.75),
+        font_size=7.2,
+    )
+    best_method = max(
+        method_rows,
+        key=lambda row: (
+            int(row["lexicographic_best_cells"]),
+            -float(row["mean_late_rate"]),
+            -float(row["mean_lateness_per_task_min"]),
+        ),
+    )
+    writer.paragraph(
+        f"15个规模–种子单元中，{best_method['method_label']}在四方法内最佳"
+        f"{int(best_method['lexicographic_best_cells'])}次。表5-6先按N归一化后等权"
+        "汇总；同种子跨规模为嵌套前缀，且每单元仅一个求解种子，故均值和标准差"
+        "仅作描述，不代表15个独立样本或随机稳定性。单任务逾期为总逾期/N（含"
+        "准时任务）；运行时间仅描述当前机器的固定迭代协议。"
+    )
+
+    ablation_rows = [
+        row for row in bundle.virtual_ablation_summary
+        if row["variant_id"] != "full_alns"
+    ]
+    writer.paragraph(
+        "组件消融每次只关闭一组机制：时间感知变体同时关闭截止期风险引导及四个"
+        "时间算子，其余变体分别移除capacity_conflict、移除assignment_destroy或"
+        "冻结均匀权重。所有变体复用同一实例、regret-2初始路线、求解种子和迭代预算。"
+    )
+    writer.table(
+        "表5-7 ALNS组件关闭消融的配对结果",
+        (
+            "关闭组件",
+            "完整胜/平/变体胜",
+            "平均Δ逾期率/百分点",
+            "平均Δ单任务逾期/min",
+            "平均Δ单任务航程/km",
+            "有效率/%",
+        ),
+        [
+            [
+                row["variant_label"],
+                f"{row['full_wins']}/{row['ties']}/{row['variant_wins']}",
+                f"{float(row['mean_delta_late_rate_percentage_points_vs_full']):+.3f}",
+                f"{float(row['mean_delta_lateness_per_task_min_vs_full']):+.3f}",
+                f"{float(row['mean_delta_distance_per_task_km_vs_full']):+.3f}",
+                f"{100 * float(row['valid_rate']):.1f}",
+            ]
+            for row in ablation_rows
+        ],
+        ratios=(1.65, 1.15, 0.9, 1.15, 1.05, 0.8),
+        font_size=7.5,
+    )
+    ablation_by_id = {
+        str(row["variant_id"]): row for row in ablation_rows
+    }
+    no_time = ablation_by_id["no_time_awareness"]
+    no_capacity = ablation_by_id["no_capacity_conflict"]
+    no_assignment = ablation_by_id["no_assignment_destroy"]
+    uniform_weights = ablation_by_id["uniform_operator_weights"]
+    writer.paragraph(
+        "表5-7中Δ=变体−完整ALNS，三项差值先按N归一化；正值表示关闭后指标上升，"
+        "低层差值不能越过字典序高层目标。完整配置相对去时间感知、去容量冲突、"
+        f"去任务重分配和均匀权重的胜/平/负依次为{no_time['full_wins']}/"
+        f"{no_time['ties']}/{no_time['variant_wins']}、{no_capacity['full_wins']}/"
+        f"{no_capacity['ties']}/{no_capacity['variant_wins']}、"
+        f"{no_assignment['full_wins']}/{no_assignment['ties']}/"
+        f"{no_assignment['variant_wins']}和{uniform_weights['full_wins']}/"
+        f"{uniform_weights['ties']}/{uniform_weights['variant_wins']}。完整配置并非"
+        "一致占优，观测差异可能同时受实例与单次搜索路径影响；本节不支持组件稳定"
+        "净贡献、显著性、运营成本或业务收益结论。完整路线、输入和SHA-256见"
+        "algorithm/results/virtual_ablation/。"
+    )
+
+    writer.heading("5.6 本章小结", 2)
     writer.paragraph(
         f"正式结果给出三类证据：题设两任务例由精确算法复核为11 km；"
         f"{len(exact_sizes)}个小规模实例中有{match_count}个ALNS运行达到精确三层"
-        "得分；较宽松多机规模实验均产生通过校验的完整解。算子统计进一步确认"
-        "最终14个注册算子实际进入搜索。正式200任务的四场景策略差异留待第6章分析。"
+        "得分；较宽松多机规模实验均产生通过校验的完整解。算子统计确认最终14个"
+        "注册算子实际进入搜索，新增的15个虚拟实例进一步给出四算法对照和四项组件"
+        "关闭配对。全部模拟运行均有效，但其解释范围严格限定为算法机制验证。正式"
+        "200任务的四场景策略差异留待第6章分析。"
     )
 
 
@@ -2952,10 +3619,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     results_root = args.results_root.expanduser()
     benchmark_dir = (args.benchmarks_dir or results_root / "final_benchmarks").expanduser()
+    virtual_dir = (args.virtual_dir or results_root / "virtual_ablation").expanduser()
     scenario_dir = (args.scenarios_dir or results_root / "final_scenario_comparison").expanduser()
     sensitivity_dir = (args.sensitivity_dir or results_root / "final_sensitivity").expanduser()
     bundle = load_bundle(
         benchmark_dir.resolve(),
+        virtual_dir.resolve(),
         scenario_dir.resolve(),
         sensitivity_dir.resolve(),
         args.figures_dir.expanduser().resolve(),

@@ -45,6 +45,7 @@ src/uav_dispatch/
 └── cli.py            命令行入口和 JSON 序列化
 experiments/
 ├── run_benchmarks.py             第5章精确/多规模实验
+├── run_virtual_ablation.py       第5.5节虚拟算法对比与组件消融
 ├── run_scenario_comparison.py    第6.1节四场景×三种子实验
 ├── run_sensitivity_analysis.py   第6.2节三参数单因素灵敏度
 └── final_plot_style.py           论文结果图公共样式
@@ -82,6 +83,15 @@ PYTHONPATH=algorithm/src python -m uav_dispatch solve \
 PYTHONPATH=algorithm/src python -m algorithm.experiments.run_benchmarks
 ```
 
+第 5.5 节使用完全模拟、非业务观测的 30/60/90 任务规模–种子单元，比较
+三个已实现的贪心构造与完整 ALNS，并对四个 ALNS 组件组做关闭消融。所有
+ALNS 变体复用同一初始路线、求解种子和固定 1000 次迭代预算：
+
+```bash
+PYTHONPATH=algorithm/src python -m \
+  algorithm.experiments.run_virtual_ablation
+```
+
 第 6.1 节只比较以下四个场景，使用三个配对种子。Direct 基础模块为 240 s；
 Relay 与 Position（需求驱动 Station 预部署）每启用一项分别增加 240 s，
 因此四场景名义预算依次为 240/480/480/720 s：
@@ -106,7 +116,7 @@ PYTHONPATH=algorithm/src python -m \
   algorithm.experiments.run_sensitivity_analysis
 ```
 
-三个入口均支持 `--quick` 冒烟模式。正式输出会保存 manifest、输入/源码
+四个入口均支持 `--quick` 冒烟模式。正式输出会保存 manifest、输入/源码
 指纹、CSV/JSON 汇总及逐运行完整路线；`--quick` 结果明确标记为非正式，
 不得写入论文结论。`_archive/` 与旧 `results/` 中的历史材料仅供审计，不能与
 上述最终协议的结果混用。

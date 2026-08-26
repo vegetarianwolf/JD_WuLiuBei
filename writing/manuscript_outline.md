@@ -242,7 +242,34 @@ _用途：将现有 DOCX 的写作计划改造成可直接成稿的章节结构�
 3. 再比较平均奖励与最终权重，说明自适应选择如何重分配搜索机会
 4. 最后结合算子语义解释高贡献或低贡献原因，不以一次偶然最优作普遍结论
 
-### 5.5 本章小结
+### 5.5 虚拟数据上的算法对比与组件消融
+
+#### 数据性质与生成规则
+
+- 本节数据全部由确定性伪随机规则生成，不来源于物流平台订单、无人机实飞记录或传感器观测
+- 任务规模为 `N ∈ {30, 60, 90}`，复用5条固定随机流形成15个嵌套的规模–种子单元；同一种子下小规模任务集合是较大规模集合的前缀
+- 取件与送达点位于20 km×20 km区域的四个需求簇附近，调度中心位于 `(10, 10)` km
+- 70%的任务跨簇送达；截止期等于单任务直送最早完成时间再加混合均匀松弛量
+- 无人机数按 `ceil(N/15)` 设置，`K=15`、`Q=2`、`v=0.9 km/min`，关闭Relay与Station
+
+#### 四算法基准比较
+
+- 只使用当前仓库可复现的 `nearest-adjacent`、`edd-adjacent`、`greedy-full-position` 和完整 `C2-Lex-ALNS`
+- 仓库没有可审计的独立“容量利用型贪心”实现，不将该名称强行套用于其他算法；第三个基线明确采用实际存在的“全位置词典序贪心”
+- 当前模型没有综合成本或 `α、β` 惩罚权重，仍按 `(late_count, total_lateness_min, distance_km)` 严格字典序判胜
+- 跨规模汇总先转换为逾期率、单任务逾期和单任务航程，再对15个规模–种子单元等权计算描述性均值与标准差
+
+#### ALNS组件关闭消融
+
+- 完整ALNS与四个关闭变体使用同一虚拟实例、同一 `regret-2` 初始路线、同一求解种子和固定1000次迭代预算
+- 关闭时间感知：关闭deadline-risk，并移除 `deadline_related`、`late_critical`、`deadline` 和 `slack`
+- 关闭容量冲突：移除 `capacity_conflict`
+- 关闭任务重分配：移除 `assignment_destroy`
+- 关闭自适应权重：保留14个算子，但搜索期间维持均匀权重
+- 主要证据为完整算法相对关闭变体的配对胜/平/负；归一化差值按“关闭变体−完整ALNS”计算，不能越过字典序层级单独判胜
+- 结论限定为受控虚拟环境中的机制诊断，不作显著性、实际准时率、运营成本或商业收益推断
+
+### 5.6 本章小结
 
 只总结三类证据：小规模精确一致性、多机扩展可行性、核心算子实际贡献。不得提前讨论正式200任务四场景优劣。
 
@@ -295,6 +322,22 @@ _用途：将现有 DOCX 的写作计划改造成可直接成稿的章节结构�
 - 辅助编码：点大小表示 `uses`，颜色表示 `acceptance_rate`
 - 禁止内容：VND、Ejection Swap、Route Pool、Cluster Regret及其他未注册机制
 - 回答问题：自适应搜索主要依靠哪些核心算子产生改进
+
+#### 表5-5 虚拟实验设计与配对控制
+
+- 结果字段：`instance_sizes`、`instance_seeds`、`region_km`、`cluster_centres_km`、`deadline_slack_rule`、`drone_count_policy`、`budget_mode`、`max_iterations`、`initial_routes_sha256`
+- 必须显示：完全模拟、非真实业务观测；15个规模–种子单元；所有ALNS变体同初始路线、种子和固定迭代预算
+- 回答问题：虚拟数据如何生成，组件之间哪些条件保持不变
+
+#### 表5-6 虚拟实例上的四算法比较
+
+- 结果字段：`method_label`、`runs`、`lexicographic_best_cells`、`mean_late_rate`、`mean_lateness_per_task_min`、`mean_distance_per_task_km`、`mean_total_runtime_seconds`、`valid_rate`
+- 回答问题：四种真实可执行算法在同一批虚拟实例上的相对表现如何
+
+#### 表5-7 ALNS组件关闭消融的配对结果
+
+- 结果字段：`variant_label`、`full_wins`、`ties`、`variant_wins`、`mean_delta_late_rate_percentage_points_vs_full`、`mean_delta_lateness_per_task_min_vs_full`、`mean_delta_distance_per_task_km_vs_full`、`valid_rate`
+- 回答问题：关闭时间感知、容量冲突、任务重分配或自适应权重后，完整算法的配对优势是否重复出现
 
 ## 🔍 第6章 正式应用案例与策略分析
 

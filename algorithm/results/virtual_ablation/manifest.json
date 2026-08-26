@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "protocol": "section5_virtual_algorithm_and_component_ablation",
+  "formal": false,
+  "data_kind": "synthetic_virtual",
+  "created_at_utc": "2026-08-26T13:57:26.872455+00:00",
+  "git_commit": "f518fddff99df0baadd780876651e5f039a57855",
+  "git_dirty": true,
+  "experiment_script_sha256": "847a58ea112e19d800a3cc464d7612f13b422bf6e437d06b2009030b197c191c",
+  "solver_source_sha256": "e43f0874fd3c6c5600e2712ef5be1ccbc05e0e4e6725dd9ed3868a9d3b6dd0e7",
+  "pyproject_sha256": "840af8af15b13ad336cd0a4fcb46b822b1aa5c41af46dd373cf7a5d7b162b97a",
+  "requirements_dev_sha256": "9e36d716acbbbee427d6b73da4fc7b6d62c999690a81a8403aa83a6248ab9e32",
+  "environment": {
+    "python_version": "3.13.13",
+    "python_implementation": "CPython",
+    "python_executable": "/Users/vegetarianwolf/miniconda3/bin/python",
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "processor": "arm",
+    "UAV_DISPATCH_LEGACY_CANDIDATE_EVAL": null
+  },
+  "instance_sizes": [
+    30,
+    60,
+    90
+  ],
+  "instance_seeds": [
+    2026082601,
+    2026082602,
+    2026082603,
+    2026082604,
+    2026082605
+  ],
+  "instance_count": 15,
+  "run_count": 120,
+  "budget_mode": "fixed_iterations",
+  "search_budget_seconds": null,
+  "candidate_limit": 32,
+  "max_iterations": 1000,
+  "paired_design": "same generated instance, initial-route SHA-256, solver seed and fixed iteration budget for every ALNS variant",
+  "generator": {
+    "region_km": [
+      20.0,
+      20.0
+    ],
+    "depot_km": [
+      10.0,
+      10.0
+    ],
+    "cluster_centres_km": [
+      [
+        3.0,
+        3.0
+      ],
+      [
+        17.0,
+        3.0
+      ],
+      [
+        3.0,
+        17.0
+      ],
+      [
+        17.0,
+        17.0
+      ]
+    ],
+    "cross_cluster_delivery_probability": 0.7,
+    "pickup_jitter_sd_km": 1.6,
+    "delivery_jitter_sd_km": 1.8,
+    "urgent_task_probability": 0.35,
+    "urgent_slack_min": [
+      28.0,
+      70.0
+    ],
+    "flexible_slack_min": [
+      70.0,
+      145.0
+    ],
+    "drone_count_policy": "ceil(task_count / 15)",
+    "max_tasks_per_drone": 15,
+    "capacity": 2,
+    "speed_km_per_min": 0.9
+  },
+  "method_ids": [
+    "nearest_adjacent",
+    "edd_adjacent",
+    "greedy_full_position",
+    "full_alns"
+  ],
+  "variants": {
+    "full_alns": {
+      "label": "完整C2-Lex-ALNS",
+      "description": "14个算子、截止期风险引导和自适应权重全部开启",
+      "deadline_risk": true,
+      "adaptive_weights": true,
+      "destroy": [
+        "random",
+        "worst_distance",
+        "worst_lex",
+        "spatial_related",
+        "deadline_related",
+        "late_critical",
+        "route_segment",
+        "capacity_conflict",
+        "assignment_destroy"
+      ],
+      "repair": [
+        "greedy",
+        "regret2",
+        "regret3",
+        "deadline",
+        "slack"
+      ]
+    },
+    "no_time_awareness": {
+      "label": "去除时间感知",
+      "description": "关闭截止期风险引导，并移除deadline_related、late_critical、deadline和slack算子",
+      "deadline_risk": false,
+      "adaptive_weights": true,
+      "destroy": [
+        "random",
+        "worst_distance",
+        "worst_lex",
+        "spatial_related",
+        "route_segment",
+        "capacity_conflict",
+        "assignment_destroy"
+      ],
+      "repair": [
+        "greedy",
+        "regret2",
+        "regret3"
+      ]
+    },
+    "no_capacity_conflict": {
+      "label": "去除容量冲突破坏",
+      "description": "移除capacity_conflict破坏算子，其余设置不变",
+      "deadline_risk": true,
+      "adaptive_weights": true,
+      "destroy": [
+        "random",
+        "worst_distance",
+        "worst_lex",
+        "spatial_related",
+        "deadline_related",
+        "late_critical",
+        "route_segment",
+        "assignment_destroy"
+      ],
+      "repair": [
+        "greedy",
+        "regret2",
+        "regret3",
+        "deadline",
+        "slack"
+      ]
+    },
+    "no_assignment_destroy": {
+      "label": "去除任务重分配破坏",
+      "description": "移除assignment_destroy破坏算子，其余设置不变",
+      "deadline_risk": true,
+      "adaptive_weights": true,
+      "destroy": [
+        "random",
+        "worst_distance",
+        "worst_lex",
+        "spatial_related",
+        "deadline_related",
+        "late_critical",
+        "route_segment",
+        "capacity_conflict"
+      ],
+      "repair": [
+        "greedy",
+        "regret2",
+        "regret3",
+        "deadline",
+        "slack"
+      ]
+    },
+    "uniform_operator_weights": {
+      "label": "关闭自适应权重",
+      "description": "保留14个算子，但整个搜索期间保持均匀选择权重",
+      "deadline_risk": true,
+      "adaptive_weights": false,
+      "destroy": [
+        "random",
+        "worst_distance",
+        "worst_lex",
+        "spatial_related",
+        "deadline_related",
+        "late_critical",
+        "route_segment",
+        "capacity_conflict",
+        "assignment_destroy"
+      ],
+      "repair": [
+        "greedy",
+        "regret2",
+        "regret3",
+        "deadline",
+        "slack"
+      ]
+    }
+  },
+  "interpretation_boundary": "virtual algorithm stress test only; not operational demand, flight, cost, safety or causal business evidence"
+}
