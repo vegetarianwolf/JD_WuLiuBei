@@ -2,7 +2,9 @@
 
 The final protocol uses one fixed seed and five levels for each of three
 parameters: fleet size, deadline tightness and station count.  All runs use
-the combined scenario and the 300 s relay/station allowance.  Historical
+the combined scenario under a fixed 300 s total wall-clock allowance.  This
+6.2 budget is an explicit override and does not inherit the cumulative 240 s
+mechanism modules used by the 6.1 four-scenario comparison.  Historical
 results are never imported.
 """
 
@@ -50,11 +52,15 @@ SENSITIVITY_LEVELS: dict[str, tuple[int | float, ...]] = {
     "deadline_multiplier": (0.8, 0.9, 1.0, 1.1, 1.2),
     "station_count": (2, 3, 4, 5, 6),
 }
-COMBINED_SCENARIO = next(
-    scenario
-    for scenario in SCENARIOS
-    if scenario["id"] == "direct_relay_stations"
-)
+SENSITIVITY_RELAY_WARMUP_FRACTION = 0.80
+COMBINED_SCENARIO = {
+    **next(
+        scenario
+        for scenario in SCENARIOS
+        if scenario["id"] == "direct_relay_stations"
+    ),
+    "warmup": SENSITIVITY_RELAY_WARMUP_FRACTION,
+}
 
 
 def scale_deadlines(
@@ -167,11 +173,12 @@ def build_manifest(
     candidate_limit = (
         None if args.candidate_limit == 0 else args.candidate_limit
     )
+    effective_seconds = args.base_seconds + args.bonus_seconds
     combined_config = asdict(
         scenario_alns_config(
             COMBINED_SCENARIO,
             seed=args.seed,
-            solve_seconds=args.base_seconds + args.bonus_seconds,
+            solve_seconds=effective_seconds,
             max_iterations=args.max_iterations,
             candidate_limit=candidate_limit,
             home_aware=True,
@@ -208,7 +215,8 @@ def build_manifest(
         "seed": args.seed,
         "base_seconds": args.base_seconds,
         "bonus_seconds": args.bonus_seconds,
-        "effective_seconds_per_run": args.base_seconds + args.bonus_seconds,
+        "effective_seconds_per_run": effective_seconds,
+        "budget_policy": "fixed_total_override",
         "levels": _levels(args.quick),
         "scenario": COMBINED_SCENARIO,
         "solver_config": {
@@ -229,7 +237,8 @@ def build_manifest(
                 "station_count": 4,
             },
             "time_limit_policy": (
-                "effective budget - initial construction - safety margin; "
+                f"fixed {effective_seconds:g} s total override - initial "
+                "construction - safety margin; "
                 "exact per-run limit is stored in solution metadata"
             ),
             "input_transform": (
@@ -254,6 +263,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     rows: list[dict[str, Any]] = []
+    effective_seconds = args.base_seconds + args.bonus_seconds
     for parameter, levels in _levels(args.quick).items():
         for level in levels:
             drones = int(level) if parameter == "drone_count" else 8
@@ -280,6 +290,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 base_seconds=args.base_seconds,
                 bonus_seconds=args.bonus_seconds,
                 safety_margin_seconds=args.safety_margin_seconds,
+                effective_seconds_override=effective_seconds,
                 max_iterations=args.max_iterations,
                 candidate_limit=(
                     None if args.candidate_limit == 0 else args.candidate_limit

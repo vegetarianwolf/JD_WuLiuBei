@@ -5,8 +5,7 @@
 配置：seed 2026080500–2026080502（3 种子配对），candidate_limit=48（rank 24 / exact 48），
 初始解 = regret-2 直送构造（三种子共享同一初始路线）
 Relay 网络：**4 个中继站，每任务 2 个候选站，绕行比 2.0，兜底开启**，选址种子 42
-Relay 求解：分阶段 `solve_relay_staged`（80% DIRECT 预热 + 20% Relay 搜索），
-**构造后中继播种 + 跨机精化开启**；probe 0.40 / max 6，plan_beam 6，leg_beam 8，
+Relay 配置：**构造后中继播种 + 跨机精化开启**；probe 0.40 / max 6，plan_beam 6，leg_beam 8，
 global_limit 5，sample_every 3
 运行方式：`run_relay_comparison.py --output-dir results/relay_adjusted_240s --wall-seed-count 3 --wall-time-limit 240 --wall-safety-margin 2`
 判优规则：严格词典序（late_count → total_lateness_min → distance_km），逐种子配对比较

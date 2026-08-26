@@ -1,9 +1,10 @@
 """Run the final four-scenario comparison on the official 200-task data.
 
-Protocol fixed by the final chat adjustment: the Direct baseline receives
-240 s; every scenario using relay service or station predeployment receives
-one additional 60 s allowance; the same three seeds are paired across all
-four scenarios; and construction time is included in each allowance.
+Protocol fixed by the final chat adjustment: each enabled mechanism receives
+one 240 s wall-clock module.  Direct therefore receives 240 s, Direct + Relay
+and Direct + Station receive 480 s, and Direct + Relay + Station receives
+720 s.  The same three seeds are paired across all four scenarios, and initial
+route construction time is included in each allowance.
 
 The script writes fresh JSON/CSV artefacts and one JSON solution per run.  It
 does not read or reuse historical result files.
@@ -58,7 +59,7 @@ FORMAL_PROTOCOL_CONFIG: dict[str, Any] = {
     "drones": 8,
     "max_tasks": 25,
     "base_seconds": 240.0,
-    "bonus_seconds": 60.0,
+    "bonus_seconds": 240.0,
     "safety_margin_seconds": 0.05,
     "max_iterations": 10_000_000,
     "candidate_limit": 48,
@@ -78,7 +79,7 @@ SCENARIOS: tuple[dict[str, Any], ...] = (
         "id": "direct_relay",
         "label": "Direct + Relay（原点起点）",
         "relay": True,
-        "warmup": 0.80,
+        "warmup": 0.50,
         "drone_homes": "origin",
     },
     {
@@ -92,7 +93,7 @@ SCENARIOS: tuple[dict[str, Any], ...] = (
         "id": "direct_relay_stations",
         "label": "Direct + Relay + Station",
         "relay": True,
-        "warmup": 0.80,
+        "warmup": 2.0 / 3.0,
         "drone_homes": "stations",
     },
 )
@@ -103,8 +104,15 @@ def scenario_time_limit_seconds(
     *,
     base_seconds: float,
     relay_or_station_bonus_seconds: float,
+    effective_seconds_override: float | None = None,
 ) -> float:
-    """Return the final protocol's effective wall-clock allowance."""
+    """Return the effective wall-clock allowance for one scenario.
+
+    The formal four-scenario comparison accumulates one bonus for each enabled
+    extension (Relay and station predeployment).  A caller such as the 6.2
+    sensitivity analysis may explicitly override that modular 6.1 policy with
+    its own fixed total budget.
+    """
 
     if not math.isfinite(base_seconds) or base_seconds <= 0:
         raise ValueError("基础墙钟预算必须是有限正数")
@@ -113,12 +121,35 @@ def scenario_time_limit_seconds(
         or relay_or_station_bonus_seconds < 0
     ):
         raise ValueError("Relay/Station 加时必须是有限非负数")
-    uses_extension = bool(scenario["relay"]) or (
+    if effective_seconds_override is not None:
+        if (
+            not math.isfinite(effective_seconds_override)
+            or effective_seconds_override <= 0
+        ):
+            raise ValueError("覆盖墙钟预算必须是有限正数")
+        return float(effective_seconds_override)
+    extension_count = int(bool(scenario["relay"])) + int(
         scenario["drone_homes"] == "stations"
     )
-    return base_seconds + (
-        relay_or_station_bonus_seconds if uses_extension else 0.0
-    )
+    return base_seconds + extension_count * relay_or_station_bonus_seconds
+
+
+def _scenario_stage_targets_seconds(
+    scenario: dict[str, Any],
+    effective_seconds: float,
+) -> dict[str, float]:
+    """Return the nominal Direct and Relay modules for audit manifests."""
+
+    if not bool(scenario["relay"]):
+        return {
+            "direct_search": float(effective_seconds),
+            "relay_search": 0.0,
+        }
+    warmup_fraction = float(scenario["warmup"])
+    return {
+        "direct_search": effective_seconds * warmup_fraction,
+        "relay_search": effective_seconds * (1.0 - warmup_fraction),
+    }
 
 
 def _sha256(path: Path) -> str:
@@ -282,6 +313,7 @@ def run_scenario(
     base_seconds: float,
     bonus_seconds: float,
     safety_margin_seconds: float,
+    effective_seconds_override: float | None = None,
     max_iterations: int,
     candidate_limit: int | None,
     relay_count: int | str,
@@ -301,6 +333,7 @@ def run_scenario(
         scenario,
         base_seconds=base_seconds,
         relay_or_station_bonus_seconds=bonus_seconds,
+        effective_seconds_override=effective_seconds_override,
     )
     home_aware = scenario["drone_homes"] == "stations"
     wall_started = time.perf_counter()
@@ -346,6 +379,12 @@ def run_scenario(
     )
     evaluation = result.evaluation
     relay = dict(result.metadata.get("relay", {}))
+    relay_warmup_runtime_seconds = float(
+        result.metadata.get("relay_warmup_runtime_seconds", 0.0)
+    )
+    relay_search_runtime_seconds = float(
+        result.metadata.get("relay_search_runtime_seconds", 0.0)
+    )
     homes = problem.drone_homes or (None,) * problem.drone_count
     row = {
         "scenario": scenario["id"],
@@ -356,6 +395,8 @@ def run_scenario(
         "effective_time_limit_seconds": effective_seconds,
         "construction_seconds": construction_seconds,
         "solver_runtime_seconds": result.runtime_seconds,
+        "relay_warmup_runtime_seconds": relay_warmup_runtime_seconds,
+        "relay_search_runtime_seconds": relay_search_runtime_seconds,
         "wall_seconds": wall_seconds,
         "iterations": result.iterations,
         "late_count": evaluation.score.late_count,
@@ -497,15 +538,22 @@ def _write_report(
             "",
             "## 逐次运行",
             "",
-            "| 场景 | seed | 逾期数 | 总逾期/min | 航程/km | Relay任务 | 墙钟/s |",
-            "|---|---:|---:|---:|---:|---:|---:|",
+            "| 场景 | seed | 逾期数 | 总逾期/min | 航程/km | Relay任务 | Direct阶段/s | Relay阶段/s | 墙钟/s |",
+            "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
         ]
     )
     for row in rows:
+        direct_runtime = (
+            row["relay_warmup_runtime_seconds"]
+            if row["relay"]
+            else row["solver_runtime_seconds"]
+        )
         lines.append(
             f"| {row['scenario']} | {row['seed']} | {row['late_count']} | "
             f"{row['total_lateness_min']:.3f} | {row['distance_km']:.3f} | "
-            f"{row['relay_task_count']} | {row['wall_seconds']:.1f} |"
+            f"{row['relay_task_count']} | {direct_runtime:.1f} | "
+            f"{row['relay_search_runtime_seconds']:.1f} | "
+            f"{row['wall_seconds']:.1f} |"
         )
     lines.extend(
         [
@@ -557,13 +605,30 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--drones", type=int, default=8)
     parser.add_argument("--max-tasks", type=int, default=25)
     parser.add_argument("--base-seconds", type=float, default=240.0)
-    parser.add_argument("--bonus-seconds", type=float, default=60.0)
+    parser.add_argument(
+        "--bonus-seconds",
+        type=float,
+        default=240.0,
+        help="每启用一个扩展机制（Relay 或 Station）增加的墙钟秒数",
+    )
     parser.add_argument("--safety-margin-seconds", type=float, default=0.05)
     parser.add_argument("--max-iterations", type=int, default=10_000_000)
     parser.add_argument("--candidate-limit", type=int, default=48)
     parser.add_argument("--relay-count", type=_parse_relay_count, default="auto")
     parser.add_argument("--relay-location-seed", type=int, default=42)
-    parser.add_argument(
+    execution_mode = parser.add_mutually_exclusive_group()
+    execution_mode.add_argument(
+        "--worker-seed",
+        type=int,
+        choices=DEFAULT_SEEDS,
+        help="仅运行一颗正式种子的四场景并写入原子分片",
+    )
+    execution_mode.add_argument(
+        "--finalize-shards",
+        action="store_true",
+        help="不求解；校验三颗正式种子分片并生成最终汇总",
+    )
+    execution_mode.add_argument(
         "--quick",
         action="store_true",
         help="仅用于冒烟：24任务、每格约1秒，不作为论文结果",
@@ -629,14 +694,11 @@ def build_manifest(
         "seeds": list(args.seeds),
         "base_seconds": args.base_seconds,
         "bonus_seconds": args.bonus_seconds,
-        "scenario_budgets_seconds": {
-            scenario["id"]: scenario_time_limit_seconds(
-                scenario,
-                base_seconds=args.base_seconds,
-                relay_or_station_bonus_seconds=args.bonus_seconds,
-            )
-            for scenario in SCENARIOS
-        },
+        "budget_policy": "base plus one bonus per enabled extension",
+        "scenario_budgets_seconds": _scenario_budgets_for_args(args),
+        "scenario_stage_targets_seconds": (
+            _scenario_stage_targets_for_args(args)
+        ),
         "scenarios": list(SCENARIOS),
         "operator_count": 14,
         "solver_config": {
@@ -660,11 +722,344 @@ def build_manifest(
     }
 
 
+def _scenario_budgets_for_args(
+    args: argparse.Namespace,
+) -> dict[str, float]:
+    return {
+        scenario["id"]: scenario_time_limit_seconds(
+            scenario,
+            base_seconds=args.base_seconds,
+            relay_or_station_bonus_seconds=args.bonus_seconds,
+        )
+        for scenario in SCENARIOS
+    }
+
+
+def _scenario_stage_targets_for_args(
+    args: argparse.Namespace,
+) -> dict[str, dict[str, float]]:
+    budgets = _scenario_budgets_for_args(args)
+    return {
+        scenario["id"]: _scenario_stage_targets_seconds(
+            scenario,
+            budgets[scenario["id"]],
+        )
+        for scenario in SCENARIOS
+    }
+
+
+def _write_json_atomic(path: Path, payload: Any) -> None:
+    """Atomically publish JSON so finalize never observes a partial shard."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(
+        f".{path.name}.{os.getpid()}.{time.time_ns()}.tmp"
+    )
+    try:
+        temporary.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        os.replace(temporary, path)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
+
+
+def _build_seed_shard_payload(
+    args: argparse.Namespace,
+    *,
+    seed: int,
+    rows: Sequence[dict[str, Any]],
+) -> dict[str, Any]:
+    """Build one self-auditing seed shard for later strict finalization."""
+
+    if seed not in DEFAULT_SEEDS:
+        raise ValueError(f"分片种子必须属于正式种子：{DEFAULT_SEEDS}")
+    return {
+        "schema_version": 1,
+        "protocol": "final_four_scenarios_seed_shard",
+        "created_at_utc": datetime.now(timezone.utc).isoformat(),
+        "seed": seed,
+        "row_count": len(rows),
+        "input_sha256": _sha256(args.input),
+        "experiment_script_sha256": _sha256(Path(__file__)),
+        "solver_source_sha256": _solver_source_sha256(),
+        "scenario_budgets_seconds": _scenario_budgets_for_args(args),
+        "scenario_stage_targets_seconds": (
+            _scenario_stage_targets_for_args(args)
+        ),
+        "rows": list(rows),
+    }
+
+
+def _finite_row_number(
+    row: dict[str, Any],
+    field: str,
+    *,
+    cell: tuple[int, str],
+) -> float:
+    try:
+        value = float(row[field])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError(f"分片单元格 {cell} 缺少有效字段 {field}") from exc
+    if not math.isfinite(value):
+        raise ValueError(f"分片单元格 {cell} 的 {field} 不是有限数")
+    return value
+
+
+def _validate_relay_phase_runtime(
+    row: dict[str, Any],
+    scenario: dict[str, Any],
+    *,
+    budget: float,
+    safety_margin_seconds: float,
+    cell: tuple[int, str],
+) -> None:
+    """Validate that staged Relay runtime follows the formal module split."""
+
+    if not bool(scenario["relay"]):
+        return
+    construction = _finite_row_number(
+        row,
+        "construction_seconds",
+        cell=cell,
+    )
+    solver_runtime = _finite_row_number(
+        row,
+        "solver_runtime_seconds",
+        cell=cell,
+    )
+    warmup_runtime = _finite_row_number(
+        row,
+        "relay_warmup_runtime_seconds",
+        cell=cell,
+    )
+    relay_runtime = _finite_row_number(
+        row,
+        "relay_search_runtime_seconds",
+        cell=cell,
+    )
+    if min(construction, solver_runtime, warmup_runtime, relay_runtime) < 0:
+        raise ValueError(f"分片单元格 {cell} 的阶段时长不能为负")
+
+    expected_solver_runtime = max(
+        1e-6,
+        budget - construction - safety_margin_seconds,
+    )
+    total_tolerance = max(2.0, 0.01 * budget)
+    if not math.isclose(
+        solver_runtime,
+        expected_solver_runtime,
+        rel_tol=0.0,
+        abs_tol=total_tolerance,
+    ):
+        raise ValueError(
+            f"分片单元格 {cell} 的阶段时长总额与正式预算不一致"
+        )
+    if not math.isclose(
+        warmup_runtime + relay_runtime,
+        solver_runtime,
+        rel_tol=0.0,
+        abs_tol=total_tolerance,
+    ):
+        raise ValueError(f"分片单元格 {cell} 的阶段时长之和不一致")
+
+    warmup_fraction = float(scenario["warmup"])
+    expected_warmup = expected_solver_runtime * warmup_fraction
+    expected_relay = expected_solver_runtime * (1.0 - warmup_fraction)
+    warmup_tolerance = max(2.0, 0.01 * expected_warmup)
+    relay_tolerance = max(2.0, 0.01 * expected_relay)
+    if not math.isclose(
+        warmup_runtime,
+        expected_warmup,
+        rel_tol=0.0,
+        abs_tol=warmup_tolerance,
+    ) or not math.isclose(
+        relay_runtime,
+        expected_relay,
+        rel_tol=0.0,
+        abs_tol=relay_tolerance,
+    ):
+        raise ValueError(
+            f"分片单元格 {cell} 的阶段时长未按正式比例分配"
+        )
+
+
+def _load_and_validate_seed_shards(
+    args: argparse.Namespace,
+) -> list[dict[str, Any]]:
+    """Load exactly the three formal seed shards and validate all 12 cells."""
+
+    expected_budgets = _scenario_budgets_for_args(args)
+    expected_stage_targets = _scenario_stage_targets_for_args(args)
+    expected_input_sha256 = _sha256(args.input)
+    expected_script_sha256 = _sha256(Path(__file__))
+    expected_solver_sha256 = _solver_source_sha256()
+    scenarios_by_id = {scenario["id"]: scenario for scenario in SCENARIOS}
+    rows_by_cell: dict[tuple[int, str], dict[str, Any]] = {}
+
+    for seed in DEFAULT_SEEDS:
+        shard_path = args.output_dir / "shards" / f"seed_{seed}.json"
+        if not shard_path.is_file():
+            raise ValueError(f"缺少正式种子分片：{shard_path}")
+        try:
+            payload = json.loads(shard_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError(f"正式种子分片无法读取：{shard_path}") from exc
+        if not isinstance(payload, dict):
+            raise ValueError(f"正式种子分片必须是 JSON 对象：{shard_path}")
+        expected_header = {
+            "schema_version": 1,
+            "protocol": "final_four_scenarios_seed_shard",
+            "seed": seed,
+            "input_sha256": expected_input_sha256,
+            "experiment_script_sha256": expected_script_sha256,
+            "solver_source_sha256": expected_solver_sha256,
+            "scenario_budgets_seconds": expected_budgets,
+            "scenario_stage_targets_seconds": expected_stage_targets,
+        }
+        for field, expected in expected_header.items():
+            if payload.get(field) != expected:
+                raise ValueError(
+                    f"正式种子分片 {shard_path.name} 的 {field} 不一致"
+                )
+        shard_rows = payload.get("rows")
+        if (
+            not isinstance(shard_rows, list)
+            or len(shard_rows) != len(SCENARIOS)
+            or payload.get("row_count") != len(SCENARIOS)
+        ):
+            raise ValueError(f"正式种子分片 {shard_path.name} 必须包含4个单元格")
+
+        for row in shard_rows:
+            if not isinstance(row, dict):
+                raise ValueError(f"正式种子分片 {shard_path.name} 含非法行")
+            scenario_id = row.get("scenario")
+            row_seed = row.get("seed")
+            cell = (row_seed, scenario_id)
+            if row_seed != seed or scenario_id not in scenarios_by_id:
+                raise ValueError(f"正式种子分片含非法单元格：{cell}")
+            typed_cell = (seed, str(scenario_id))
+            if typed_cell in rows_by_cell:
+                raise ValueError(f"正式种子分片含重复单元格：{typed_cell}")
+            budget = _finite_row_number(
+                row,
+                "effective_time_limit_seconds",
+                cell=typed_cell,
+            )
+            expected_budget = expected_budgets[str(scenario_id)]
+            if not math.isclose(
+                budget,
+                expected_budget,
+                rel_tol=0.0,
+                abs_tol=1e-9,
+            ):
+                raise ValueError(
+                    f"分片单元格 {typed_cell} 的预算应为 {expected_budget:g}s"
+                )
+
+            expected_solution_file = (
+                f"run_solutions/{scenario_id}__seed_{seed}.json"
+            )
+            if row.get("solution_file") != expected_solution_file:
+                raise ValueError(f"分片单元格 {typed_cell} 的解文件名不一致")
+            solution_path = args.output_dir / expected_solution_file
+            if not solution_path.is_file():
+                raise ValueError(f"分片单元格 {typed_cell} 缺少解文件")
+            if row.get("solution_sha256") != _sha256(solution_path):
+                raise ValueError(f"分片单元格 {typed_cell} 的解文件哈希不一致")
+
+            _validate_relay_phase_runtime(
+                row,
+                scenarios_by_id[str(scenario_id)],
+                budget=expected_budget,
+                safety_margin_seconds=args.safety_margin_seconds,
+                cell=typed_cell,
+            )
+            rows_by_cell[typed_cell] = row
+
+    expected_cells = {
+        (seed, scenario["id"])
+        for seed in DEFAULT_SEEDS
+        for scenario in SCENARIOS
+    }
+    if set(rows_by_cell) != expected_cells or len(rows_by_cell) != 12:
+        raise ValueError("正式种子分片未形成完整的12个单元格")
+
+    ordered_rows: list[dict[str, Any]] = []
+    for seed_index, seed in enumerate(DEFAULT_SEEDS):
+        offset = seed_index % len(SCENARIOS)
+        ordered = SCENARIOS[offset:] + SCENARIOS[:offset]
+        ordered_rows.extend(
+            rows_by_cell[(seed, scenario["id"])] for scenario in ordered
+        )
+    return ordered_rows
+
+
+def _write_final_outputs(
+    args: argparse.Namespace,
+    rows: Sequence[dict[str, Any]],
+    *,
+    task_count: int,
+) -> None:
+    summaries = summarize(rows)
+    manifest = build_manifest(args, task_count=task_count)
+    _write_json_atomic(args.output_dir / "runs.json", rows)
+    _write_json_atomic(args.output_dir / "summary.json", summaries)
+    _write_json_atomic(args.output_dir / "manifest.json", manifest)
+    _write_csv(args.output_dir / "runs.csv", rows)
+    _write_csv(args.output_dir / "summary.csv", summaries)
+    _write_report(args.output_dir / "REPORT.md", rows, summaries, manifest)
+
+
+def _run_seed(
+    tasks: Sequence[Task],
+    args: argparse.Namespace,
+    *,
+    seed: int,
+    seed_index: int,
+) -> list[dict[str, Any]]:
+    offset = seed_index % len(SCENARIOS)
+    ordered = SCENARIOS[offset:] + SCENARIOS[:offset]
+    rows: list[dict[str, Any]] = []
+    for scenario in ordered:
+        rows.append(
+            run_scenario(
+                tasks,
+                scenario,
+                seed=seed,
+                output_dir=args.output_dir,
+                input_path=args.input,
+                drones=args.drones,
+                max_tasks=args.max_tasks,
+                base_seconds=args.base_seconds,
+                bonus_seconds=args.bonus_seconds,
+                safety_margin_seconds=args.safety_margin_seconds,
+                max_iterations=args.max_iterations,
+                candidate_limit=(
+                    None if args.candidate_limit == 0 else args.candidate_limit
+                ),
+                relay_count=args.relay_count,
+                relay_location_seed=args.relay_location_seed,
+            )
+        )
+    return rows
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     validate_formal_protocol(args)
     if len(set(args.seeds)) != len(args.seeds):
         raise ValueError("种子不得重复")
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.finalize_shards:
+        rows = _load_and_validate_seed_shards(args)
+        _write_final_outputs(args, rows, task_count=args.tasks)
+        print(f"分片汇总已写入 {args.output_dir}", flush=True)
+        return 0
+
     if args.quick:
         args.tasks = min(args.tasks, 24)
         args.base_seconds = min(args.base_seconds, 1.0)
@@ -676,50 +1071,38 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.drones * args.max_tasks < len(tasks):
         raise ValueError("无人机数×单机任务上限不足以覆盖全部任务")
 
-    args.output_dir.mkdir(parents=True, exist_ok=True)
+    if args.worker_seed is not None:
+        seed_index = DEFAULT_SEEDS.index(args.worker_seed)
+        rows = _run_seed(
+            tasks,
+            args,
+            seed=args.worker_seed,
+            seed_index=seed_index,
+        )
+        shard = _build_seed_shard_payload(
+            args,
+            seed=args.worker_seed,
+            rows=rows,
+        )
+        shard_path = (
+            args.output_dir / "shards" / f"seed_{args.worker_seed}.json"
+        )
+        _write_json_atomic(shard_path, shard)
+        print(f"种子分片已写入 {shard_path}", flush=True)
+        return 0
+
     rows: list[dict[str, Any]] = []
     for seed_index, seed in enumerate(args.seeds):
-        offset = seed_index % len(SCENARIOS)
-        ordered = SCENARIOS[offset:] + SCENARIOS[:offset]
-        for scenario in ordered:
-            rows.append(
-                run_scenario(
-                    tasks,
-                    scenario,
-                    seed=seed,
-                    output_dir=args.output_dir,
-                    input_path=args.input,
-                    drones=args.drones,
-                    max_tasks=args.max_tasks,
-                    base_seconds=args.base_seconds,
-                    bonus_seconds=args.bonus_seconds,
-                    safety_margin_seconds=args.safety_margin_seconds,
-                    max_iterations=args.max_iterations,
-                    candidate_limit=(
-                        None if args.candidate_limit == 0 else args.candidate_limit
-                    ),
-                    relay_count=args.relay_count,
-                    relay_location_seed=args.relay_location_seed,
-                )
+        rows.extend(
+            _run_seed(
+                tasks,
+                args,
+                seed=seed,
+                seed_index=seed_index,
             )
+        )
 
-    summaries = summarize(rows)
-    manifest = build_manifest(args, task_count=len(tasks))
-    (args.output_dir / "runs.json").write_text(
-        json.dumps(rows, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    (args.output_dir / "summary.json").write_text(
-        json.dumps(summaries, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    (args.output_dir / "manifest.json").write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    _write_csv(args.output_dir / "runs.csv", rows)
-    _write_csv(args.output_dir / "summary.csv", summaries)
-    _write_report(args.output_dir / "REPORT.md", rows, summaries, manifest)
+    _write_final_outputs(args, rows, task_count=len(tasks))
     print(f"结果已写入 {args.output_dir}", flush=True)
     return 0
 

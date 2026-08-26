@@ -5,7 +5,6 @@
 配置：seed 2026080500–2026080502（3 种子配对），candidate_limit=48（rank 24 / exact 48），
 初始解 = regret-2 直送构造（三种子共享同一初始路线）
 Relay 网络：2 个中继站，每任务 1 个候选站，绕行比 1.3，选址种子 42
-Relay 求解：分阶段 `solve_relay_staged`（80% DIRECT 预热 + 20% Relay 搜索）
 运行方式：`run_relay_comparison.py --output-dir results/relay_comparison_240s --wall-seed-count 3 --wall-time-limit 240 --wall-safety-margin 2`
 判优规则：严格词典序（late_count → total_lateness_min → distance_km），逐种子配对比较
 
@@ -58,9 +57,7 @@ Relay 搜索阶段的最佳得分与其 DIRECT 预热得分完全一致（`relay
 1. **词典序质量**：三种子下两变体的 `late_count` 完全相同（65/66/67），差异集中在
    `total_lateness_min`。Direct 总逾期均值低 5.01 分钟，三种子全部按词典序胜出。
 2. **中继未被采用**：默认 Relay 空间（2 站、1 候选、绕行 1.3、sample_every=6）在
-   240 s 内没有产生优于 DIRECT 的解。分阶段设计（80% DIRECT 预热）本身已保证
-   Relay 不会比 DIRECT 差，因此 Relay 的词典序结果与 DIRECT 预热相同，但多付出了
-   20% 预算用于 Relay 搜索而未见收益。
+   240 s 内没有产生优于 DIRECT 的解。
 3. **总里程**：Relay 均值总里程略短（627.04 vs 627.55），但总逾期更大，按词典序
    无法翻盘。这与"Relay 通过绕行换运力余量"的预期一致——在当前紧耦合实例上，
    额外绕行没有转化为词典序收益。
@@ -73,8 +70,6 @@ Relay 搜索阶段的最佳得分与其 DIRECT 预热得分完全一致（`relay
 
 - 在当前实现与默认参数下，**200 任务规模 240 s 预算内 Direct 模式在词典序质量与
   吞吐上均占优（3:0）**；Relay 未在最终解中采用任何中继任务。
-- 分阶段 Relay 的 80% DIRECT 预热 + 20% Relay 搜索在三种子上均未带来收益，
-  说明默认 Relay 空间（2 站/1 候选/绕行 1.3）对该数据集的直送解几乎无改善空间。
 - 后续若需 Relay 在质量侧胜出，可尝试更多中继站/更高绕行容忍/更大 relay probe
   预算，或在中继友好的数据集（任务聚集、跨机紧约束）上对比。
 

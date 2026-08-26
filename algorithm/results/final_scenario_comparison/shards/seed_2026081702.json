@@ -1,0 +1,576 @@
+{
+  "schema_version": 1,
+  "protocol": "final_four_scenarios_seed_shard",
+  "created_at_utc": "2026-08-26T07:09:06.976826+00:00",
+  "seed": 2026081702,
+  "row_count": 4,
+  "input_sha256": "386d3fbaa9009aeed947493782d657ed0b30b25d369c8187bfc9619fc7e31d25",
+  "experiment_script_sha256": "5566709d474ac03e9e3a6118a0b947098d785281f65f2c8bcc0074b8eb34ca1c",
+  "solver_source_sha256": "e43f0874fd3c6c5600e2712ef5be1ccbc05e0e4e6725dd9ed3868a9d3b6dd0e7",
+  "scenario_budgets_seconds": {
+    "pure_direct": 240.0,
+    "direct_relay": 480.0,
+    "direct_stations": 480.0,
+    "direct_relay_stations": 720.0
+  },
+  "scenario_stage_targets_seconds": {
+    "pure_direct": {
+      "direct_search": 240.0,
+      "relay_search": 0.0
+    },
+    "direct_relay": {
+      "direct_search": 240.0,
+      "relay_search": 240.0
+    },
+    "direct_stations": {
+      "direct_search": 480.0,
+      "relay_search": 0.0
+    },
+    "direct_relay_stations": {
+      "direct_search": 480.0,
+      "relay_search": 240.00000000000003
+    }
+  },
+  "rows": [
+    {
+      "scenario": "direct_relay",
+      "scenario_label": "Direct + Relay（原点起点）",
+      "seed": 2026081702,
+      "relay": true,
+      "station_predeployment": false,
+      "effective_time_limit_seconds": 480.0,
+      "construction_seconds": 0.6531566251069307,
+      "solver_runtime_seconds": 479.30060870875604,
+      "relay_warmup_runtime_seconds": 239.65005408390425,
+      "relay_search_runtime_seconds": 239.6505546248518,
+      "wall_seconds": 479.9823331660591,
+      "iterations": 17255,
+      "late_count": 65,
+      "total_lateness_min": 2145.5059821492655,
+      "distance_km": 639.0974634758771,
+      "relay_task_count": 1,
+      "cross_uav_handoff_count": 1,
+      "total_relay_waiting_min": 0,
+      "station_count": 4,
+      "deployment_distribution": {
+        "depot": 8
+      },
+      "deployment_scores": {},
+      "deadhead_km": 21.15707144281367,
+      "home_assignment_rate": 1.0,
+      "operator_statistics": {
+        "destroy:capacity_conflict": {
+          "uses": 2410,
+          "accepted": 1504,
+          "current_improvements": 174,
+          "best_improvements": 30,
+          "total_reward": 2146.0
+        },
+        "repair:regret2": {
+          "uses": 3526,
+          "accepted": 1436,
+          "current_improvements": 333,
+          "best_improvements": 62,
+          "total_reward": 2683.0
+        },
+        "destroy:spatial_related": {
+          "uses": 1897,
+          "accepted": 852,
+          "current_improvements": 140,
+          "best_improvements": 23,
+          "total_reward": 1364.0
+        },
+        "destroy:worst_lex": {
+          "uses": 2188,
+          "accepted": 831,
+          "current_improvements": 347,
+          "best_improvements": 75,
+          "total_reward": 2172.0
+        },
+        "destroy:assignment_destroy": {
+          "uses": 1493,
+          "accepted": 528,
+          "current_improvements": 180,
+          "best_improvements": 28,
+          "total_reward": 1180.0
+        },
+        "repair:deadline": {
+          "uses": 1727,
+          "accepted": 430,
+          "current_improvements": 73,
+          "best_improvements": 6,
+          "total_reward": 673.0
+        },
+        "repair:slack": {
+          "uses": 2023,
+          "accepted": 554,
+          "current_improvements": 85,
+          "best_improvements": 17,
+          "total_reward": 877.0
+        },
+        "destroy:random": {
+          "uses": 2190,
+          "accepted": 1182,
+          "current_improvements": 169,
+          "best_improvements": 27,
+          "total_reward": 1797.0
+        },
+        "destroy:route_segment": {
+          "uses": 379,
+          "accepted": 61,
+          "current_improvements": 10,
+          "best_improvements": 1,
+          "total_reward": 95.0
+        },
+        "repair:greedy": {
+          "uses": 5300,
+          "accepted": 3075,
+          "current_improvements": 741,
+          "best_improvements": 136,
+          "total_reward": 5842.0
+        },
+        "destroy:worst_distance": {
+          "uses": 2573,
+          "accepted": 1023,
+          "current_improvements": 404,
+          "best_improvements": 81,
+          "total_reward": 2559.0
+        },
+        "destroy:late_critical": {
+          "uses": 2130,
+          "accepted": 827,
+          "current_improvements": 241,
+          "best_improvements": 46,
+          "total_reward": 1734.0
+        },
+        "destroy:deadline_related": {
+          "uses": 1995,
+          "accepted": 990,
+          "current_improvements": 151,
+          "best_improvements": 17,
+          "total_reward": 1511.0
+        },
+        "repair:regret3": {
+          "uses": 4679,
+          "accepted": 2303,
+          "current_improvements": 584,
+          "best_improvements": 107,
+          "total_reward": 4483.0
+        }
+      },
+      "method": "C2-Lex-ALNS-Staged",
+      "solution_file": "run_solutions/direct_relay__seed_2026081702.json",
+      "solution_sha256": "55e82a3aa023fb35fbc0730b64afa9387abb4dba2fcf386b3d2311880d76c07e"
+    },
+    {
+      "scenario": "direct_stations",
+      "scenario_label": "Direct + Station（需求驱动预部署）",
+      "seed": 2026081702,
+      "relay": false,
+      "station_predeployment": true,
+      "effective_time_limit_seconds": 480.0,
+      "construction_seconds": 2.099126667017117,
+      "solver_runtime_seconds": 477.85122599988244,
+      "relay_warmup_runtime_seconds": 0.0,
+      "relay_search_runtime_seconds": 0.0,
+      "wall_seconds": 479.9504350419156,
+      "iterations": 24694,
+      "late_count": 59,
+      "total_lateness_min": 1768.2038809144512,
+      "distance_km": 598.018293865803,
+      "relay_task_count": 0,
+      "cross_uav_handoff_count": 0,
+      "total_relay_waiting_min": 0.0,
+      "station_count": 4,
+      "deployment_distribution": {
+        "depot": 1,
+        "relay_1": 2,
+        "relay_2": 2,
+        "relay_3": 2,
+        "relay_4": 1
+      },
+      "deployment_scores": {
+        "depot": 100.51862714261433,
+        "relay_1": 153.2134978081724,
+        "relay_2": 151.05945514698283,
+        "relay_3": 151.01079879985605,
+        "relay_4": 150.83008788980874
+      },
+      "deadhead_km": 6.489643470383391,
+      "home_assignment_rate": 0.23,
+      "operator_statistics": {
+        "destroy:random": {
+          "uses": 2961,
+          "accepted": 1573,
+          "current_improvements": 144,
+          "best_improvements": 22,
+          "total_reward": 2093.0
+        },
+        "destroy:worst_distance": {
+          "uses": 3188,
+          "accepted": 1148,
+          "current_improvements": 425,
+          "best_improvements": 102,
+          "total_reward": 2831.0
+        },
+        "destroy:worst_lex": {
+          "uses": 2802,
+          "accepted": 915,
+          "current_improvements": 300,
+          "best_improvements": 71,
+          "total_reward": 2099.0
+        },
+        "destroy:spatial_related": {
+          "uses": 2872,
+          "accepted": 1367,
+          "current_improvements": 130,
+          "best_improvements": 14,
+          "total_reward": 1813.0
+        },
+        "destroy:deadline_related": {
+          "uses": 3175,
+          "accepted": 1634,
+          "current_improvements": 173,
+          "best_improvements": 31,
+          "total_reward": 2277.0
+        },
+        "destroy:late_critical": {
+          "uses": 2701,
+          "accepted": 1025,
+          "current_improvements": 212,
+          "best_improvements": 45,
+          "total_reward": 1841.0
+        },
+        "destroy:route_segment": {
+          "uses": 401,
+          "accepted": 40,
+          "current_improvements": 5,
+          "best_improvements": 2,
+          "total_reward": 63.0
+        },
+        "destroy:capacity_conflict": {
+          "uses": 4083,
+          "accepted": 2588,
+          "current_improvements": 273,
+          "best_improvements": 32,
+          "total_reward": 3535.0
+        },
+        "destroy:assignment_destroy": {
+          "uses": 2511,
+          "accepted": 903,
+          "current_improvements": 215,
+          "best_improvements": 41,
+          "total_reward": 1712.0
+        },
+        "repair:greedy": {
+          "uses": 7972,
+          "accepted": 4651,
+          "current_improvements": 838,
+          "best_improvements": 183,
+          "total_reward": 7897.0
+        },
+        "repair:regret2": {
+          "uses": 4208,
+          "accepted": 1532,
+          "current_improvements": 234,
+          "best_improvements": 39,
+          "total_reward": 2390.0
+        },
+        "repair:regret3": {
+          "uses": 6975,
+          "accepted": 3571,
+          "current_improvements": 666,
+          "best_improvements": 130,
+          "total_reward": 6089.0
+        },
+        "repair:deadline": {
+          "uses": 2995,
+          "accepted": 816,
+          "current_improvements": 86,
+          "best_improvements": 8,
+          "total_reward": 1106.0
+        },
+        "repair:slack": {
+          "uses": 2544,
+          "accepted": 623,
+          "current_improvements": 53,
+          "best_improvements": 0,
+          "total_reward": 782.0
+        }
+      },
+      "method": "C2-Lex-ALNS",
+      "solution_file": "run_solutions/direct_stations__seed_2026081702.json",
+      "solution_sha256": "3db5f83d367b0bbc834d46139ad5a8f620a80390a0608a12d07e21b5558ad113"
+    },
+    {
+      "scenario": "direct_relay_stations",
+      "scenario_label": "Direct + Relay + Station",
+      "seed": 2026081702,
+      "relay": true,
+      "station_predeployment": true,
+      "effective_time_limit_seconds": 720.0,
+      "construction_seconds": 1.3356400839984417,
+      "solver_runtime_seconds": 718.6199176248629,
+      "relay_warmup_runtime_seconds": 479.07773433299735,
+      "relay_search_runtime_seconds": 239.5421832918655,
+      "wall_seconds": 719.9828785839491,
+      "iterations": 28475,
+      "late_count": 59,
+      "total_lateness_min": 1745.8437003953861,
+      "distance_km": 601.9512527092759,
+      "relay_task_count": 5,
+      "cross_uav_handoff_count": 5,
+      "total_relay_waiting_min": 0,
+      "station_count": 4,
+      "deployment_distribution": {
+        "depot": 1,
+        "relay_1": 2,
+        "relay_2": 2,
+        "relay_3": 2,
+        "relay_4": 1
+      },
+      "deployment_scores": {
+        "depot": 100.51862714261433,
+        "relay_1": 153.2134978081724,
+        "relay_2": 151.05945514698283,
+        "relay_3": 151.01079879985605,
+        "relay_4": 150.83008788980874
+      },
+      "deadhead_km": 6.489643470383391,
+      "home_assignment_rate": 0.23076923076923078,
+      "operator_statistics": {
+        "destroy:capacity_conflict": {
+          "uses": 4424,
+          "accepted": 2717,
+          "current_improvements": 308,
+          "best_improvements": 32,
+          "total_reward": 3769.0
+        },
+        "repair:regret2": {
+          "uses": 4843,
+          "accepted": 1771,
+          "current_improvements": 325,
+          "best_improvements": 39,
+          "total_reward": 2902.0
+        },
+        "destroy:spatial_related": {
+          "uses": 3216,
+          "accepted": 1507,
+          "current_improvements": 169,
+          "best_improvements": 14,
+          "total_reward": 2070.0
+        },
+        "destroy:worst_lex": {
+          "uses": 3361,
+          "accepted": 1162,
+          "current_improvements": 418,
+          "best_improvements": 71,
+          "total_reward": 2700.0
+        },
+        "destroy:assignment_destroy": {
+          "uses": 3009,
+          "accepted": 1115,
+          "current_improvements": 314,
+          "best_improvements": 41,
+          "total_reward": 2221.0
+        },
+        "repair:deadline": {
+          "uses": 3301,
+          "accepted": 899,
+          "current_improvements": 116,
+          "best_improvements": 8,
+          "total_reward": 1279.0
+        },
+        "repair:slack": {
+          "uses": 3090,
+          "accepted": 789,
+          "current_improvements": 92,
+          "best_improvements": 0,
+          "total_reward": 1065.0
+        },
+        "destroy:random": {
+          "uses": 3493,
+          "accepted": 1852,
+          "current_improvements": 210,
+          "best_improvements": 22,
+          "total_reward": 2570.0
+        },
+        "destroy:route_segment": {
+          "uses": 466,
+          "accepted": 51,
+          "current_improvements": 11,
+          "best_improvements": 2,
+          "total_reward": 92.0
+        },
+        "repair:greedy": {
+          "uses": 9122,
+          "accepted": 5262,
+          "current_improvements": 1072,
+          "best_improvements": 183,
+          "total_reward": 9210.0
+        },
+        "destroy:worst_distance": {
+          "uses": 3805,
+          "accepted": 1409,
+          "current_improvements": 569,
+          "best_improvements": 102,
+          "total_reward": 3524.0
+        },
+        "destroy:late_critical": {
+          "uses": 3107,
+          "accepted": 1213,
+          "current_improvements": 274,
+          "best_improvements": 45,
+          "total_reward": 2215.0
+        },
+        "destroy:deadline_related": {
+          "uses": 3594,
+          "accepted": 1824,
+          "current_improvements": 224,
+          "best_improvements": 31,
+          "total_reward": 2620.0
+        },
+        "repair:regret3": {
+          "uses": 8119,
+          "accepted": 4129,
+          "current_improvements": 892,
+          "best_improvements": 130,
+          "total_reward": 7325.0
+        }
+      },
+      "method": "C2-Lex-ALNS-Staged",
+      "solution_file": "run_solutions/direct_relay_stations__seed_2026081702.json",
+      "solution_sha256": "740b3ebcf1ede545dcad510eee7032b72a31eb486fdb3b3d22a371f08fafa657"
+    },
+    {
+      "scenario": "pure_direct",
+      "scenario_label": "Direct（原点起点）",
+      "seed": 2026081702,
+      "relay": false,
+      "station_predeployment": false,
+      "effective_time_limit_seconds": 240.0,
+      "construction_seconds": 2.3930938330013305,
+      "solver_runtime_seconds": 237.55730370804667,
+      "relay_warmup_runtime_seconds": 0.0,
+      "relay_search_runtime_seconds": 0.0,
+      "wall_seconds": 239.95046420791186,
+      "iterations": 11449,
+      "late_count": 66,
+      "total_lateness_min": 2155.8117567584104,
+      "distance_km": 630.4715433048491,
+      "relay_task_count": 0,
+      "cross_uav_handoff_count": 0,
+      "total_relay_waiting_min": 0.0,
+      "station_count": 4,
+      "deployment_distribution": {
+        "depot": 8
+      },
+      "deployment_scores": {},
+      "deadhead_km": 21.15707144281367,
+      "home_assignment_rate": 1.0,
+      "operator_statistics": {
+        "destroy:random": {
+          "uses": 1546,
+          "accepted": 921,
+          "current_improvements": 124,
+          "best_improvements": 26,
+          "total_reward": 1397.0
+        },
+        "destroy:worst_distance": {
+          "uses": 1625,
+          "accepted": 667,
+          "current_improvements": 246,
+          "best_improvements": 77,
+          "total_reward": 1713.0
+        },
+        "destroy:worst_lex": {
+          "uses": 1457,
+          "accepted": 582,
+          "current_improvements": 223,
+          "best_improvements": 73,
+          "total_reward": 1543.0
+        },
+        "destroy:spatial_related": {
+          "uses": 1194,
+          "accepted": 596,
+          "current_improvements": 72,
+          "best_improvements": 18,
+          "total_reward": 884.0
+        },
+        "destroy:deadline_related": {
+          "uses": 1312,
+          "accepted": 698,
+          "current_improvements": 81,
+          "best_improvements": 15,
+          "total_reward": 1001.0
+        },
+        "destroy:late_critical": {
+          "uses": 1457,
+          "accepted": 589,
+          "current_improvements": 159,
+          "best_improvements": 45,
+          "total_reward": 1246.0
+        },
+        "destroy:route_segment": {
+          "uses": 207,
+          "accepted": 32,
+          "current_improvements": 1,
+          "best_improvements": 1,
+          "total_reward": 39.0
+        },
+        "destroy:capacity_conflict": {
+          "uses": 1675,
+          "accepted": 1144,
+          "current_improvements": 118,
+          "best_improvements": 29,
+          "total_reward": 1614.0
+        },
+        "destroy:assignment_destroy": {
+          "uses": 976,
+          "accepted": 355,
+          "current_improvements": 106,
+          "best_improvements": 27,
+          "total_reward": 781.0
+        },
+        "repair:greedy": {
+          "uses": 3542,
+          "accepted": 2258,
+          "current_improvements": 471,
+          "best_improvements": 130,
+          "total_reward": 4191.0
+        },
+        "repair:regret2": {
+          "uses": 2295,
+          "accepted": 984,
+          "current_improvements": 191,
+          "best_improvements": 57,
+          "total_reward": 1785.0
+        },
+        "repair:regret3": {
+          "uses": 3030,
+          "accepted": 1619,
+          "current_improvements": 364,
+          "best_improvements": 102,
+          "total_reward": 3119.0
+        },
+        "repair:deadline": {
+          "uses": 1206,
+          "accepted": 316,
+          "current_improvements": 47,
+          "best_improvements": 6,
+          "total_reward": 481.0
+        },
+        "repair:slack": {
+          "uses": 1376,
+          "accepted": 407,
+          "current_improvements": 57,
+          "best_improvements": 16,
+          "total_reward": 642.0
+        }
+      },
+      "method": "C2-Lex-ALNS",
+      "solution_file": "run_solutions/pure_direct__seed_2026081702.json",
+      "solution_sha256": "0f802f32c72c9a18e7235caec87eedee4079247d51ca9fde8332a9178adedf29"
+    }
+  ]
+}

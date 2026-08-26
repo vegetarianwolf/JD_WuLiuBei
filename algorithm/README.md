@@ -10,9 +10,7 @@
 
 ## 当前方法
 
-主算法为 `C2-Lex-ALNS`。Relay 场景在同一总预算内先用 80% 做 Direct
-预热，再用 20% 搜索中继方案，元数据方法名为 `C2-Lex-ALNS-Staged`。
-算法注册表固定为 14 个有效算子：
+主算法为 `C2-Lex-ALNS`。算法注册表固定为 14 个有效算子：
 
 - 破坏算子（9）：`random`、`worst_distance`、`worst_lex`、
   `spatial_related`、`deadline_related`、`late_critical`、
@@ -84,8 +82,9 @@ PYTHONPATH=algorithm/src python -m uav_dispatch solve \
 PYTHONPATH=algorithm/src python -m algorithm.experiments.run_benchmarks
 ```
 
-第 6.1 节只比较以下四个场景，使用三个配对种子。纯 Direct 为 240 s；只要
-使用 Relay 或 Station 预部署就统一为 300 s（只加一次 60 s）：
+第 6.1 节只比较以下四个场景，使用三个配对种子。Direct 基础模块为 240 s；
+Relay 与 Position（需求驱动 Station 预部署）每启用一项分别增加 240 s，
+因此四场景名义预算依次为 240/480/480/720 s：
 
 - `pure_direct`；
 - `direct_relay`；
@@ -97,7 +96,8 @@ PYTHONPATH=algorithm/src python -m \
   algorithm.experiments.run_scenario_comparison
 ```
 
-第 6.2 节只运行 `direct_relay_stations`，固定一个种子，并分别扫描无人机数
+第 6.2 节只运行 `direct_relay_stations`，采用独立的 300 s 单次总预算，
+固定一个种子，并分别扫描无人机数
 `8/9/10/12/16`、截止期倍率 `0.8/0.9/1.0/1.1/1.2`、中继站数
 `2/3/4/5/6`：
 

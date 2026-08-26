@@ -17,7 +17,6 @@ import numpy as np
 from algorithm.experiments.final_plot_style import (
     FOUR_PANEL_FIGSIZE,
     METHOD_LINE_PALETTE,
-    MODEL_FILL_PALETTE,
     OPERATOR_PALETTE,
     TWO_PANEL_FIGSIZE,
     reference_plot_style,
@@ -50,8 +49,32 @@ _FINAL_FIGURE_SUFFIXES = (".png", ".svg")
 SCENARIO_LABELS = {
     "pure_direct": "D",
     "direct_relay": "D+R",
-    "direct_stations": "D+S",
-    "direct_relay_stations": "D+R+S",
+    "direct_stations": "D+P",
+    "direct_relay_stations": "D+P+R",
+}
+FORMAL_SCENARIO_SEEDS = (2026081701, 2026081702, 2026081703)
+FORMAL_SCENARIO_BUDGETS = {
+    "pure_direct": 240.0,
+    "direct_relay": 480.0,
+    "direct_stations": 480.0,
+    "direct_relay_stations": 720.0,
+}
+SCENARIO_STAGE_LABELS = {
+    "pure_direct": "240 s",
+    "direct_relay": "240+240 s",
+    "direct_stations": "240+240 s",
+    "direct_relay_stations": "240+240+240 s",
+}
+SCENARIO_TICK_LABELS = {
+    scenario: f"{SCENARIO_LABELS[scenario]}\n{SCENARIO_STAGE_LABELS[scenario]}"
+    for scenario in SCENARIO_LABELS
+}
+SENSITIVITY_SEED = 2026081701
+SENSITIVITY_BUDGET_SECONDS = 300.0
+SENSITIVITY_PARAMETERS = {
+    "drone_count": ("Number of UAVs", 8.0),
+    "deadline_multiplier": ("Deadline multiplier", 1.0),
+    "station_count": ("Number of position stations", 4.0),
 }
 METRIC_LINE_STYLES = {
     "late_count": (METHOD_LINE_PALETTE[0], "o"),
@@ -123,6 +146,15 @@ def _file_audit_record(path: Path, *, relative_to: Path) -> dict[str, str]:
     }
 
 
+def _normalize_generated_svg(path: Path) -> None:
+    """Remove renderer-only trailing spaces before hashing final SVG files."""
+
+    contents = path.read_text(encoding="utf-8")
+    normalized = "\n".join(line.rstrip() for line in contents.splitlines()) + "\n"
+    if normalized != contents:
+        path.write_text(normalized, encoding="utf-8")
+
+
 @contextmanager
 def figure_manifest_on_success(
     *,
@@ -153,6 +185,9 @@ def figure_manifest_on_success(
         raise FileNotFoundError(
             "missing final figure outputs: " + ", ".join(missing)
         )
+    for path in expected_outputs:
+        if path.suffix == ".svg":
+            _normalize_generated_svg(path)
     output_records = [
         _file_audit_record(path, relative_to=resolved_output)
         for path in expected_outputs
@@ -593,7 +628,7 @@ def plot_operator_effectiveness(
 def paired_scenario_rows(
     rows: Sequence[dict[str, Any]],
 ) -> dict[int, dict[str, dict[str, Any]]]:
-    """Return complete four-scenario cells keyed by their paired seed."""
+    """Validate and return the formal three-seed, four-scenario protocol."""
 
     paired: dict[int, dict[str, dict[str, Any]]] = {}
     expected = set(SCENARIO_LABELS)
@@ -601,6 +636,18 @@ def paired_scenario_rows(
         scenario = str(row["scenario"])
         if scenario not in expected:
             continue
+        expected_budget = FORMAL_SCENARIO_BUDGETS[scenario]
+        observed_budget = float(row["effective_time_limit_seconds"])
+        if not np.isclose(
+            observed_budget,
+            expected_budget,
+            rtol=0.0,
+            atol=1e-9,
+        ):
+            raise ValueError(
+                f"{scenario} formal budget must be {expected_budget:g} s, "
+                f"got {observed_budget:g} s"
+            )
         seed = int(row["seed"])
         cells = paired.setdefault(seed, {})
         if scenario in cells:
@@ -616,6 +663,13 @@ def paired_scenario_rows(
             )
     if not paired:
         raise ValueError("no paired scenario rows available")
+    observed_seeds = tuple(sorted(paired))
+    if observed_seeds != FORMAL_SCENARIO_SEEDS:
+        expected_text = ", ".join(str(seed) for seed in FORMAL_SCENARIO_SEEDS)
+        observed_text = ", ".join(str(seed) for seed in observed_seeds)
+        raise ValueError(
+            f"formal paired seeds must be {expected_text}; got {observed_text}"
+        )
     return {seed: paired[seed] for seed in sorted(paired)}
 
 
@@ -629,19 +683,7 @@ def _scenario_budget_note(
     if any(len(values) != 1 for values in budgets.values()):
         raise ValueError("scenario budgets must be constant across paired seeds")
     resolved = {scenario: next(iter(values)) for scenario, values in budgets.items()}
-    assisted = (
-        "direct_relay",
-        "direct_stations",
-        "direct_relay_stations",
-    )
-    assisted_budgets = {resolved[scenario] for scenario in assisted}
-    if len(assisted_budgets) == 1:
-        return (
-            f"Budgets: D = {resolved['pure_direct']:g} s; "
-            "D+R/D+S/D+R+S = "
-            f"{next(iter(assisted_budgets)):g} s"
-        )
-    return "Budgets: " + "; ".join(
+    return "Unequal cumulative budgets: " + "; ".join(
         f"{SCENARIO_LABELS[scenario]} = {resolved[scenario]:g} s"
         for scenario in SCENARIO_LABELS
     )
@@ -650,22 +692,31 @@ def _scenario_budget_note(
 def build_scenario_comparison_figure(
     rows: Sequence[dict[str, Any]],
 ) -> plt.Figure:
-    """Build the paired-seed scenario comparison with descriptive spread."""
+    """Build the formal paired comparison with raw runs and descriptive SD."""
 
     paired = paired_scenario_rows(rows)
     seeds = tuple(paired)
     ids = list(SCENARIO_LABELS)
     fields = (
-        ("late_count", "Late deliveries"),
-        ("total_lateness_min", "Total lateness (min)"),
-        ("distance_km", "Total distance (km)"),
+        ("late_count", "Late deliveries", "Priority 1"),
+        (
+            "total_lateness_min",
+            "Total lateness (min)",
+            "Priority 2 (conditional)",
+        ),
+        (
+            "distance_km",
+            "Total distance (km)",
+            "Priority 3 (conditional)",
+        ),
+        ("wall_seconds", "Observed wall time (s)", "Observed wall time"),
     )
     with reference_plot_style():
-        figure, axes = plt.subplots(1, 3, figsize=(7.1, 3.25))
-        for axis, (field, ylabel), panel in zip(
-            axes,
+        figure, axes = plt.subplots(2, 2, figsize=FOUR_PANEL_FIGSIZE)
+        for axis, (field, ylabel, title), panel in zip(
+            axes.flat,
             fields,
-            ("(a)", "(b)", "(c)"),
+            ("(a)", "(b)", "(c)", "(d)"),
             strict=True,
         ):
             values = [
@@ -678,15 +729,6 @@ def build_scenario_comparison_figure(
                 for group in values
             ]
             x = np.arange(len(ids))
-            axis.bar(
-                x,
-                means,
-                yerr=errors,
-                capsize=2,
-                color=MODEL_FILL_PALETTE,
-                width=0.72,
-                zorder=1,
-            )
             for seed in seeds:
                 paired_values = [
                     float(paired[seed][scenario][field])
@@ -709,17 +751,48 @@ def build_scenario_comparison_figure(
                     linewidth=0.45,
                     zorder=3,
                 )
-            axis.set_xticks(x, [SCENARIO_LABELS[sid] for sid in ids])
+            axis.errorbar(
+                x,
+                means,
+                yerr=errors,
+                fmt="D",
+                markersize=4.1,
+                markerfacecolor="#222222",
+                markeredgecolor="white",
+                markeredgewidth=0.45,
+                color="#222222",
+                ecolor="#222222",
+                elinewidth=0.8,
+                capsize=2.5,
+                zorder=4,
+            )
+            axis.set_xticks(x, [SCENARIO_TICK_LABELS[sid] for sid in ids])
             axis.set_ylabel(ylabel)
-            _panel_label(axis, panel)
+            axis.set_title(title)
+            _panel_label(axis, panel, y=-0.24)
         figure.suptitle(
-            f"Paired seeds (n={len(seeds)}); bars = mean ± SD\n"
-            f"{_scenario_budget_note(paired)}; objectives read (a)→(b)→(c) "
-            "lexicographically",
+            f"Paired formal seeds (n={len(seeds)}); points = individual runs; "
+            "diamond = mean ± SD\n"
+            f"{_scenario_budget_note(paired)}; cumulative-budget ablation "
+            "(mechanism + compute effects)",
             fontsize=8.2,
             y=0.995,
         )
-        figure.subplots_adjust(top=0.75, bottom=0.23, wspace=0.42)
+        figure.text(
+            0.5,
+            0.012,
+            "Lexicographic order: Priority 1 → Priority 2 → Priority 3; "
+            "later priorities are compared only after ties upstream.",
+            ha="center",
+            va="bottom",
+            fontsize=7.4,
+        )
+        figure.subplots_adjust(
+            top=0.86,
+            bottom=0.14,
+            hspace=0.48,
+            wspace=0.30,
+        )
     return figure
 
 
@@ -845,13 +918,26 @@ def shared_route_bounds(
     )
 
 
-def plot_route_layouts(
+def _route_panel_title(scenario: str, row: Mapping[str, Any]) -> str:
+    late_count = int(row["late_count"])
+    total_lateness = float(row["total_lateness_min"])
+    distance = float(row["distance_km"])
+    relay_tasks = int(row.get("relay_task_count", 0))
+    return (
+        f"{SCENARIO_LABELS[scenario]} · {SCENARIO_STAGE_LABELS[scenario]}\n"
+        f"Lex score = ({late_count}, {total_lateness:.1f} min, "
+        f"{distance:.1f} km); Relay tasks = {relay_tasks}"
+    )
+
+
+def build_route_layouts_figure(
     rows: Sequence[dict[str, Any]],
     scenario_dir: Path,
-    output_dir: Path,
     *,
     route_seed: int = DEFAULT_ROUTE_SEED,
-) -> None:
+) -> plt.Figure:
+    """Build comparable route panels for one predeclared paired seed."""
+
     selected = select_route_rows(rows, route_seed=route_seed)
     layouts = {
         scenario: route_layout_from_solution(
@@ -933,7 +1019,7 @@ def plot_route_layouts(
                     facecolor="#029EAC",
                     edgecolor="white",
                     linewidth=0.55,
-                    label="Active/home station",
+                    label="Position/home or relay-used station",
                     zorder=5,
                 )
             axis.scatter(
@@ -947,7 +1033,7 @@ def plot_route_layouts(
                 label="Depot",
                 zorder=6,
             )
-            axis.set_title(SCENARIO_LABELS[sid])
+            axis.set_title(_route_panel_title(sid, selected[sid]), fontsize=7.5)
             axis.set_aspect("equal", adjustable="box")
             axis.set_xlim(*x_limits)
             axis.set_ylim(*y_limits)
@@ -965,60 +1051,166 @@ def plot_route_layouts(
             bbox_to_anchor=(0.5, 0.995),
         )
         figure.suptitle(
-            f"Paired route layouts for predefined seed {route_seed}",
-            fontsize=8.5,
-            y=0.955,
+            f"Paired route layouts for predefined seed {route_seed} "
+            "(n=1 illustrative paired seed)\n"
+            "P = demand-driven position/predeployment; R = relay; "
+            "panel budgets are cumulative",
+            fontsize=8.0,
+            y=0.954,
         )
         figure.supxlabel("x (km)", y=0.02, fontsize=8.5)
         figure.supylabel("y (km)", x=0.02, fontsize=8.5)
         figure.subplots_adjust(
-            top=0.88,
+            top=0.84,
             bottom=0.10,
             left=0.08,
-            hspace=0.40,
+            hspace=0.48,
             wspace=0.20,
         )
+    return figure
+
+
+def plot_route_layouts(
+    rows: Sequence[dict[str, Any]],
+    scenario_dir: Path,
+    output_dir: Path,
+    *,
+    route_seed: int = DEFAULT_ROUTE_SEED,
+) -> None:
+    figure = build_route_layouts_figure(
+        rows,
+        scenario_dir,
+        route_seed=route_seed,
+    )
+    with reference_plot_style():
         _save_pair(figure, output_dir, "fig6_2_route_layouts")
 
 
-def plot_sensitivity(rows: Sequence[dict[str, Any]], output_dir: Path) -> None:
-    labels = {
-        "drone_count": "Number of UAVs",
-        "deadline_multiplier": "Deadline multiplier",
-        "station_count": "Number of stations",
-    }
-    metrics = (
-        ("late_count", "Late deliveries"),
-        ("total_lateness_min", "Total lateness (min)"),
-        ("distance_km", "Total distance (km)"),
+def _validated_sensitivity_rows(
+    rows: Sequence[dict[str, Any]],
+    parameter: str,
+) -> tuple[dict[str, Any], ...]:
+    if parameter not in SENSITIVITY_PARAMETERS:
+        raise ValueError(f"unsupported sensitivity parameter: {parameter}")
+    selected = unique_rows_by_numeric_key(
+        tuple(row for row in rows if row["parameter"] == parameter),
+        "level",
+        context=f"sensitivity {parameter}",
     )
-    for parameter, xlabel in labels.items():
-        selected = unique_rows_by_numeric_key(
-            tuple(row for row in rows if row["parameter"] == parameter),
-            "level",
-            context=f"sensitivity {parameter}",
+    if not selected:
+        raise ValueError(f"sensitivity {parameter}: no rows available")
+    seeds = {int(row["seed"]) for row in selected}
+    if seeds != {SENSITIVITY_SEED}:
+        raise ValueError(
+            f"sensitivity {parameter} must use the single seed "
+            f"{SENSITIVITY_SEED}; got {sorted(seeds)}"
         )
-        x = [float(row["level"]) for row in selected]
-        with reference_plot_style({"axes.grid": True}):
-            figure, axes = plt.subplots(1, 3, figsize=(7.1, 2.75))
-            for axis, (field, ylabel), panel in zip(
-                axes,
-                metrics,
-                ("(a)", "(b)", "(c)"),
-                strict=True,
-            ):
-                color, marker = METRIC_LINE_STYLES[field]
-                axis.plot(
-                    x,
-                    [row[field] for row in selected],
-                    color=color,
-                    marker=marker,
-                )
-                axis.set_xlabel(xlabel)
-                axis.set_ylabel(ylabel)
-                axis.set_xticks(x)
-                _panel_label(axis, panel)
-            figure.subplots_adjust(bottom=0.26, wspace=0.44)
+    for row in selected:
+        scenario = str(row["scenario"])
+        if scenario != "direct_relay_stations":
+            raise ValueError(
+                f"sensitivity {parameter} must use D+P+R; got {scenario}"
+            )
+        observed_budget = float(row["effective_time_limit_seconds"])
+        if not np.isclose(
+            observed_budget,
+            SENSITIVITY_BUDGET_SECONDS,
+            rtol=0.0,
+            atol=1e-9,
+        ):
+            raise ValueError(
+                f"sensitivity {parameter} uses a fixed "
+                f"{SENSITIVITY_BUDGET_SECONDS:g} s total budget; "
+                f"got {observed_budget:g} s"
+            )
+    return selected
+
+
+def build_sensitivity_figure(
+    rows: Sequence[dict[str, Any]],
+    parameter: str,
+) -> plt.Figure:
+    """Build one explicitly exploratory, single-seed OFAT figure."""
+
+    xlabel, baseline = SENSITIVITY_PARAMETERS[parameter]
+    selected = _validated_sensitivity_rows(rows, parameter)
+    metrics = (
+        ("late_count", "Late deliveries", "Priority 1"),
+        (
+            "total_lateness_min",
+            "Total lateness (min)",
+            "Priority 2 (conditional)",
+        ),
+        (
+            "distance_km",
+            "Total distance (km)",
+            "Priority 3 (conditional)",
+        ),
+    )
+    x = [float(row["level"]) for row in selected]
+    with reference_plot_style({"axes.grid": True}):
+        figure, axes = plt.subplots(1, 3, figsize=(7.1, 3.1))
+        for axis, (field, ylabel, title), panel in zip(
+            axes,
+            metrics,
+            ("(a)", "(b)", "(c)"),
+            strict=True,
+        ):
+            color, marker = METRIC_LINE_STYLES[field]
+            values = [float(row[field]) for row in selected]
+            axis.plot(
+                x,
+                values,
+                color=color,
+                marker=marker,
+            )
+            axis.axvline(
+                baseline,
+                color="#555555",
+                linestyle="--",
+                linewidth=0.75,
+                alpha=0.8,
+                zorder=1,
+            )
+            baseline_index = x.index(baseline)
+            axis.scatter(
+                [baseline],
+                [values[baseline_index]],
+                marker=marker,
+                s=34,
+                facecolor="white",
+                edgecolor=color,
+                linewidth=0.9,
+                zorder=4,
+                label="Baseline level",
+            )
+            axis.set_xlabel(xlabel)
+            axis.set_ylabel(ylabel)
+            axis.set_xticks(x)
+            axis.set_title(title)
+            _panel_label(axis, panel, y=-0.34)
+        axes[0].legend(
+            loc="best",
+            frameon=True,
+            framealpha=1.0,
+            facecolor="white",
+        )
+        figure.suptitle(
+            "OFAT exploratory (n=1; no error bars); D+P+R; "
+            "fixed 300 s total budget\n"
+            "Lexicographic order: Priority 1 → Priority 2 → Priority 3; "
+            "later priorities are conditional",
+            fontsize=8.0,
+            y=0.995,
+        )
+        figure.subplots_adjust(top=0.73, bottom=0.32, wspace=0.44)
+    return figure
+
+
+def plot_sensitivity(rows: Sequence[dict[str, Any]], output_dir: Path) -> None:
+    for parameter in SENSITIVITY_PARAMETERS:
+        figure = build_sensitivity_figure(rows, parameter)
+        with reference_plot_style():
             _save_pair(figure, output_dir, f"fig6_3_{parameter}_sensitivity")
 
 
@@ -1037,18 +1229,31 @@ def main(argv: Sequence[str] | None = None) -> int:
     benchmark_path = args.benchmarks / "results.json"
     scenario_path = args.scenarios / "runs.json"
     sensitivity_path = args.sensitivity / "runs.json"
+    benchmark_rows = _load(benchmark_path)["runs"]
+    scenario_rows = _load(scenario_path)
+    sensitivity_rows = _load(sensitivity_path)
+    selected_route_rows = select_route_rows(
+        scenario_rows,
+        route_seed=args.route_seed,
+    )
+    input_paths = {
+        "benchmark_results": benchmark_path,
+        "scenario_runs": scenario_path,
+        "scenario_manifest": args.scenarios / "manifest.json",
+        "sensitivity_runs": sensitivity_path,
+        "sensitivity_manifest": args.sensitivity / "manifest.json",
+        **{
+            f"route_solution_{scenario}": (
+                args.scenarios / row["solution_file"]
+            )
+            for scenario, row in selected_route_rows.items()
+        },
+    }
     with figure_manifest_on_success(
         output_dir=args.output_dir,
-        input_paths={
-            "benchmark_results": benchmark_path,
-            "scenario_runs": scenario_path,
-            "sensitivity_runs": sensitivity_path,
-        },
+        input_paths=input_paths,
         route_seed=args.route_seed,
     ):
-        benchmark_rows = _load(benchmark_path)["runs"]
-        scenario_rows = _load(scenario_path)
-        sensitivity_rows = _load(sensitivity_path)
         plot_title_example(args.output_dir)
         plot_exact_validation(benchmark_rows, args.output_dir)
         plot_multiscale(benchmark_rows, args.output_dir)

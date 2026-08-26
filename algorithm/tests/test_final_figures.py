@@ -9,7 +9,9 @@ import algorithm.experiments.render_final_figures as final_figures
 from algorithm.experiments.render_final_figures import (
     FINAL_FIGURE_STEMS,
     build_exact_validation_figure,
+    build_route_layouts_figure,
     build_scenario_comparison_figure,
+    build_sensitivity_figure,
     figure_manifest_on_success,
     operator_outcome_percentages,
     paired_scenario_rows,
@@ -18,6 +20,53 @@ from algorithm.experiments.render_final_figures import (
     summarize_operator_outcomes,
     unique_rows_by_numeric_key,
 )
+
+
+FORMAL_SCENARIO_SEEDS = (2026081701, 2026081702, 2026081703)
+FORMAL_SCENARIOS = (
+    "pure_direct",
+    "direct_relay",
+    "direct_stations",
+    "direct_relay_stations",
+)
+FORMAL_SCENARIO_BUDGETS = {
+    "pure_direct": 240.0,
+    "direct_relay": 480.0,
+    "direct_stations": 480.0,
+    "direct_relay_stations": 720.0,
+}
+
+
+def _formal_scenario_rows() -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    for seed_index, seed in enumerate(FORMAL_SCENARIO_SEEDS):
+        for scenario_index, scenario in enumerate(FORMAL_SCENARIOS):
+            rows.append(
+                {
+                    "seed": seed,
+                    "scenario": scenario,
+                    "effective_time_limit_seconds": FORMAL_SCENARIO_BUDGETS[
+                        scenario
+                    ],
+                    "wall_seconds": FORMAL_SCENARIO_BUDGETS[scenario]
+                    - 0.05
+                    + 0.001 * seed_index,
+                    "late_count": 60 + seed_index - scenario_index,
+                    "total_lateness_min": (
+                        2000.0 + 10.0 * seed_index - scenario_index
+                    ),
+                    "distance_km": (
+                        620.0 + 2.0 * seed_index - scenario_index
+                    ),
+                    "relay_task_count": (
+                        scenario_index
+                        if scenario in {"direct_relay", "direct_relay_stations"}
+                        else 0
+                    ),
+                    "solution_file": f"run_solutions/{scenario}__seed_{seed}.json",
+                }
+            )
+    return rows
 
 
 def test_operator_outcome_percentages_are_exclusive_and_sum_to_100():
@@ -77,37 +126,46 @@ def test_numeric_series_rejects_duplicate_x_values_before_plotting():
 
 def test_scenario_comparison_rejects_an_incomplete_paired_seed():
     rows = [
-        {"seed": 7, "scenario": "pure_direct"},
-        {"seed": 7, "scenario": "direct_relay"},
-        {"seed": 7, "scenario": "direct_stations"},
+        {
+            "seed": FORMAL_SCENARIO_SEEDS[0],
+            "scenario": scenario,
+            "effective_time_limit_seconds": FORMAL_SCENARIO_BUDGETS[scenario],
+        }
+        for scenario in FORMAL_SCENARIOS[:-1]
     ]
 
-    with pytest.raises(ValueError, match="seed=7.*direct_relay_stations"):
+    with pytest.raises(
+        ValueError,
+        match=f"seed={FORMAL_SCENARIO_SEEDS[0]}.*direct_relay_stations",
+    ):
+        paired_scenario_rows(rows)
+
+
+def test_scenario_comparison_requires_the_three_predeclared_paired_seeds():
+    rows = _formal_scenario_rows()
+    rows = [row for row in rows if row["seed"] != FORMAL_SCENARIO_SEEDS[-1]]
+
+    with pytest.raises(ValueError, match="paired seeds.*2026081701.*2026081703"):
+        paired_scenario_rows(rows)
+
+
+def test_scenario_comparison_rejects_a_nonformal_budget():
+    rows = _formal_scenario_rows()
+    rows[1]["effective_time_limit_seconds"] = 300.0
+
+    with pytest.raises(ValueError, match="direct_relay.*480.*300"):
         paired_scenario_rows(rows)
 
 
 def test_route_panels_use_one_predefined_seed_for_every_scenario():
-    scenarios = (
-        "pure_direct",
-        "direct_relay",
-        "direct_stations",
-        "direct_relay_stations",
-    )
-    rows = [
-        {
-            "seed": seed,
-            "scenario": scenario,
-            "distance_km": 100.0 if seed == 11 else 1.0,
-            "solution_file": f"{scenario}-{seed}.json",
-        }
-        for seed in (11, 12)
-        for scenario in scenarios
-    ]
+    rows = _formal_scenario_rows()
 
-    selected = select_route_rows(rows, route_seed=11)
+    selected = select_route_rows(rows, route_seed=FORMAL_SCENARIO_SEEDS[0])
 
-    assert set(selected) == set(scenarios)
-    assert {row["seed"] for row in selected.values()} == {11}
+    assert set(selected) == set(FORMAL_SCENARIOS)
+    assert {row["seed"] for row in selected.values()} == {
+        FORMAL_SCENARIO_SEEDS[0]
+    }
 
 
 def test_route_layout_uses_payload_depot_homes_stations_and_service_points():
@@ -148,6 +206,54 @@ def test_route_layout_uses_payload_depot_homes_stations_and_service_points():
     assert layout.active_station_ids == frozenset({3, 4})
     assert (20.0, 21.0) not in layout.service_points
     assert (22.0, 23.0) in layout.service_points
+
+
+def test_route_figure_titles_expose_protocol_score_and_relay_use(tmp_path):
+    rows = _formal_scenario_rows()
+    selected_seed = FORMAL_SCENARIO_SEEDS[0]
+    solution = {
+        "problem": {
+            "depot_km": [0.0, 0.0],
+            "drone_homes": ["origin"],
+            "open_routes": True,
+        },
+        "relay": {
+            "relay_coordinates": [[1, 1.0, 1.0]],
+            "relay_usage_per_station": [],
+        },
+        "routes": [
+            {
+                "visits": [
+                    {"kind": "PICKUP", "location_km": [1.0, 0.0]},
+                    {"kind": "DELIVERY", "location_km": [1.0, 1.0]},
+                ]
+            }
+        ],
+    }
+    for row in rows:
+        if row["seed"] != selected_seed:
+            continue
+        solution_path = tmp_path / str(row["solution_file"])
+        solution_path.parent.mkdir(parents=True, exist_ok=True)
+        solution_path.write_text(json.dumps(solution), encoding="utf-8")
+
+    figure = build_route_layouts_figure(
+        rows,
+        tmp_path,
+        route_seed=selected_seed,
+    )
+    try:
+        titles = [axis.get_title() for axis in figure.axes]
+        assert "D · 240 s" in titles[0]
+        assert "D+R · 240+240 s" in titles[1]
+        assert "D+P · 240+240 s" in titles[2]
+        assert "D+P+R · 240+240+240 s" in titles[3]
+        assert all("Lex score = (" in title for title in titles)
+        assert all("Relay tasks =" in title for title in titles)
+        assert "n=1 illustrative paired seed" in figure.get_suptitle()
+        assert "P = demand-driven position/predeployment" in figure.get_suptitle()
+    finally:
+        plt.close(figure)
 
 
 def test_exact_match_panel_shows_both_states_without_bar_grid():
@@ -274,8 +380,29 @@ def test_main_writes_manifest_after_all_renderers_complete(
         json.dumps({"runs": []}),
         encoding="utf-8",
     )
-    (scenario_dir / "runs.json").write_text("[]", encoding="utf-8")
+    scenario_rows = _formal_scenario_rows()
+    (scenario_dir / "runs.json").write_text(
+        json.dumps(scenario_rows),
+        encoding="utf-8",
+    )
     (sensitivity_dir / "runs.json").write_text("[]", encoding="utf-8")
+    (scenario_dir / "manifest.json").write_text(
+        json.dumps({"protocol": "formal"}),
+        encoding="utf-8",
+    )
+    (sensitivity_dir / "manifest.json").write_text(
+        json.dumps({"protocol": "ofat"}),
+        encoding="utf-8",
+    )
+    for row in scenario_rows:
+        if row["seed"] != FORMAL_SCENARIO_SEEDS[0]:
+            continue
+        solution_path = scenario_dir / str(row["solution_file"])
+        solution_path.parent.mkdir(parents=True, exist_ok=True)
+        solution_path.write_text(
+            json.dumps({"scenario": row["scenario"]}),
+            encoding="utf-8",
+        )
     output_dir = tmp_path / "figures"
 
     def write_pair(stem, target):
@@ -344,7 +471,7 @@ def test_main_writes_manifest_after_all_renderers_complete(
             "--output-dir",
             str(output_dir),
             "--route-seed",
-            "41",
+            str(FORMAL_SCENARIO_SEEDS[0]),
         ]
     )
 
@@ -352,47 +479,114 @@ def test_main_writes_manifest_after_all_renderers_complete(
     manifest = json.loads(
         (output_dir / "figure_manifest.json").read_text(encoding="utf-8")
     )
-    assert manifest["route_seed"] == 41
+    assert manifest["route_seed"] == FORMAL_SCENARIO_SEEDS[0]
     assert len(manifest["outputs"]) == 18
+    assert {
+        "scenario_manifest",
+        "sensitivity_manifest",
+        "route_solution_pure_direct",
+        "route_solution_direct_relay",
+        "route_solution_direct_stations",
+        "route_solution_direct_relay_stations",
+    } <= set(manifest["inputs"])
 
 
 def test_scenario_figure_exposes_pairing_sample_size_spread_and_budgets():
-    scenarios = (
-        "pure_direct",
-        "direct_relay",
-        "direct_stations",
-        "direct_relay_stations",
-    )
-    rows = []
-    for seed in (1, 2, 3):
-        for scenario_index, scenario in enumerate(scenarios):
-            rows.append(
-                {
-                    "seed": seed,
-                    "scenario": scenario,
-                    "effective_time_limit_seconds": (
-                        240.0 if scenario == "pure_direct" else 300.0
-                    ),
-                    "late_count": seed + scenario_index,
-                    "total_lateness_min": 10.0 * seed + scenario_index,
-                    "distance_km": 100.0 * seed + scenario_index,
-                }
-            )
+    rows = _formal_scenario_rows()
 
     figure = build_scenario_comparison_figure(rows)
     try:
         title = figure.get_suptitle()
         assert "n=3" in title
         assert "mean ± SD" in title
-        assert "D = 240 s" in title
-        assert "D+R/D+S/D+R+S = 300 s" in title
+        assert "unequal cumulative budgets" in title.lower()
+        assert len(figure.axes) == 4
+        assert [axis.get_title() for axis in figure.axes] == [
+            "Priority 1",
+            "Priority 2 (conditional)",
+            "Priority 3 (conditional)",
+            "Observed wall time",
+        ]
         for axis in figure.axes:
+            assert [tick.get_text() for tick in axis.get_xticklabels()] == [
+                "D\n240 s",
+                "D+R\n240+240 s",
+                "D+P\n240+240 s",
+                "D+P+R\n240+240+240 s",
+            ]
+            assert not axis.patches
             paired_lines = [
                 line
                 for line in axis.lines
                 if tuple(line.get_xdata()) == (0, 1, 2, 3)
                 and line.get_linestyle() == "-"
+                and line.get_marker() == "None"
             ]
             assert len(paired_lines) == 3
+            assert any(line.get_marker() == "D" for line in axis.lines)
     finally:
         plt.close(figure)
+
+
+def _sensitivity_rows(parameter: str) -> list[dict[str, object]]:
+    levels = {
+        "drone_count": (8, 9, 10, 12, 16),
+        "deadline_multiplier": (0.8, 0.9, 1.0, 1.1, 1.2),
+        "station_count": (2, 3, 4, 5, 6),
+    }[parameter]
+    return [
+        {
+            "parameter": parameter,
+            "level": level,
+            "seed": FORMAL_SCENARIO_SEEDS[0],
+            "scenario": "direct_relay_stations",
+            "effective_time_limit_seconds": 300.0,
+            "late_count": index,
+            "total_lateness_min": 100.0 + index,
+            "distance_km": 600.0 + index,
+        }
+        for index, level in enumerate(levels)
+    ]
+
+
+@pytest.mark.parametrize(
+    ("parameter", "baseline"),
+    (("drone_count", 8.0), ("deadline_multiplier", 1.0), ("station_count", 4.0)),
+)
+def test_sensitivity_figure_is_explicitly_single_seed_exploratory(
+    parameter,
+    baseline,
+):
+    figure = build_sensitivity_figure(_sensitivity_rows(parameter), parameter)
+    try:
+        title = figure.get_suptitle()
+        assert "OFAT exploratory" in title
+        assert "n=1" in title
+        assert "no error bars" in title
+        assert "fixed 300 s total budget" in title
+        assert [axis.get_title() for axis in figure.axes] == [
+            "Priority 1",
+            "Priority 2 (conditional)",
+            "Priority 3 (conditional)",
+        ]
+        assert [
+            text.get_text() for text in figure.axes[0].get_legend().get_texts()
+        ] == ["Baseline level"]
+        for axis in figure.axes:
+            baseline_lines = [
+                line
+                for line in axis.lines
+                if line.get_linestyle() == "--"
+                and tuple(line.get_xdata()) == (baseline, baseline)
+            ]
+            assert len(baseline_lines) == 1
+    finally:
+        plt.close(figure)
+
+
+def test_sensitivity_figure_rejects_a_budget_other_than_fixed_300_seconds():
+    rows = _sensitivity_rows("drone_count")
+    rows[0]["effective_time_limit_seconds"] = 720.0
+
+    with pytest.raises(ValueError, match="fixed 300 s.*720"):
+        build_sensitivity_figure(rows, "drone_count")

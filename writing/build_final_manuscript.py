@@ -61,20 +61,30 @@ EXPECTED_SCENARIO_SEEDS = (2026081701, 2026081702, 2026081703)
 SCENARIO_LABELS = {
     "pure_direct": "Direct（原点起点）",
     "direct_relay": "Direct + Relay（原点起点）",
+    "direct_stations": "Direct + Position（需求驱动Station预部署）",
+    "direct_relay_stations": "Direct + Position + Relay",
+}
+EXPECTED_SCENARIO_ROW_LABELS = {
+    "pure_direct": "Direct（原点起点）",
+    "direct_relay": "Direct + Relay（原点起点）",
     "direct_stations": "Direct + Station（需求驱动预部署）",
     "direct_relay_stations": "Direct + Relay + Station",
 }
 EXPECTED_SCENARIO_SPECS = {
     "pure_direct": {"relay": False, "warmup": 0.0, "drone_homes": "origin"},
-    "direct_relay": {"relay": True, "warmup": 0.8, "drone_homes": "origin"},
+    "direct_relay": {"relay": True, "warmup": 0.5, "drone_homes": "origin"},
     "direct_stations": {"relay": False, "warmup": 0.0, "drone_homes": "stations"},
-    "direct_relay_stations": {"relay": True, "warmup": 0.8, "drone_homes": "stations"},
+    "direct_relay_stations": {
+        "relay": True,
+        "warmup": 2.0 / 3.0,
+        "drone_homes": "stations",
+    },
 }
 EXPECTED_BUDGETS = {
     "pure_direct": 240.0,
-    "direct_relay": 300.0,
-    "direct_stations": 300.0,
-    "direct_relay_stations": 300.0,
+    "direct_relay": 480.0,
+    "direct_stations": 480.0,
+    "direct_relay_stations": 720.0,
 }
 DESTROY_OPERATORS = (
     "random",
@@ -506,6 +516,7 @@ def _validate_scenarios(directory: Path) -> tuple[
             "base_seconds",
             "bonus_seconds",
             "scenario_budgets_seconds",
+            "scenario_stage_targets_seconds",
             "scenarios",
             "operator_count",
         ),
@@ -518,7 +529,7 @@ def _validate_scenarios(directory: Path) -> tuple[
     if manifest["operator_count"] != 14:
         raise ArtefactError("四场景manifest的operator_count必须为14")
     _close(manifest["base_seconds"], 240.0, "四场景基础预算")
-    _close(manifest["bonus_seconds"], 60.0, "四场景Relay/Station加时")
+    _close(manifest["bonus_seconds"], 240.0, "四场景Relay/Position单机制增量")
     if str(manifest["solver_source_sha256"]) != _solver_source_sha256():
         raise ArtefactError("四场景manifest的求解器源码SHA-256与当前源码不一致")
     seeds = [int(seed) for seed in manifest["seeds"]]
@@ -553,6 +564,32 @@ def _validate_scenarios(directory: Path) -> tuple[
         raise ArtefactError("四场景预算键与最终四场景不一致")
     for scenario, expected in EXPECTED_BUDGETS.items():
         _close(budgets[scenario], expected, f"{scenario}名义预算")
+        expected_spec = EXPECTED_SCENARIO_SPECS[scenario]
+        enabled_mechanisms = int(expected_spec["relay"]) + int(
+            expected_spec["drone_homes"] == "stations"
+        )
+        accumulated = float(manifest["base_seconds"]) + (
+            enabled_mechanisms * float(manifest["bonus_seconds"])
+        )
+        _close(budgets[scenario], accumulated, f"{scenario}累计预算公式")
+    stage_targets = _mapping(
+        manifest["scenario_stage_targets_seconds"],
+        "四场景阶段目标",
+    )
+    if set(stage_targets) != set(SCENARIO_IDS):
+        raise ArtefactError("四场景阶段目标键与最终四场景不一致")
+    expected_stage_targets = {
+        "pure_direct": (240.0, 0.0),
+        "direct_relay": (240.0, 240.0),
+        "direct_stations": (480.0, 0.0),
+        "direct_relay_stations": (480.0, 240.0),
+    }
+    for scenario, (expected_direct, expected_relay) in expected_stage_targets.items():
+        targets = _mapping(stage_targets[scenario], f"{scenario}阶段目标")
+        if set(targets) != {"direct_search", "relay_search"}:
+            raise ArtefactError(f"{scenario}阶段目标字段不完整")
+        _close(targets["direct_search"], expected_direct, f"{scenario}.direct_search")
+        _close(targets["relay_search"], expected_relay, f"{scenario}.relay_search")
     if len(rows) != 12:
         raise ArtefactError(f"四场景正式结果应为4×3=12条，实际为{len(rows)}条")
     cells = {(row.get("scenario"), row.get("seed")) for row in rows}
@@ -568,6 +605,8 @@ def _validate_scenarios(directory: Path) -> tuple[
         "effective_time_limit_seconds",
         "construction_seconds",
         "solver_runtime_seconds",
+        "relay_warmup_runtime_seconds",
+        "relay_search_runtime_seconds",
         "wall_seconds",
         "iterations",
         "late_count",
@@ -590,7 +629,7 @@ def _validate_scenarios(directory: Path) -> tuple[
         label = f"四场景runs[{index}]"
         _require_keys(row, required, label)
         scenario = str(row["scenario"])
-        if str(row["scenario_label"]) != SCENARIO_LABELS[scenario]:
+        if str(row["scenario_label"]) != EXPECTED_SCENARIO_ROW_LABELS[scenario]:
             raise ArtefactError(f"{label}.scenario_label与最终场景标签不一致")
         _close(row["effective_time_limit_seconds"], EXPECTED_BUDGETS[scenario], f"{label}.effective_time_limit_seconds")
         expected_spec = EXPECTED_SCENARIO_SPECS[scenario]
@@ -599,6 +638,29 @@ def _validate_scenarios(directory: Path) -> tuple[
         expected_station = expected_spec["drone_homes"] == "stations"
         if bool(row["station_predeployment"]) is not expected_station:
             raise ArtefactError(f"{label}.station_predeployment与场景定义不一致")
+        warmup_runtime = float(row["relay_warmup_runtime_seconds"])
+        relay_runtime = float(row["relay_search_runtime_seconds"])
+        solver_runtime = float(row["solver_runtime_seconds"])
+        if min(warmup_runtime, relay_runtime, solver_runtime) < 0:
+            raise ArtefactError(f"{label}.阶段运行时间不能为负")
+        if expected_spec["relay"]:
+            if not math.isclose(
+                warmup_runtime + relay_runtime,
+                solver_runtime,
+                rel_tol=0.0,
+                abs_tol=2.0,
+            ):
+                raise ArtefactError(f"{label}.Direct与Relay阶段时间之和不一致")
+            expected_fraction = float(expected_spec["warmup"])
+            if solver_runtime <= 0 or not math.isclose(
+                warmup_runtime / solver_runtime,
+                expected_fraction,
+                rel_tol=0.0,
+                abs_tol=0.01,
+            ):
+                raise ArtefactError(f"{label}.阶段时间没有按最终模块预算分配")
+        elif warmup_runtime != 0.0 or relay_runtime != 0.0:
+            raise ArtefactError(f"{label}.非Relay场景不应记录Relay阶段时间")
         _validate_operator_statistics(row, label)
         solution_path = directory / str(row["solution_file"])
         solution = _solution(solution_path, str(row["solution_sha256"]), f"{label}解文件")
@@ -636,6 +698,17 @@ def _validate_scenarios(directory: Path) -> tuple[
         )
         if metadata_statistics != row["operator_statistics"]:
             raise ArtefactError(f"{label}.operator_statistics与解文件metadata不一致")
+        if expected_spec["relay"]:
+            _close(
+                solution["metadata"]["relay_warmup_runtime_seconds"],
+                warmup_runtime,
+                f"{label}.relay_warmup_runtime_seconds",
+            )
+            _close(
+                solution["metadata"]["relay_search_runtime_seconds"],
+                relay_runtime,
+                f"{label}.relay_search_runtime_seconds",
+            )
         for key in ("late_count", "total_lateness_min", "distance_km"):
             if not math.isclose(float(row[key]), float(score[key]), rel_tol=0.0, abs_tol=1e-8):
                 raise ArtefactError(f"{label}.{key}与解文件不一致")
@@ -868,11 +941,21 @@ def _validate_figure_manifest(
     expected_inputs = {
         "benchmark_results": benchmark_dir / "results.json",
         "scenario_runs": scenario_dir / "runs.json",
+        "scenario_manifest": scenario_dir / "manifest.json",
         "sensitivity_runs": sensitivity_dir / "runs.json",
+        "sensitivity_manifest": sensitivity_dir / "manifest.json",
+        **{
+            f"route_solution_{scenario}": (
+                scenario_dir
+                / "run_solutions"
+                / f"{scenario}__seed_{EXPECTED_SCENARIO_SEEDS[0]}.json"
+            )
+            for scenario in SCENARIO_IDS
+        },
     }
     input_records = _mapping(manifest["inputs"], "最终图像manifest.inputs")
     if set(input_records) != set(expected_inputs):
-        raise ArtefactError("最终图像manifest.inputs与三组正式JSON不一致")
+        raise ArtefactError("最终图像manifest.inputs与正式结果及路线解文件不一致")
     for name, expected_path in expected_inputs.items():
         record = _mapping(input_records[name], f"最终图像manifest.inputs.{name}")
         _require_keys(record, ("absolute_path", "sha256"), f"最终图像manifest.inputs.{name}")
@@ -1932,8 +2015,10 @@ def write_chapter_six(writer: ManuscriptWriter, bundle: Bundle) -> None:
     writer.heading("6 正式应用案例与策略分析", 1, page_break=True)
     writer.paragraph(
         "本章使用给定200任务、8架无人机的正式数据，按照最终差异化计算预算协议"
-        "比较四种协同场景。纯Direct使用240 s，启用Relay或Station的场景均增加"
-        "一次60 s，组合场景不会累计为360 s。因此，本章结果是按最终预算协议的"
+        "比较四种协同场景。纯Direct使用240 s；Relay与Position（需求驱动Station"
+        "预部署）每启用一项分别增加240 s，因而Direct + Relay与Direct + Position"
+        "均为480 s，Direct + Position + Relay累计两项增量后为720 s。因此，本章"
+        "结果是按最终预算协议的"
         "配对比较，质量差异同时包含机制与额外计算时间的共同影响，不能解释为"
         "严格同墙钟下的纯机制因果效应。"
     )
@@ -1962,28 +2047,38 @@ def write_chapter_six(writer: ManuscriptWriter, bundle: Bundle) -> None:
     protocol_rows: list[list[Any]] = []
     for scenario in SCENARIO_IDS:
         spec = scenario_specs[scenario]
-        uses_extension = bool(spec["relay"]) or spec["drone_homes"] == "stations"
+        relay_increment = float(manifest["bonus_seconds"]) if spec["relay"] else 0.0
+        position_increment = (
+            float(manifest["bonus_seconds"])
+            if spec["drone_homes"] == "stations"
+            else 0.0
+        )
         protocol_rows.append(
             [
                 scenario,
                 "开" if spec["relay"] else "关",
                 "需求驱动Station" if spec["drone_homes"] == "stations" else "原点",
                 _fmt(manifest["base_seconds"]),
-                _fmt(manifest["bonus_seconds"]) if uses_extension else "0",
+                _fmt(relay_increment),
+                _fmt(position_increment),
                 _fmt(manifest["scenario_budgets_seconds"][scenario]),
                 len(manifest["seeds"]),
             ]
         )
     writer.table(
         "表6-1 四场景定义与预算协议",
-        ("场景", "Relay", "无人机起点", "基础/s", "加时/s", "名义预算/s", "种子数"),
+        (
+            "场景", "Relay", "无人机起点", "基础/s", "Relay增量/s",
+            "Position增量/s", "名义预算/s", "种子数",
+        ),
         protocol_rows,
-        ratios=(1.75, 0.6, 1.45, 0.75, 0.7, 0.95, 0.7),
-        font_size=7.5,
+        ratios=(1.6, 0.5, 1.2, 0.65, 0.8, 0.9, 0.85, 0.6),
+        font_size=7.1,
     )
     writer.paragraph(
-        "表6-1中的加时按“是否使用Relay或Station”判断，只增加一次。构造时间计入"
-        "名义预算，搜索时间还扣除安全余量。"
+        "表6-1按Relay与Position两个机制开关分别计取增量：每启用一项增加240 s，"
+        "组合场景累计两次，因此四场景名义预算依次为240、480、480和720 s。构造"
+        "时间计入名义预算，搜索时间还扣除安全余量。"
     )
 
     writer.heading("6.1.3 解质量与稳定性", 3)
@@ -2027,7 +2122,10 @@ def write_chapter_six(writer: ManuscriptWriter, bundle: Bundle) -> None:
         f"{best_summary['mean_distance_km']:.2f})。均值只用于描述总体水平，"
         "逐种子配对胜负仍按每一对三层得分单独判定。"
     )
-    writer.figure("fig6_1_scenario_comparison.png", "图6-1 四场景三层目标比较（均值、标准差与逐次观测）")
+    writer.figure(
+        "fig6_1_scenario_comparison.png",
+        "图6-1 四场景三层目标与实际墙钟（配对观测及均值±标准差）",
+    )
 
     writer.heading("6.1.4 相对纯Direct的逐种子配对结果", 3)
     writer.table(
@@ -2107,12 +2205,13 @@ def write_chapter_six(writer: ManuscriptWriter, bundle: Bundle) -> None:
         + " deadhead_km仅统计每架无人机从home到首个访问节点的首段调位里程；"
         "home_assignment_rate表示可识别的DIRECT取件任务中，其所在路线home为"
         "全部已部署home中最近者的比例，Relay腿不进入该分母，且原点场景因home"
-        "相同而天然为1。三个扩展场景获得额外60 s，故机制指标与实测墙钟"
+        "相同而天然为1。Direct + Relay和Direct + Position各比纯Direct多240 s，"
+        "组合场景多480 s，故机制指标与实测墙钟"
         "必须结合表6-1、表6-2共同解读。"
     )
     writer.figure(
         "fig6_2_route_layouts.png",
-        "图6-2 四场景固定种子2026081701的路线布局",
+        "图6-2 四场景固定种子2026081701的路线布局（图题列示累计模块预算）",
     )
 
     writer.heading("6.2 组合场景敏感性分析", 2)
@@ -2434,7 +2533,15 @@ def write_appendix_a(writer: ManuscriptWriter, bundle: Bundle) -> None:
         ("正式无人机数", "drones", scenario_manifest["drones"], "架", "第6.1节", "四场景manifest"),
         ("单机任务上限", "max_tasks_per_drone", scenario_manifest["max_tasks_per_drone"], "项", "第6.1节", "四场景manifest"),
         ("基础预算", "base_seconds", _fmt(scenario_manifest["base_seconds"]), "s", "四场景", "四场景manifest"),
-        ("Relay/Station加时", "bonus_seconds", _fmt(scenario_manifest["bonus_seconds"]), "s", "扩展场景，只加一次", "四场景manifest"),
+        ("Relay/Position单机制增量", "bonus_seconds", _fmt(scenario_manifest["bonus_seconds"]), "s", "第6.1节，每启用一项各加一次", "四场景manifest"),
+        (
+            "四场景名义预算",
+            "scenario_budgets_seconds",
+            " / ".join(_fmt(scenario_manifest["scenario_budgets_seconds"][scenario]) for scenario in SCENARIO_IDS),
+            "s",
+            "按pure_direct/direct_relay/direct_stations/direct_relay_stations顺序",
+            "四场景manifest",
+        ),
         ("正式站点数", "station_count", ", ".join(map(str, station_counts)), "站", "第6.1节", "四场景runs"),
         ("敏感性单次预算", "effective_seconds_per_run", _fmt(sensitivity_manifest["effective_seconds_per_run"]), "s", "第6.2节", "敏感性manifest"),
         ("多机宽松倍率", "relaxed_deadline_multiplier", _fmt(bundle.benchmark_manifest["relaxed_deadline_multiplier"]), "倍", "第5.3节", "第5章manifest"),
@@ -2496,7 +2603,12 @@ def write_appendix_b(writer: ManuscriptWriter, bundle: Bundle) -> None:
         ("第5章种子", benchmark_manifest["seed"]),
         ("敏感性生成时间UTC", sensitivity_manifest["created_at_utc"]),
         ("敏感性固定种子", sensitivity_manifest["seed"]),
-        ("预算协议", "pure_direct=240 s；其余三场景=300 s"),
+        (
+            "第6.1节预算协议",
+            "pure_direct=240 s；direct_relay=480 s；direct_stations=480 s；"
+            "direct_relay_stations=720 s",
+        ),
+        ("第6.2节敏感性单次预算", f"{_fmt(sensitivity_manifest['effective_seconds_per_run'])} s（独立协议）"),
     ]
     reproducibility_rows.append(
         ("第5章求解器源码SHA-256", benchmark_manifest["solver_source_sha256"])
