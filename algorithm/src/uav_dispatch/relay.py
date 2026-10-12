@@ -1218,7 +1218,10 @@ def relay_statistics(
         relay_pickups = 0
         delivered = set()
         for visit in route:
-            route_distance += problem.distance(previous, visit)
+            route_distance += problem.distance(
+                previous, visit,
+                from_node=problem.home_node(route_index) if previous is None else None,
+            )
             previous = visit
             leg = problem.leg_registry.get(abs(visit)) if problem.has_relays else None
             if leg is not None:

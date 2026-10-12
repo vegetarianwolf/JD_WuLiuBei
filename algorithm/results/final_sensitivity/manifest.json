@@ -1,13 +1,13 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "protocol": "four_strategy_one_factor_sensitivity",
   "formal": true,
-  "created_at_utc": "2026-10-12T11:34:34.151581+00:00",
-  "git_commit": "d07d066a725dc6346454ac747732dd769026b224",
+  "created_at_utc": "2026-10-12T14:06:25.987524+00:00",
+  "git_commit": "40985c3c309cb4d205dab11e87b65f5e3f89a31f",
   "git_dirty": true,
-  "experiment_script_sha256": "8eb686aaf98208cdf620b0310874d1ab114f55c899b4cb1353c6c4b1f68c009d",
+  "experiment_script_sha256": "8b5df9dc6475e30d1823c20ca4238a1abe16d63981cb1f881e23fe673926f242",
   "scenario_script_sha256": "5566709d474ac03e9e3a6118a0b947098d785281f65f2c8bcc0074b8eb34ca1c",
-  "solver_source_sha256": "e43f0874fd3c6c5600e2712ef5be1ccbc05e0e4e6725dd9ed3868a9d3b6dd0e7",
+  "solver_source_sha256": "58db7011752a64f09afef7706e26085bd1bdcb49cc3968afca2667ea33a5d695",
   "pyproject_sha256": "840af8af15b13ad336cd0a4fcb46b822b1aa5c41af46dd373cf7a5d7b162b97a",
   "requirements_dev_sha256": "9e36d716acbbbee427d6b73da4fc7b6d62c999690a81a8403aa83a6248ab9e32",
   "environment": {
@@ -24,7 +24,14 @@
   "input": "/Users/vegetarianwolf/Projects/JD_WuLiuBei/algorithm/命题1-低空经济场景下的物流无人机调度算法数据.csv",
   "input_sha256": "386d3fbaa9009aeed947493782d657ed0b30b25d369c8187bfc9619fc7e31d25",
   "tasks": 200,
-  "seed": 2026081701,
+  "seeds": [
+    2026081701,
+    2026081702,
+    2026081703,
+    2026081704,
+    2026081705
+  ],
+  "seed_count": 5,
   "base_seconds": 240.0,
   "bonus_seconds": 60.0,
   "effective_seconds_per_run": 300.0,
@@ -109,9 +116,10 @@
     }
   },
   "workers": 8,
-  "planned_rows": 55,
-  "planned_unique_solves": 48,
-  "reuse_policy": "identical baseline within scenario and this run only; no historical results",
+  "planned_rows": 275,
+  "planned_unique_solves": 240,
+  "reuse_policy": "identical baseline within scenario, seed and this run only; no historical results",
+  "execution_order": "seed, parameter, level, scenario; scenario order rotated by seed index",
   "scenario_stage_targets_seconds": {
     "pure_direct": {
       "direct_search": 300.0,

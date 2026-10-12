@@ -22,6 +22,12 @@ from algorithm.experiments.final_plot_style import (
     reference_plot_style,
     save_publication_figure,
 )
+from algorithm.experiments.sensitivity_statistics import (
+    FORMAL_SEEDS as SENSITIVITY_SEEDS,
+    SCENARIOS_BY_PARAMETER as SENSITIVITY_SCENARIOS,
+    SENSITIVITY_LEVELS,
+    aggregate_sensitivity,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -69,25 +75,11 @@ SCENARIO_TICK_LABELS = {
     scenario: f"{SCENARIO_LABELS[scenario]}\n{SCENARIO_STAGE_LABELS[scenario]}"
     for scenario in SCENARIO_LABELS
 }
-SENSITIVITY_SEED = 2026081701
 SENSITIVITY_BUDGET_SECONDS = 300.0
 SENSITIVITY_PARAMETERS = {
     "drone_count": ("Number of UAVs", 8.0),
     "deadline_multiplier": ("Deadline multiplier", 1.0),
     "station_count": ("Number of stations", 4.0),
-}
-SENSITIVITY_LEVELS = {
-    "drone_count": (8.0, 9.0, 10.0, 12.0, 16.0),
-    "deadline_multiplier": (0.8, 0.9, 1.0, 1.1, 1.2),
-    "station_count": (2.0, 3.0, 4.0, 5.0, 6.0),
-}
-SENSITIVITY_SCENARIOS = {
-    parameter: tuple(
-        scenario
-        for scenario in SCENARIO_LABELS
-        if parameter != "station_count" or scenario != "pure_direct"
-    )
-    for parameter in SENSITIVITY_PARAMETERS
 }
 SENSITIVITY_SCENARIO_STYLES = {
     "pure_direct": ("#1F77B4", "o", "-"),
@@ -191,6 +183,16 @@ def figure_manifest_on_success(
         name: _file_audit_record(Path(path), relative_to=ROOT)
         for name, path in sorted(input_paths.items())
     }
+    source_records = {
+        name: {
+            "relative_path": _relative_path(path, ROOT),
+            "sha256": _sha256(path),
+        }
+        for name, path in (
+            ("renderer", Path(__file__).resolve()),
+            ("plot_style", Path(__file__).resolve().with_name("final_plot_style.py")),
+        )
+    }
 
     yield
 
@@ -217,6 +219,7 @@ def figure_manifest_on_success(
         "route_seed": int(route_seed),
         "figure_count": len(FINAL_FIGURE_STEMS),
         "output_file_count": len(output_records),
+        "sources": source_records,
         "inputs": input_records,
         "outputs": output_records,
     }
@@ -421,7 +424,7 @@ def build_exact_validation_figure(
         )
         axes[0].set_yscale("log")
         axes[0].set_xlabel("Number of tasks")
-        axes[0].set_ylabel("Exact runtime (s, log scale)")
+        axes[0].set_ylabel("Exact elapsed time (s, log scale)")
         axes[0].set_xticks(sizes)
         matches = [bool(alns[size]["matches_oracle"]) for size in sizes]
         axes[1].scatter(
@@ -455,6 +458,10 @@ def build_exact_validation_figure(
         axes[1].grid(False)
         for axis, label in zip(axes, ("(a)", "(b)"), strict=True):
             _panel_label(axis, label)
+        figure.text(
+            0.5, 0.015, "Timing: perf_counter monotonic elapsed.",
+            ha="center", va="bottom", fontsize=7.4,
+        )
         figure.subplots_adjust(bottom=0.24, wspace=0.34)
     return figure
 
@@ -480,7 +487,7 @@ def plot_multiscale(rows: Sequence[dict[str, Any]], output_dir: Path) -> None:
     metrics = (
         ("late_count", "Late deliveries"),
         ("distance_km", "Total distance (km)"),
-        ("runtime_seconds", "Search runtime (s)"),
+        ("runtime_seconds", "Search elapsed time (s)"),
     )
     with reference_plot_style({"axes.grid": True}):
         figure, axes = plt.subplots(1, 3, figsize=(7.1, 2.75))
@@ -511,6 +518,10 @@ def plot_multiscale(rows: Sequence[dict[str, Any]], output_dir: Path) -> None:
                     color=color,
                 )
             _panel_label(axis, label)
+        figure.text(
+            0.5, 0.015, "Timing: perf_counter monotonic elapsed.",
+            ha="center", va="bottom", fontsize=7.4,
+        )
         figure.subplots_adjust(bottom=0.26, wspace=0.42)
         _save_pair(figure, output_dir, "fig5_3_relaxed_multiscale")
 
@@ -728,7 +739,7 @@ def build_scenario_comparison_figure(
             "Total distance (km)",
             "Priority 3 (conditional)",
         ),
-        ("wall_seconds", "Observed wall time (s)", "Observed wall time"),
+        ("wall_seconds", "Elapsed program time (s)", "Observed program time"),
     )
     with reference_plot_style():
         figure, axes = plt.subplots(2, 2, figsize=FOUR_PANEL_FIGSIZE)
@@ -792,8 +803,8 @@ def build_scenario_comparison_figure(
         figure.suptitle(
             f"Paired formal seeds (n={len(seeds)}); points = individual runs; "
             "diamond = mean ± SD\n"
-            f"{_scenario_budget_note(paired)}; cumulative-budget ablation "
-            "(mechanism + compute effects)",
+            f"{_scenario_budget_note(paired)}\n"
+            "Cumulative-budget ablation (mechanism + compute effects)",
             fontsize=8.2,
             y=0.995,
         )
@@ -801,14 +812,15 @@ def build_scenario_comparison_figure(
             0.5,
             0.012,
             "Lexicographic order: Priority 1 → Priority 2 → Priority 3; "
-            "later priorities are compared only after ties upstream.",
+            "later priorities are compared only after ties upstream.\n"
+            "Timing and budgets: perf_counter monotonic elapsed.",
             ha="center",
             va="bottom",
             fontsize=7.4,
         )
         figure.subplots_adjust(
             top=0.86,
-            bottom=0.14,
+            bottom=0.16,
             hspace=0.48,
             wspace=0.30,
         )
@@ -1073,14 +1085,15 @@ def build_route_layouts_figure(
             f"Paired route layouts for predefined seed {route_seed} "
             "(n=1 illustrative paired seed)\n"
             "P = demand-driven position/predeployment; R = relay; "
-            "panel budgets are cumulative",
+            "panel budgets are cumulative\n"
+            "Budgets: perf_counter monotonic elapsed.",
             fontsize=8.0,
             y=0.954,
         )
         figure.supxlabel("x (km)", y=0.02, fontsize=8.5)
         figure.supylabel("y (km)", x=0.02, fontsize=8.5)
         figure.subplots_adjust(
-            top=0.84,
+            top=0.82,
             bottom=0.10,
             left=0.08,
             hspace=0.48,
@@ -1109,68 +1122,25 @@ def _validated_sensitivity_rows(
     rows: Sequence[dict[str, Any]],
     parameter: str,
 ) -> dict[str, tuple[dict[str, Any], ...]]:
-    """Require one complete formal level series per applicable strategy."""
+    """Aggregate five complete paired seeds per applicable strategy and level."""
 
     if parameter not in SENSITIVITY_PARAMETERS:
         raise ValueError(f"unsupported sensitivity parameter: {parameter}")
-    selected = tuple(row for row in rows if row["parameter"] == parameter)
-    expected_scenarios = SENSITIVITY_SCENARIOS[parameter]
-    observed_scenarios = {str(row["scenario"]) for row in selected}
-    if observed_scenarios != set(expected_scenarios):
-        missing = sorted(set(expected_scenarios) - observed_scenarios)
-        unexpected = sorted(observed_scenarios - set(expected_scenarios))
-        raise ValueError(
-            f"sensitivity {parameter}: incomplete or unexpected scenarios; "
-            f"missing={missing}, unexpected={unexpected}"
-        )
-    for row in selected:
-        if row["seed"] != SENSITIVITY_SEED:
-            raise ValueError(
-                f"sensitivity {parameter} must use the single seed "
-                f"{SENSITIVITY_SEED}; got {row['seed']}"
-            )
-        observed_budget = float(row["effective_time_limit_seconds"])
-        if not np.isclose(
-            observed_budget,
-            SENSITIVITY_BUDGET_SECONDS,
-            rtol=0.0,
-            atol=1e-9,
-        ):
-            raise ValueError(
-                f"sensitivity {parameter} uses a fixed "
-                f"{SENSITIVITY_BUDGET_SECONDS:g} s total budget; "
-                f"got {observed_budget:g} s"
-            )
-    grouped: dict[str, tuple[dict[str, Any], ...]] = {}
-    expected_levels = SENSITIVITY_LEVELS[parameter]
-    for scenario in expected_scenarios:
-        series = unique_rows_by_numeric_key(
-            tuple(row for row in selected if row["scenario"] == scenario),
-            "level",
-            context=f"sensitivity {parameter} scenario={scenario}",
-        )
-        levels = tuple(float(row["level"]) for row in series)
-        if levels != expected_levels:
-            raise ValueError(
-                f"sensitivity {parameter} scenario={scenario}: expected levels "
-                f"{expected_levels}; got {levels}"
-            )
-        for row in series:
-            for field in ("late_count", "total_lateness_min", "distance_km"):
-                if not np.isfinite(float(row[field])):
-                    raise ValueError(
-                        f"sensitivity {parameter} scenario={scenario} "
-                        f"level={row['level']}: nonfinite {field}"
-                    )
-        grouped[scenario] = series
-    return grouped
+    groups = aggregate_sensitivity(
+        tuple(row for row in rows if row["parameter"] == parameter),
+        levels={parameter: SENSITIVITY_LEVELS[parameter]},
+    )
+    return {
+        scenario: tuple(group for group in groups if group["scenario"] == scenario)
+        for scenario in SENSITIVITY_SCENARIOS[parameter]
+    }
 
 
 def build_sensitivity_figure(
     rows: Sequence[dict[str, Any]],
     parameter: str,
 ) -> plt.Figure:
-    """Compare applicable strategies without collapsing their OFAT curves."""
+    """Compare strategy means with sample-SD bars from the five paired seeds."""
 
     selected = _validated_sensitivity_rows(rows, parameter)
     xlabel, baseline = SENSITIVITY_PARAMETERS[parameter]
@@ -1189,7 +1159,9 @@ def build_sensitivity_figure(
     )
     x = SENSITIVITY_LEVELS[parameter]
     with reference_plot_style({"axes.grid": True}):
-        figure, axes = plt.subplots(1, 3, figsize=(7.1, 3.6))
+        figure, axes = plt.subplots(1, 3, figsize=(7.1, 4.0))
+        legend_handles = []
+        clipped_count_bar = False
         for axis, (field, ylabel, title), panel in zip(
             axes,
             metrics,
@@ -1198,15 +1170,23 @@ def build_sensitivity_figure(
         ):
             for scenario, series in selected.items():
                 color, marker, linestyle = SENSITIVITY_SCENARIO_STYLES[scenario]
-                axis.plot(
-                    x,
-                    [float(row[field]) for row in series],
+                means = np.array([row[f"mean_{field}"] for row in series])
+                sd = np.array([row[f"sd_{field}"] for row in series])
+                lower_error = np.minimum(sd, means) if field == "late_count" else sd
+                clipped_count_bar |= bool(np.any(lower_error < sd))
+                curve = axis.errorbar(
+                    x, means, yerr=np.vstack((lower_error, sd)),
                     color=color,
                     marker=marker,
                     linestyle=linestyle,
                     label=SCENARIO_LABELS[scenario],
+                    capsize=2.0,
+                    capthick=0.6,
+                    elinewidth=0.7,
                 )
-            axis.axvline(
+                if axis is axes[0]:
+                    legend_handles.append(curve)
+            baseline_line = axis.axvline(
                 baseline,
                 color="#555555",
                 linestyle="--",
@@ -1215,20 +1195,24 @@ def build_sensitivity_figure(
                 zorder=1,
                 label="Baseline level",
             )
+            if axis is axes[0]:
+                legend_handles.append(baseline_line)
             axis.set_xlabel(xlabel)
             axis.set_ylabel(ylabel)
             axis.set_xticks(x)
             axis.set_title(title)
+            if field == "late_count":
+                axis.set_ylim(bottom=max(0.0, axis.get_ylim()[0]))
             _panel_label(axis, panel, y=-0.34)
         figure.legend(
-            *axes[0].get_legend_handles_labels(),
+            handles=legend_handles,
             loc="upper center",
-            bbox_to_anchor=(0.5, 0.86),
+            bbox_to_anchor=(0.5, 0.83),
             ncol=len(selected) + 1,
         )
         figure.suptitle(
-            "OFAT exploratory (n=1 per strategy/level; no error bars); "
-            "fixed 300 s total budget\n"
+            "OFAT sensitivity: n=5 paired seeds; mean ± 1 sample SD (ddof=1)\n"
+            "Fixed 300 s total budget; SD describes seed spread, not confidence intervals\n"
             "Lexicographic order: Priority 1 → Priority 2 → Priority 3; "
             "later priorities are conditional",
             fontsize=8.0,
@@ -1236,12 +1220,16 @@ def build_sensitivity_figure(
         )
         note = (
             "D = direct; R = relay; P = demand-driven predeployment; "
-            f"shared seed = {SENSITIVITY_SEED}"
+            f"seeds {SENSITIVITY_SEEDS[0]}–{SENSITIVITY_SEEDS[-1]}\n"
+            "Baseline copies reuse the same run within each seed; "
+            "budget: perf_counter monotonic elapsed."
         )
+        if clipped_count_bar:
+            note += "\nCount SD bars clipped at zero; raw SD retained in summary."
         if parameter == "station_count":
             note += "\nD: N/A for station count (uses no stations)."
         figure.text(0.5, 0.025, note, ha="center", va="bottom", fontsize=7.5)
-        figure.subplots_adjust(top=0.73, bottom=0.32, wspace=0.48)
+        figure.subplots_adjust(top=0.70, bottom=0.33, wspace=0.48)
     return figure
 
 
@@ -1254,8 +1242,7 @@ def plot_sensitivity(rows: Sequence[dict[str, Any]], output_dir: Path) -> None:
             f"unexpected sensitivity parameters: {sorted(unknown_parameters)}"
         )
     # Reject partial or mixed protocols before replacing any published figure.
-    for parameter in SENSITIVITY_PARAMETERS:
-        _validated_sensitivity_rows(rows, parameter)
+    aggregate_sensitivity(rows)
     for parameter in SENSITIVITY_PARAMETERS:
         figure = build_sensitivity_figure(rows, parameter)
         with reference_plot_style():
@@ -1290,6 +1277,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         "scenario_manifest": args.scenarios / "manifest.json",
         "sensitivity_runs": sensitivity_path,
         "sensitivity_manifest": args.sensitivity / "manifest.json",
+        "sensitivity_summary": args.sensitivity / "summary.json",
+        "sensitivity_stability": args.sensitivity / "stability.json",
         **{
             f"route_solution_{scenario}": (
                 args.scenarios / row["solution_file"]

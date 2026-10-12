@@ -5,14 +5,14 @@
 | 算例 | 方法 | 任务 | 逾期数 | 总逾期/min | 航程/km | 时间/s | 与精确解一致 |
 |---|---|---:|---:|---:|---:|---:|---:|
 | title_example_n2 | Pareto-DP | 2 | 0 | 0.000 | 11.000 | 0.0001 | True |
-| official_prefix_n5 | Pareto-DP | 5 | 0 | 0.000 | 28.953 | 0.0010 | True |
-| official_prefix_n5 | C2-Lex-ALNS | 5 | 0 | 0.000 | 28.953 | 0.0715 | True |
-| official_prefix_n8 | Pareto-DP | 8 | 1 | 0.643 | 46.404 | 0.0285 | True |
-| official_prefix_n8 | C2-Lex-ALNS | 8 | 1 | 0.774 | 45.501 | 0.1149 | False |
-| official_prefix_n10 | Pareto-DP | 10 | 2 | 17.864 | 54.646 | 0.2845 | True |
-| official_prefix_n10 | C2-Lex-ALNS | 10 | 2 | 17.864 | 54.646 | 0.1598 | True |
-| official_prefix_n12 | Pareto-DP | 12 | 3 | 65.784 | 62.411 | 3.5684 | True |
-| official_prefix_n12 | C2-Lex-ALNS | 12 | 3 | 99.450 | 64.185 | 0.1949 | False |
+| official_prefix_n5 | Pareto-DP | 5 | 0 | 0.000 | 28.953 | 0.0012 | True |
+| official_prefix_n5 | C2-Lex-ALNS | 5 | 0 | 0.000 | 28.953 | 0.0702 | True |
+| official_prefix_n8 | Pareto-DP | 8 | 1 | 0.643 | 46.404 | 0.0289 | True |
+| official_prefix_n8 | C2-Lex-ALNS | 8 | 1 | 0.774 | 45.501 | 0.1150 | False |
+| official_prefix_n10 | Pareto-DP | 10 | 2 | 17.864 | 54.646 | 0.2876 | True |
+| official_prefix_n10 | C2-Lex-ALNS | 10 | 2 | 17.864 | 54.646 | 0.1603 | True |
+| official_prefix_n12 | Pareto-DP | 12 | 3 | 65.784 | 62.411 | 3.7347 | True |
+| official_prefix_n12 | C2-Lex-ALNS | 12 | 3 | 99.450 | 64.185 | 0.1962 | False |
 
 ## 宽松截止期多机规模实验
 
@@ -20,7 +20,7 @@
 
 | 任务 | 无人机 | 逾期数 | 总逾期/min | 航程/km | 时间/s | 迭代 |
 |---:|---:|---:|---:|---:|---:|---:|
-| 50 | 2 | 0 | 0.000 | 175.526 | 29.98 | 29749 |
-| 100 | 4 | 0 | 0.000 | 322.078 | 29.89 | 10876 |
-| 150 | 6 | 0 | 0.000 | 455.940 | 29.65 | 4924 |
-| 200 | 8 | 0 | 0.000 | 604.460 | 29.27 | 2698 |
+| 50 | 2 | 0 | 0.000 | 175.526 | 29.98 | 27630 |
+| 100 | 4 | 0 | 0.000 | 322.078 | 29.89 | 10453 |
+| 150 | 6 | 0 | 0.000 | 455.940 | 29.64 | 4866 |
+| 200 | 8 | 0 | 0.000 | 604.460 | 29.10 | 2658 |

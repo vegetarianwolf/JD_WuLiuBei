@@ -1,4 +1,6 @@
 import json
+from concurrent.futures import Future, ThreadPoolExecutor
+from threading import Event
 from types import SimpleNamespace
 
 import pytest
@@ -261,7 +263,7 @@ def test_sensitivity_manifest_captures_the_reproducibility_contract():
     args = sensitivity_experiment._parser().parse_args([])
     manifest = sensitivity_experiment.build_manifest(args, task_count=200)
 
-    assert manifest["schema_version"] == 2
+    assert manifest["schema_version"] == 3
     assert manifest["protocol"] == "four_strategy_one_factor_sensitivity"
     assert manifest["formal"] is True
     for key in ("input_sha256", "solver_source_sha256", "experiment_script_sha256", "scenario_script_sha256"):
@@ -276,9 +278,12 @@ def test_sensitivity_manifest_captures_the_reproducibility_contract():
     assert manifest["solver_config"]["relay_location_method"] == "weighted_kmedoids"
     assert manifest["effective_seconds_per_run"] == 300.0
     assert manifest["solver_config"]["time_limit_policy"].startswith("fixed 300 s")
-    assert manifest["planned_rows"] == 55
-    assert manifest["planned_unique_solves"] == 48
+    assert manifest["planned_rows"] == 275
+    assert manifest["planned_unique_solves"] == 240
     assert manifest["workers"] == 1
+    assert manifest["seeds"] == list(range(2026081701, 2026081706))
+    assert manifest["seed_count"] == 5
+    assert "seed" not in manifest
     assert manifest["parameter_applicability"]["pure_direct"] == ("drone_count", "deadline_multiplier")
     assert set(manifest["solver_config"]["alns_by_scenario"]) == {s["id"] for s in SCENARIOS}
     for scenario in manifest["scenarios"]:
@@ -296,22 +301,68 @@ def test_sensitivity_manifest_captures_the_reproducibility_contract():
     assert manifest["levels"] == SENSITIVITY_LEVELS
 
 
-@pytest.mark.parametrize("quick, expected_rows, expected_solves", [(False, 55, 48), (True, 33, 26)])
+@pytest.mark.parametrize("quick, expected_rows, expected_solves", [(False, 275, 240), (True, 66, 52)])
 def test_sensitivity_grid_covers_applicable_strategies_and_reuses_only_baselines(quick, expected_rows, expected_solves):
     args = sensitivity_experiment._parser().parse_args(["--quick"] if quick else [])
     cells = sensitivity_experiment.build_cells(args)
     assert len(cells) == expected_rows
     assert len({cell["run_id"] for cell in cells}) == expected_solves
     assert len({cell["cell_id"] for cell in cells}) == expected_rows
+    by_setting = {}
     for cell in cells:
+        key = (cell["scenario"], cell["parameter"], cell["level"])
+        by_setting.setdefault(key, set()).add(cell["seed"])
+    assert all(seeds == set(sensitivity_experiment.effective_seeds(args)) for seeds in by_setting.values())
+    for cell in cells:
+        assert f"__seed_{cell['seed']}__" in cell["cell_id"]
+        assert f"seed_{cell['seed']}/" in cell["cell_output_dir"]
         if cell["scenario"] == "pure_direct":
             assert cell["parameter"] != "station_count"
             assert cell["requested_station_count"] == 0
         if cell["reused_from"] is not None:
-            assert cell["reused_from"] == f"{cell['scenario']}__drone_count__8"
+            assert cell["reused_from"] == f"{cell['scenario']}__seed_{cell['seed']}__drone_count__8"
             assert cell["drone_count"] == 8
             assert cell["deadline_multiplier"] == 1.0
             assert cell["requested_station_count"] == (0 if cell["scenario"] == "pure_direct" else 4)
+
+
+@pytest.mark.parametrize("argv, expected", [
+    (["--quick", "--seed", "7"], (7,)),
+    (["--quick", "--seeds", "7", "9", "11"], (7, 9, 11)),
+    (["--quick"], sensitivity_experiment.DEFAULT_SEEDS[:2]),
+])
+def test_sensitivity_quick_seed_selection_is_explicit(argv, expected):
+    args = sensitivity_experiment._parser().parse_args(argv)
+    sensitivity_experiment.validate_formal_protocol(args)
+    assert sensitivity_experiment.effective_seeds(args) == expected
+    cells = sensitivity_experiment.build_cells(args)
+    assert len(cells) == 33 * len(expected)
+    assert len({cell["run_id"] for cell in cells}) == 26 * len(expected)
+
+
+@pytest.mark.parametrize("seeds", [
+    [2026081701],
+    [2026081701, 2026081702, 2026081703],
+    list(reversed(sensitivity_experiment.DEFAULT_SEEDS)),
+    [2026081701, 2026081702, 2026081703, 2026081704, 7],
+])
+def test_sensitivity_formal_requires_the_prescribed_five_paired_seeds(seeds):
+    args = sensitivity_experiment._parser().parse_args(["--seeds", *map(str, seeds)])
+    with pytest.raises(ValueError, match="正式敏感性协议"):
+        sensitivity_experiment.validate_formal_protocol(args)
+
+
+def test_sensitivity_accepts_explicit_formal_seeds_and_rejects_duplicates():
+    args = sensitivity_experiment._parser().parse_args([
+        "--seeds", *map(str, sensitivity_experiment.DEFAULT_SEEDS),
+    ])
+    sensitivity_experiment.validate_formal_protocol(args)
+    assert sensitivity_experiment.effective_seeds(args) == sensitivity_experiment.DEFAULT_SEEDS
+    duplicate = sensitivity_experiment._parser().parse_args(["--quick", "--seeds", "7", "7"])
+    with pytest.raises(ValueError, match="重复"):
+        sensitivity_experiment.validate_formal_protocol(duplicate)
+    with pytest.raises(SystemExit):
+        sensitivity_experiment._parser().parse_args(["--quick", "--seed", "7", "--seeds", "9"])
 
 
 def _fake_sensitivity_solves(monkeypatch):
@@ -340,17 +391,18 @@ def _fake_sensitivity_solves(monkeypatch):
     return calls
 
 
-def test_sensitivity_main_passes_300_seconds_to_all_48_unique_solves(monkeypatch, tmp_path):
+def test_sensitivity_main_passes_300_seconds_to_all_240_unique_solves(monkeypatch, tmp_path):
     calls = _fake_sensitivity_solves(monkeypatch)
     assert sensitivity_experiment.main(["--output-dir", str(tmp_path)]) == 0
-    assert len(calls) == 48
+    assert len(calls) == 240
+    assert {kwargs["seed"] for _, kwargs, _ in calls} == set(sensitivity_experiment.DEFAULT_SEEDS)
     assert {kwargs["effective_seconds_override"] for _, kwargs, _ in calls} == {300.0}
     assert {scenario["id"] for scenario, _, _ in calls} == {s["id"] for s in SCENARIOS}
     assert all(s["warmup"] == 0.8 for s, _, _ in calls if s["relay"])
     rows = json.loads((tmp_path / "runs.json").read_text())
-    assert len(rows) == 55
-    assert len(list((tmp_path / "checkpoints").glob("*.json"))) == 48
-    assert "n=1" in (tmp_path / "REPORT.md").read_text()
+    assert len(rows) == 275
+    assert len(list((tmp_path / "checkpoints").glob("*.json"))) == 240
+    assert "n=5" in (tmp_path / "REPORT.md").read_text()
     calls.clear()
     assert sensitivity_experiment.main(["--output-dir", str(tmp_path), "--resume"]) == 0
     assert calls == []
@@ -372,24 +424,109 @@ def test_sensitivity_resume_completes_only_missing_checkpoints(monkeypatch, tmp_
         sensitivity_experiment.main(argv)
     assert len(list((tmp_path / "checkpoints").glob("*.json"))) == 2
     assert not (tmp_path / "runs.json").exists()
+    failure = json.loads(next((tmp_path / "failures").glob("*.json")).read_text())
+    manifest = json.loads((tmp_path / "manifest.json").read_text())
+    assert failure["contract_sha256"] == sensitivity_experiment._contract_sha256(manifest)
+    assert failure["run_id"] == failure["cell"]["run_id"]
+    assert failure["error_type"] == "RuntimeError"
+    assert failure["error_message"] == "simulated interruption"
+    assert "RuntimeError: simulated interruption" in failure["traceback"]
 
     calls.clear()
     monkeypatch.setattr(sensitivity_experiment, "run_scenario", fake_run)
     assert sensitivity_experiment.main([*argv, "--resume"]) == 0
-    assert len(calls) == 24
-    assert len(json.loads((tmp_path / "runs.json").read_text())) == 33
-    assert len(list((tmp_path / "checkpoints").glob("*.json"))) == 26
+    assert len(calls) == 50
+    assert len(json.loads((tmp_path / "runs.json").read_text())) == 66
+    assert len(list((tmp_path / "checkpoints").glob("*.json"))) == 52
+
+
+def test_parallel_sensitivity_records_failure_before_draining_and_resumes_survivors(monkeypatch, tmp_path):
+    calls = _fake_sensitivity_solves(monkeypatch)
+    successful_run = sensitivity_experiment._run_cell
+    second_started = Event()
+    failure_written = Event()
+    started = []
+    write_json = sensitivity_experiment._write_json
+
+    def observe_write(path, payload):
+        write_json(path, payload)
+        if path.parent.name == "failures":
+            failure_written.set()
+
+    def run_with_failure(args, tasks, cell):
+        started.append(cell["run_id"])
+        if cell["scenario"] == "pure_direct":
+            assert second_started.wait(3)
+            raise RuntimeError("parallel cell failed")
+        second_started.set()
+        # Completion depends on the failure being visible, not pool shutdown.
+        assert failure_written.wait(3)
+        return successful_run(args, tasks, cell)
+
+    monkeypatch.setattr(sensitivity_experiment, "ProcessPoolExecutor", ThreadPoolExecutor)
+    monkeypatch.setattr(sensitivity_experiment, "_write_json", observe_write)
+    monkeypatch.setattr(sensitivity_experiment, "_run_cell", run_with_failure)
+    argv = ["--output-dir", str(tmp_path), "--quick", "--workers", "2"]
+    with pytest.raises(RuntimeError, match="parallel cell failed"):
+        sensitivity_experiment.main(argv)
+    assert len(started) == 2  # No unbounded queue or replenishment after failure.
+    assert len(list((tmp_path / "failures").glob("*.json"))) == 1
+    checkpoints = list((tmp_path / "checkpoints").glob("*.json"))
+    assert len(checkpoints) == 1
+    assert json.loads(checkpoints[0].read_text())["row"]["scenario"] == "direct_relay"
+    assert not (tmp_path / "runs.json").exists()
+
+    calls.clear()
+    monkeypatch.setattr(sensitivity_experiment, "_run_cell", successful_run)
+    assert sensitivity_experiment.main([*argv, "--resume"]) == 0
+    assert len(calls) == 51
+    assert len(json.loads((tmp_path / "runs.json").read_text())) == 66
+
+
+def test_parallel_failure_cancels_submitted_work_that_has_not_started(monkeypatch):
+    failed = Future()
+    failed.set_exception(RuntimeError("first failure"))
+    queued = Future()
+    submitted = []
+
+    class ControlledPool:
+        def __init__(self, **kwargs):
+            assert kwargs == {"max_workers": 2}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            assert queued.cancelled()
+
+        def submit(self, function, args, tasks, cell):
+            submitted.append(cell)
+            return failed if len(submitted) == 1 else queued
+
+    monkeypatch.setattr(sensitivity_experiment, "ProcessPoolExecutor", ControlledPool)
+    errors = []
+    with pytest.raises(RuntimeError, match="first failure"):
+        sensitivity_experiment._execute_pending(
+            SimpleNamespace(workers=2), (), [{"id": i} for i in range(20)],
+            record=lambda row: pytest.fail("no completed solve expected"),
+            record_failure=lambda cell, error: errors.append((cell, error)),
+        )
+    assert submitted == [{"id": 0}, {"id": 1}]
+    assert len(errors) == 1
+    assert errors[0][0] == {"id": 0}
+
 
 def test_sensitivity_quick_report_is_explicitly_nonformal(monkeypatch, tmp_path):
     calls = _fake_sensitivity_solves(monkeypatch)
     assert sensitivity_experiment.main(["--output-dir", str(tmp_path), "--quick"]) == 0
-    assert len(calls) == 26
+    assert len(calls) == 52
     text = (tmp_path / "REPORT.md").read_text()
     assert "非正式结果" in text
     assert "0.6 s" in text
+    assert "n=2" in text
 
 
-@pytest.mark.parametrize("mutation", ["missing", "duplicate", "mechanism", "reuse"])
+@pytest.mark.parametrize("mutation", ["missing", "duplicate", "mechanism", "reuse", "cross_seed_reuse", "missing_seed"])
 def test_sensitivity_validation_rejects_incomplete_or_inconsistent_cells(monkeypatch, tmp_path, mutation):
     _fake_sensitivity_solves(monkeypatch)
     sensitivity_experiment.main(["--output-dir", str(tmp_path)])
@@ -401,19 +538,29 @@ def test_sensitivity_validation_rejects_incomplete_or_inconsistent_cells(monkeyp
         rows.append(rows[0])
     elif mutation == "mechanism":
         rows[0]["station_predeployment"] = True
+    elif mutation == "cross_seed_reuse":
+        row = next(row for row in rows if row["reused_from"] is not None)
+        row["reused_from"] = row["reused_from"].replace("2026081701", "2026081702")
+    elif mutation == "missing_seed":
+        rows = [row for row in rows if row["seed"] != sensitivity_experiment.DEFAULT_SEEDS[-1]]
     else:
         next(row for row in rows if row["reused_from"] is not None)["distance_km"] += 1.0
     with pytest.raises(ValueError):
         sensitivity_experiment.validate_rows(rows, args)
 
 
-@pytest.mark.parametrize("mutation", ["config", "source", "solution", "checkpoint"])
+@pytest.mark.parametrize("mutation", ["config", "source", "solution", "checkpoint", "seed_list"])
 def test_sensitivity_resume_rejects_mismatched_provenance(monkeypatch, tmp_path, mutation):
     calls = _fake_sensitivity_solves(monkeypatch)
     sensitivity_experiment.main(["--output-dir", str(tmp_path)])
     args = ["--output-dir", str(tmp_path), "--resume"]
     if mutation == "config":
         args.extend(["--workers", "2"])
+    elif mutation == "seed_list":
+        path = tmp_path / "manifest.json"
+        manifest = json.loads(path.read_text())
+        manifest["seeds"] = manifest["seeds"][:-1]
+        path.write_text(json.dumps(manifest))
     elif mutation == "source":
         path = tmp_path / "manifest.json"
         manifest = json.loads(path.read_text())

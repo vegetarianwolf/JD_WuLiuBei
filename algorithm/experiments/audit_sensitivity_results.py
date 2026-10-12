@@ -14,8 +14,12 @@ from pathlib import Path
 from typing import Any
 
 from uav_dispatch import load_tasks_csv
+from uav_dispatch.diagnostics import deadhead_km, home_assignment_rate
 from uav_dispatch.model import Problem
+from uav_dispatch.relay import GlobalRelayEvaluator, build_plan_index
 from uav_dispatch.validation import evaluate_solution
+
+from algorithm.experiments.audit_sensitivity_statistics import audit_aggregates, audit_summary_csv
 
 from algorithm.experiments.run_scenario_comparison import (
     DEFAULT_INPUT,
@@ -85,6 +89,70 @@ def validate_source_fingerprints(manifest: dict[str, Any]) -> None:
             raise ValueError(f"Source fingerprint mismatch: {field}")
 
 
+def audit_mechanism_statistics(
+    problem: Problem, payload: dict[str, Any], row: dict[str, Any]
+) -> None:
+    """Rebuild reported mechanisms from the selected routes, not saved metadata."""
+
+    routes = [route["encoded_visits"] for route in payload["routes"]]
+    expected = {
+        "deadhead_km": deadhead_km(problem, routes),
+        "home_assignment_rate": home_assignment_rate(problem, routes),
+        "relay_task_count": 0,
+        "cross_uav_handoff_count": 0,
+        "total_relay_waiting_min": 0.0,
+    }
+    if problem.has_relays:
+        plans = build_plan_index(problem, routes)
+        schedule = GlobalRelayEvaluator(problem).evaluate(routes)
+        if not schedule.feasible:
+            raise ValueError("Mechanism audit found an infeasible relay schedule")
+        expected.update({
+            "relay_task_count": len(plans.relay_task_ids),
+            "cross_uav_handoff_count": sum(
+                plans.inbound_route_by_task[task_id]
+                != plans.outbound_route_by_task[task_id]
+                for task_id in plans.relay_task_ids
+            ),
+            "total_relay_waiting_min": schedule.total_waiting_min,
+        })
+    for field, actual in expected.items():
+        if not math.isclose(actual, float(row[field]), rel_tol=0, abs_tol=1e-8):
+            raise ValueError(f"Recomputed mechanism {field} disagrees with row")
+    metadata = payload["metadata"]
+    relay_blocks = [("solution", payload["relay"])]
+    if metadata.get("relay_enabled"):
+        relay_blocks.append(("metadata", metadata["relay"]))
+    for source, relay in relay_blocks:
+        for field, saved_field in (
+            ("relay_task_count", "relay_task_count"),
+            ("cross_uav_handoff_count", "cross_uav_handoff_count"),
+            ("total_relay_waiting_min", "total_relay_waiting_time"),
+        ):
+            if not math.isclose(expected[field], float(relay[saved_field]), rel_tol=0, abs_tol=1e-8):
+                raise ValueError(f"Recomputed mechanism {field} disagrees with {source}")
+        per_drone = relay["per_drone"]
+        if [route["drone_id"] for route in per_drone] != list(range(1, problem.drone_count + 1)):
+            raise ValueError(f"Relay per-drone IDs disagree with {source}")
+        for route, diagnostic in zip(payload["routes"], per_drone, strict=True):
+            if not math.isclose(route["distance_km"], diagnostic["distance_km"], rel_tol=0, abs_tol=1e-8):
+                raise ValueError(f"Relay per-drone distance disagrees with {source} routes")
+    if metadata.get("staged_relay"):
+        warm = tuple(metadata["relay_warmup_score"])
+        relay = tuple(metadata["relay_search_final_score"])
+        chosen = tuple(payload["score"][key] for key in (
+            "late_count", "total_lateness_min", "distance_km"
+        ))
+        if any(len(score) != 3 or not all(math.isfinite(value) for value in score)
+               for score in (warm, relay)):
+            raise ValueError("Invalid staged phase score")
+        retained = metadata.get("relay_retained_warmup_incumbent")
+        if retained is not (relay > warm) or chosen != min(warm, relay):
+            raise ValueError("Staged incumbent selection disagrees with full phase scores")
+        if retained and metadata.get("relay_phase_best_update_count") != 0:
+            raise ValueError("Retained warmup has rejected Relay best updates")
+
+
 def _runtime_number(source: dict[str, Any], field: str) -> float:
     try:
         value = float(source[field])
@@ -152,8 +220,8 @@ def audit_directory(directory: Path) -> dict[str, Any]:
     runs_path = directory / "runs.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     rows = json.loads(runs_path.read_text(encoding="utf-8"))
-    if manifest["schema_version"] != 2 or manifest["protocol"] != "four_strategy_one_factor_sensitivity":
-        raise ValueError("Expected the four-strategy sensitivity protocol")
+    if manifest["schema_version"] != 3 or manifest["protocol"] != "four_strategy_one_factor_sensitivity":
+        raise ValueError("Expected the multi-seed four-strategy sensitivity protocol")
     validate_source_fingerprints(manifest)
     input_path = Path(manifest["input"])
     if not input_path.is_file():
@@ -163,16 +231,21 @@ def audit_directory(directory: Path) -> dict[str, Any]:
     args = _parser().parse_args([])
     for key in FORMAL_PROTOCOL_CONFIG:
         setattr(args, key, manifest.get(key, manifest["solver_config"].get(key)))
+    args.seeds = manifest["seeds"]
+    args.seed = None
     args.input = input_path
     args.output_dir = directory
     args.quick = not manifest["formal"]
     validate_formal_protocol(args)
     validate_rows(rows, args)
+    if len(rows) != manifest["planned_rows"] or manifest["seed_count"] != len(args.seeds):
+        raise ValueError("Declared row or seed count disagrees with the validated design")
     source_tasks = load_tasks_csv(input_path)[:manifest["tasks"]]
     if len(source_tasks) != manifest["tasks"]:
         raise ValueError("Input does not contain the declared task count")
     scenarios = {scenario["id"]: scenario for scenario in SENSITIVITY_SCENARIOS}
     audited: dict[str, str] = {}
+    retained_warmup_runs: list[str] = []
     for row in rows:
         path = directory / row["cell_output_dir"] / row["solution_file"]
         if row["run_id"] in audited:
@@ -186,6 +259,9 @@ def audit_directory(directory: Path) -> dict[str, Any]:
         )
         payload = json.loads(path.read_text(encoding="utf-8"))
         audit_saved_solution(problem, payload, row)
+        audit_mechanism_statistics(problem, payload, row)
+        if payload["metadata"].get("relay_retained_warmup_incumbent"):
+            retained_warmup_runs.append(row["run_id"])
         if manifest["formal"]:
             audit_formal_runtime(
                 row, payload, scenarios[row["scenario"]],
@@ -195,20 +271,62 @@ def audit_directory(directory: Path) -> dict[str, Any]:
         audited[row["run_id"]] = row["solution_sha256"]
     if len(audited) != manifest["planned_unique_solves"]:
         raise ValueError("Independent solve count disagrees with manifest")
+    statistics_files = {
+        "summary_sha256": directory / "summary.json",
+        "summary_csv_sha256": directory / "summary.csv",
+        "stability_sha256": directory / "stability.json",
+    }
+    statistics_audit: dict[str, Any] = {"statistics_checked": False}
+    if manifest["formal"] or any(path.exists() for path in statistics_files.values()):
+        if not all(path.is_file() for path in statistics_files.values()):
+            raise ValueError("Generate complete sensitivity statistics before the final audit")
+        summary = json.loads(statistics_files["summary_sha256"].read_text(encoding="utf-8"))
+        stability = json.loads(statistics_files["stability_sha256"].read_text(encoding="utf-8"))
+        sources = {
+            "manifest_sha256": _sha256(manifest_path),
+            "runs_sha256": _sha256(runs_path),
+            "statistics_script_sha256": _sha256(Path(__file__).with_name("sensitivity_statistics.py")),
+        }
+        for report in (summary, stability):
+            if report.get("sources") != sources:
+                raise ValueError("Statistics source fingerprints disagree with the audited raw data")
+        if (
+            summary.get("schema_version") != 1
+            or summary.get("protocol") != "paired_seed_sensitivity_summary"
+            or stability.get("schema_version") != 1
+            or stability.get("protocol") != "paired_seed_sensitivity_stability"
+            or summary.get("raw_row_count") != len(rows)
+            or summary.get("group_count") != len(summary["groups"])
+            or summary.get("seeds") != args.seeds
+            or summary.get("seed_count") != len(args.seeds)
+        ):
+            raise ValueError("Statistics metadata disagrees with the audited experiment")
+        statistics_audit = {
+            "statistics_checked": True,
+            **audit_aggregates(rows, summary, stability, seeds=args.seeds),
+            **{name: _sha256(path) for name, path in statistics_files.items()},
+            "statistics_script_sha256": sources["statistics_script_sha256"],
+            "statistics_audit_script_sha256": _sha256(Path(__file__).with_name("audit_sensitivity_statistics.py")),
+        }
+        audit_summary_csv(statistics_files["summary_csv_sha256"], summary)
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "validated_at_utc": datetime.now(timezone.utc).isoformat(),
         "formal": manifest["formal"],
-        "method": "verify source fingerprints; rebuild problems from original CSV; full route feasibility, objective and delivery-time recomputation",
+        "method": "verify source fingerprints; rebuild problems from original CSV; full route feasibility, objective, delivery-time and mechanism-statistic recomputation; strict staged incumbent selection",
         "formal_runtime_checked": bool(manifest["formal"]),
+        "mechanism_statistics_checked": True,
+        "retained_warmup_runs": retained_warmup_runs,
         "validated_rows": len(rows),
         "validated_unique_solutions": len(audited),
+        "validated_seeds": args.seeds,
         "manifest_sha256": _sha256(manifest_path),
         "runs_sha256": _sha256(runs_path),
         "input_sha256": manifest["input_sha256"],
         "solver_source_sha256": _solver_source_sha256(),
         "audit_script_sha256": _sha256(Path(__file__)),
         "solution_sha256_by_run": audited,
+        **statistics_audit,
     }
 
 

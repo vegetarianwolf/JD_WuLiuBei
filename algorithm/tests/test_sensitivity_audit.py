@@ -6,6 +6,7 @@ import pytest
 import algorithm.experiments.audit_sensitivity_results as audit
 from algorithm.experiments.audit_sensitivity_results import (
     audit_formal_runtime,
+    audit_mechanism_statistics,
     audit_saved_solution,
     validate_source_fingerprints,
 )
@@ -13,6 +14,106 @@ from algorithm.experiments.run_sensitivity_analysis import SENSITIVITY_SCENARIOS
 from uav_dispatch import construct_regret_initial
 from uav_dispatch.cli import result_payload
 from uav_dispatch.model import Point, Problem, Task
+
+
+def _mechanism_example():
+    problem, payload, row = _saved_example()
+    row.update({
+        "deadhead_km": 1.0, "home_assignment_rate": 1.0,
+        "relay_task_count": 0, "cross_uav_handoff_count": 0,
+        "total_relay_waiting_min": 0.0,
+    })
+    return problem, payload, row
+
+
+def test_mechanism_audit_recomputes_selected_routes():
+    audit_mechanism_statistics(*_mechanism_example())
+
+
+@pytest.mark.parametrize("field", [
+    "deadhead_km", "home_assignment_rate", "relay_task_count",
+    "cross_uav_handoff_count", "total_relay_waiting_min",
+])
+def test_mechanism_audit_rejects_stale_row_statistics(field):
+    problem, payload, row = _mechanism_example()
+    row[field] += 1
+    with pytest.raises(ValueError, match=f"{field} disagrees with row"):
+        audit_mechanism_statistics(problem, payload, row)
+
+
+def test_mechanism_audit_rejects_inconsistent_per_drone_diagnostics():
+    problem, payload, row = _mechanism_example()
+    payload["relay"]["per_drone"][0]["distance_km"] += 1
+    with pytest.raises(ValueError, match="per-drone distance"):
+        audit_mechanism_statistics(problem, payload, row)
+
+
+@pytest.mark.parametrize("retained", [False, True])
+def test_staged_selection_audit_accepts_strict_minimum(retained):
+    problem, payload, row = _mechanism_example()
+    chosen = [payload["score"][key] for key in (
+        "late_count", "total_lateness_min", "distance_km"
+    )]
+    worse = [chosen[0] + 1, *chosen[1:]]
+    payload["metadata"].update({
+        "staged_relay": True,
+        "relay_warmup_score": chosen if retained else worse,
+        "relay_search_final_score": worse if retained else chosen,
+        "relay_retained_warmup_incumbent": retained,
+        "relay_phase_best_update_count": 0,
+    })
+    audit_mechanism_statistics(problem, payload, row)
+    payload["metadata"]["relay_retained_warmup_incumbent"] = not retained
+    with pytest.raises(ValueError, match="incumbent selection"):
+        audit_mechanism_statistics(problem, payload, row)
+
+
+def test_staged_selection_audit_retains_relay_on_an_exact_tie():
+    problem, payload, row = _mechanism_example()
+    chosen = [payload["score"][key] for key in (
+        "late_count", "total_lateness_min", "distance_km"
+    )]
+    payload["metadata"].update({
+        "staged_relay": True, "relay_warmup_score": chosen,
+        "relay_search_final_score": chosen,
+        "relay_retained_warmup_incumbent": False,
+    })
+    audit_mechanism_statistics(problem, payload, row)
+
+
+def test_mechanism_audit_recomputes_cross_drone_waiting_and_metadata():
+    from uav_dispatch import (
+        RelayStation, TransportLeg, evaluate_solution, GlobalRelayEvaluator,
+        build_plan_index, relay_statistics,
+    )
+    from uav_dispatch.search import SolverResult
+
+    problem = Problem(
+        (Task(1, Point(10, 0), Point(2, 0), 100),),
+        drone_count=2, max_tasks_per_drone=1,
+        relay_stations=(RelayStation(1, 1, 0),),
+        leg_registry={
+            2: TransportLeg(2, 1, "RELAY_IN", 1),
+            3: TransportLeg(3, 1, "RELAY_OUT", 1),
+        },
+        task_relay_candidates={1: (1,)},
+    )
+    routes = ((2, -2), (3, -3))
+    result = SolverResult(routes, evaluate_solution(problem, routes), 0, 0, {
+        "relay_enabled": True,
+        "relay": relay_statistics(
+            problem, routes, GlobalRelayEvaluator(problem).evaluate(routes),
+            build_plan_index(problem, routes),
+        ),
+    })
+    payload = result_payload(problem, result, source="test")
+    row = {"deadhead_km": 11, "home_assignment_rate": 0,
+           "relay_task_count": 1, "cross_uav_handoff_count": 1,
+           "total_relay_waiting_min": 18 / problem.speed_km_per_min}
+    audit_mechanism_statistics(problem, payload, row)
+    payload["metadata"]["relay"]["total_relay_waiting_time"] = 0
+    with pytest.raises(ValueError, match="waiting_min disagrees with metadata"):
+        audit_mechanism_statistics(problem, payload, row)
 
 
 def _saved_example():

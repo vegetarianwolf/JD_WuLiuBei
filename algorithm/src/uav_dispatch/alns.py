@@ -488,6 +488,7 @@ def _relay_seed_pass(
     if not direct_tasks:
         return routes
     current = routes
+    current_score = evaluate_solution(problem, current, _force_full=True).score
     considered = 0
     for task_id in direct_tasks:
         if task_limit is not None and considered >= task_limit:
@@ -526,7 +527,20 @@ def _relay_seed_pass(
             direct_exact_top_k=1,
         )
         if candidate is not None and mode == "RELAY" and score is not None:
+            # The insertion shortlist can omit the task's original position.
+            # Beating that shortlist does not imply beating the incumbent.
+            candidate_evaluation = evaluate_solution(
+                problem, candidate, _force_full=True
+            )
+            if deadline is not None and perf_counter() >= deadline:
+                raise _SearchDeadlineReached
+            if (
+                not candidate_evaluation.valid
+                or candidate_evaluation.score >= current_score
+            ):
+                continue
             current = candidate
+            current_score = candidate_evaluation.score
             if relay_cfg.debug:
                 print(f"[relay-debug] seed task={task_id} mode=RELAY")
     return current
@@ -2627,6 +2641,21 @@ def solve_alns(
             return global_evaluator.evaluate(candidate_routes).score
         return routes_score(evaluator, candidate_routes)
 
+    startup = current
+    startup_evaluation = evaluate_solution(problem, startup, _force_full=True)
+    if not startup_evaluation.valid:
+        raise RuntimeError(f"ALNS 初始解非法: {startup_evaluation.violations}")
+    initial_score = startup_evaluation.score
+    time_to_best = perf_counter() - started
+    best_trajectory: list[tuple[int, float, int, float, float]] = [
+        (
+            0,
+            time_to_best,
+            initial_score.late_count,
+            initial_score.total_lateness_min,
+            initial_score.distance_km,
+        )
+    ]
     if relay_cfg is not None and cfg.enable_relay_seed:
         try:
             current = _relay_seed_pass(
@@ -2640,6 +2669,11 @@ def solve_alns(
             )
         except _SearchDeadlineReached:
             pass
+    seeded_evaluation = evaluate_solution(problem, current, _force_full=True)
+    if not seeded_evaluation.valid or seeded_evaluation.score > initial_score:
+        current = startup
+        seeded_evaluation = startup_evaluation
+    seeded = current
     if relay_cfg is not None and cfg.enable_relay_refine:
         try:
             current = _relay_refine_pass(
@@ -2653,20 +2687,23 @@ def solve_alns(
             )
         except _SearchDeadlineReached:
             pass
+    prepared_evaluation = evaluate_solution(problem, current, _force_full=True)
+    if (
+        not prepared_evaluation.valid
+        or prepared_evaluation.score > seeded_evaluation.score
+    ):
+        current = seeded
+        prepared_evaluation = seeded_evaluation
     current_score = score_of(current)
-    initial_score = current_score
     best = current
-    best_score = current_score
-    time_to_best = perf_counter() - started
-    best_trajectory: list[tuple[int, float, int, float, float]] = [
-        (
-            0,
-            time_to_best,
-            best_score.late_count,
-            best_score.total_lateness_min,
-            best_score.distance_km,
-        )
-    ]
+    best_search_score = current_score
+    best_score = prepared_evaluation.score
+    if best_score < initial_score:
+        time_to_best = perf_counter() - started
+        best_trajectory.append((
+            0, time_to_best, best_score.late_count,
+            best_score.total_lateness_min, best_score.distance_km,
+        ))
 
     destroy_operators = DESTROY_OPERATORS
     destroy_weights = {name: 1.0 for name in destroy_operators}
@@ -2800,7 +2837,22 @@ def solve_alns(
             deadline is not None and perf_counter() >= deadline
         )
         improved_current = candidate_score < current_score
-        improved_best = not timed_out and candidate_score < best_score
+        improved_best = False
+        candidate_evaluation = None
+        if (
+            not timed_out and improved_current
+            and candidate_score < best_search_score
+        ):
+            # Search scores can sum floating-point terms in a different order.
+            # Only canonical full scores may update the reported incumbent.
+            candidate_evaluation = evaluate_solution(
+                problem, candidate, _force_full=True
+            )
+            timed_out = deadline is not None and perf_counter() >= deadline
+            improved_best = (
+                not timed_out and candidate_evaluation.valid
+                and candidate_evaluation.score < best_score
+            )
         accepted = False if timed_out else _accept_worse(
             candidate_score, current_score, problem, temperature, rng
         )
@@ -2812,7 +2864,8 @@ def solve_alns(
             reward = 4.0 if improved_current else 1.0
         if improved_best:
             best = candidate
-            best_score = candidate_score
+            best_search_score = candidate_score
+            best_score = candidate_evaluation.score
             time_to_best = perf_counter() - started
             best_trajectory.append(
                 (
@@ -2871,7 +2924,7 @@ def solve_alns(
         )
         completed_iterations = iteration
 
-    evaluation = evaluate_solution(problem, best)
+    evaluation = evaluate_solution(problem, best, _force_full=True)
     if not evaluation.valid:
         raise RuntimeError(f"ALNS 最终解非法: {evaluation.violations}")
     all_weights = {
@@ -3018,11 +3071,20 @@ def solve_relay_staged(
         config=relay_config,
         initial_routes=warm_result.routes,
     )
-    if relay_result.evaluation.score > warm_result.evaluation.score:
-        raise RuntimeError("中继阶段违反 best-so-far：结果劣于 DIRECT 预热解")
+    # Compare both phases through exactly the same full evaluation path.
+    warm_evaluation = evaluate_solution(problem, warm_result.routes, _force_full=True)
+    relay_evaluation = evaluate_solution(problem, relay_result.routes, _force_full=True)
+    if not warm_evaluation.valid or not relay_evaluation.valid:
+        raise RuntimeError("阶段求解器返回非法路线")
+    retain_warmup = relay_evaluation.score > warm_evaluation.score
+    selected_routes = warm_result.routes if retain_warmup else relay_result.routes
+    selected_evaluation = warm_evaluation if retain_warmup else relay_evaluation
 
     warm_trajectory = tuple(warm_result.metadata.get("best_trajectory", ()))
-    relay_trajectory = tuple(relay_result.metadata.get("best_trajectory", ()))
+    relay_trajectory = (
+        () if retain_warmup
+        else tuple(relay_result.metadata.get("best_trajectory", ()))
+    )
     merged_trajectory = list(warm_trajectory)
     for iteration, elapsed, late_count, lateness, distance in relay_trajectory:
         adjusted = (
@@ -3104,17 +3166,29 @@ def solve_relay_staged(
         "relay_warmup_iterations": warm_result.iterations,
         "relay_search_iterations": relay_result.iterations,
         "relay_warmup_score": (
-            warm_result.evaluation.score.late_count,
-            warm_result.evaluation.score.total_lateness_min,
-            warm_result.evaluation.score.distance_km,
+            warm_evaluation.score.late_count,
+            warm_evaluation.score.total_lateness_min,
+            warm_evaluation.score.distance_km,
         ),
-        "relay_phase_best_update_count": relay_result.metadata.get(
-            "best_update_count", 0
+        "relay_search_final_score": (
+            relay_evaluation.score.late_count,
+            relay_evaluation.score.total_lateness_min,
+            relay_evaluation.score.distance_km,
+        ),
+        "relay_retained_warmup_incumbent": retain_warmup,
+        "relay_phase_best_update_count": (
+            0 if retain_warmup else relay_result.metadata.get("best_update_count", 0)
         ),
     }
+    if retain_warmup:
+        selected_schedule = GlobalRelayEvaluator(problem).evaluate(selected_routes)
+        metadata["relay"] = MappingProxyType(relay_statistics(
+            problem, selected_routes, selected_schedule,
+            build_plan_index(problem, selected_routes),
+        ))
     return SolverResult(
-        routes=relay_result.routes,
-        evaluation=relay_result.evaluation,
+        routes=selected_routes,
+        evaluation=selected_evaluation,
         runtime_seconds=runtime_seconds,
         iterations=iterations,
         metadata=MappingProxyType(metadata),

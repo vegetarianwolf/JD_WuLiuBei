@@ -26,6 +26,19 @@ Regret 分支。每次 ALNS 运行会在 `metadata.operator_statistics` 中记�
 局部调整，将无人机预部署到原点/中继站。Relay 交接由 precedence DAG 做
 全局时序校验，允许异步先卸后取并计入等待时间。
 
+ALNS 保存构造或传入初始解的完整评分；中继播种只采用完整三级得分严格改善
+的候选，启动播种/精化均不得使完整评分退化。搜索中潜在的 best 改善须经完整
+评价确认，轨迹记录严格改善的完整得分。`initial_score` 对应播种/精化前的
+原始初始解，启动改善可在迭代 0 追加轨迹点。
+
+分阶段 Relay 在末尾以同一完整评价器重新评分 Direct 预热解和 Relay 解，
+严格保留较优者；精确等分采用 Relay 阶段解。保留预热解时记录
+`relay_retained_warmup_incumbent=true`、`relay_warmup_score` 和
+`relay_search_final_score`，并重新生成所选路线的接力统计，保留与所选解
+一致的 best 轨迹；两阶段真实耗时、迭代和算子工作量仍完整相加。该保护不
+改变比较容差，也不执行随机重跑择优。正式基准、四场景、虚拟消融及多种子
+敏感性全部使用含此保护的同一源码版本重算，生成器禁止混用旧源码结果。
+
 小规模 `Pareto-DP` 是单机、公共原点、Direct-only 的精确 oracle，默认最多
 10 个任务；可用 `--exact-max-tasks` 调高，但状态空间呈指数增长。CLI 选择
 `--method exact` 时会强制上述语义，避免把不支持的 Relay/异地起点结果误称
@@ -84,6 +97,11 @@ PYTHONPATH=algorithm/src python -m uav_dispatch solve \
 PYTHONPATH=algorithm/src python -m algorithm.experiments.run_benchmarks
 ```
 
+当前同源码正式重跑在 5/8/10/12 任务的四个精确对照中，ALNS 于 5、10
+任务匹配 Pareto-DP，8、12 任务未匹配。8 任务的 ALNS 航程虽短，总逾期却更大，
+按三级词典序仍较差。论文动态读取匹配数量、具体规模与差距，不把可行性等同于
+达到精确最优。
+
 第 5.5 节使用完全模拟、非业务观测的 30/60/90 任务规模–种子单元，比较
 三个已实现的贪心构造与完整 ALNS，并对四个 ALNS 组件组做关闭消融。所有
 ALNS 变体复用同一初始路线、求解种子和固定 1000 次迭代预算：
@@ -107,37 +125,70 @@ PYTHONPATH=algorithm/src python -m \
   algorithm.experiments.run_scenario_comparison
 ```
 
-第 6.2 节覆盖上述四种策略，统一采用独立的 300 s 单次总预算，固定种子
-`2026081701`，扫描无人机数 `8/9/10/12/16` 和截止期倍率
-`0.8/0.9/1.0/1.1/1.2`；使用站点的三个策略另扫描站点数 `2/3/4/5/6`。
-`pure_direct` 没有 Relay 或预部署，站点数敏感性不适用，实际站数为 0。
-Pure Direct 共 10 行，其余策略各 15 行，共 55 个参数水平单元格。同一策略
-各轴复用同一基准解，实际求解 48 次。两个 Relay 策略的 Direct 预热比例均为
-0.8；基准为 8 架无人机、截止期倍率 1.0，使用站点时为 4 站。
+第 6.2 节覆盖上述四种策略，统一采用独立的 300 s 单次总预算，使用五个配对
+种子 `2026081701/2026081702/2026081703/2026081704/2026081705`。每个种子
+扫描无人机数 `8/9/10/12/16` 和截止期倍率 `0.8/0.9/1.0/1.1/1.2`；使用
+站点的三个策略另扫描站点数 `2/3/4/5/6`。`pure_direct` 没有 Relay 或
+预部署，站点数敏感性不适用，实际站数为 0。
+共 55 个配置，每配置 n=5，形成 275 条原始行。同一策略、同一种子跨轴复用
+基准解，35 条复用行不增加样本量，实际求解 240 次。两个 Relay 策略的
+Direct 预热比例均为 0.8；基准为 8 架、截止倍率 1.0，使用站点时为 4 站。
 
 ```bash
 PYTHONPATH=algorithm/src python -m \
   algorithm.experiments.run_sensitivity_analysis \
   --output-dir algorithm/results/sensitivity_rerun --workers 8
-```
-
-仓库中的 `final_sensitivity/` 为已完成的正式产物，重跑须指定新的空目录。
-可用 `--workers N` 并发求解；断点续跑时保持同一输出目录、并发数与其他配置，
-增加 `--resume`，从通过协议与哈希检查的检查点继续。
-manifest 记录并发数、各策略求解配置、参数适用性与计划数量；每行的
-`cell_id`、`run_id`、`reused_from` 和解文件 SHA-256 区分结果单元格、实际求解
-与基准复用。300 s 为包含构造的名义总预算；墙钟终止受并发负载影响，固定
-种子不保证逐位复现。这一单实例、单种子单因素设计不估计统计显著性或交互效应。
-
-完成后，从官方 CSV 重建问题，用独立完整评价器重新计算全部唯一解：
-
-```bash
+PYTHONPATH=algorithm/src python -m \
+  algorithm.experiments.sensitivity_statistics algorithm/results/sensitivity_rerun
 PYTHONPATH=algorithm/src python -m \
   algorithm.experiments.audit_sensitivity_results algorithm/results/sensitivity_rerun
 ```
 
-审计写入 `validation.json`。正文生成器另外核对 55 行覆盖、48 次唯一求解、
-策略开关、单因素控制、基准复用、解文件哈希与图像来源。
+仓库中的 `final_sensitivity/` 为冻结的正式产物，重跑须指定新的空目录。
+可用 `--workers N` 并发求解；断点续跑保持同一输出目录、并发数与其他配置，
+增加 `--resume`，从通过协议与哈希检查的检查点继续。manifest schema 3
+记录五种子、并发数、按种子轮换的策略交错顺序、求解配置、参数适用性与计划
+数量；每行的 `cell_id` 含策略与种子，`run_id`、`reused_from` 和解文件
+SHA-256 区分结果单元格、实际求解与基准复用。300 s 为包含构造的名义预算；
+预算与 `wall_seconds` 使用 Python `perf_counter` 单调时钟计时，不是 CPU
+时间；固定时限下的搜索进度受并发负载影响，固定种子不保证逐位复现。
+
+本次 macOS 主机的 `perf_counter` 使用 `mach_absolute_time()`，该时钟在
+系统休眠时暂停（见 [Apple 文档](https://developer.apple.com/documentation/kernel/1462446-mach_absolute_time)）。
+2026-10-12 的一次主机暂停影响了 8 组运行，其程序总计时为
+299.953–300.209 s，均通过完整 300 s 程序计时预算核验。恢复后保留原次
+求解结果，没有重跑择优；暂停增加的日历耗时不计入上述记录。此说明仅适用于
+本机时钟实现，不代表所有平台的 `perf_counter` 都排除系统休眠时间。
+对应运行标识、解文件指纹和最终核验记录见
+[`execution_notes.json`](results/final_sensitivity/execution_notes.json)。
+
+统计模块输出 `summary.json/csv` 的 55 个配置，包含三项目标与五项机制指标
+的均值、样本 SD（ddof=1）、最小值、最大值和均值±SD；图中误差线是一个
+样本 SD，不是置信区间。`stability.json` 按同一种子的原始三级词典序报告
+策略胜平负、首末档配对变化、全轴单调性以及最优档位频次；不对均值三元组
+排序。每档策略统计中的胜/平/负分别指唯一最优/并列最优/未达最优，两两比较
+则以 A 相对 B 计数。最优档位频次含并列，合计可超过 5；单调不增含相等。
+五个种子反映算法随机性的有限观测，不能外推需求分布，也不构成显著性检验。
+单因素设计无法识别参数交互。
+
+本次正式结果中，四策略在无人机数轴（8–16）和截止期倍率轴（0.8–1.2）上，
+全部 5 个种子的三级得分均随水平增加而单调不劣，首末档均严格改善；16 架
+无人机时四策略的逾期数均为 0。站点数从 2 增至 6 时，Direct + Relay、
+Direct + Position、组合策略的首末档改善/持平/变差次数分别为 3/0/2、2/0/3、
+3/0/2，三个策略的全轴单调不劣次数均为 0/5，最优站点数也随种子变化。
+这不支持“站点越多越好”的结论。
+
+15 个展示水平中，Direct + Position 在 8 档获得 5/5 次唯一最优，其余 7 档
+的最优策略随种子变化。各轴基准点复用同一批解，因此这些展示水平不能被当作
+相互独立的重复试验；上述频次只描述本实例和当前预算下的观测结果。
+
+统计生成后，审计从官方 CSV 重建问题，独立完整评价全部 240 个唯一解；
+同时从路线重算五项机制指标，检查阶段末严格择优与预热保留标志；
+另外独立重算均值、样本 SD、范围、配对胜平负与稳定性，并核对 CSV。
+`validation.json` schema 2 绑定原始记录、统计文件、完整解与审计脚本的
+哈希。论文生成器验证 275 行覆盖、240 次求解、五种子配对、机制开关、单因素
+控制、同种子基准复用、重新计算的统计、独立审计凭据及图像来源。复现顺序
+必须是运行实验、生成统计、独立审计，再生成图表和论文。
 
 四个入口均支持 `--quick` 冒烟模式。正式输出会保存 manifest、输入/源码
 指纹、CSV/JSON 汇总及逐运行完整路线；`--quick` 结果明确标记为非正式，
