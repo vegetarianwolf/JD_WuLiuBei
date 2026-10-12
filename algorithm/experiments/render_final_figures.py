@@ -74,7 +74,26 @@ SENSITIVITY_BUDGET_SECONDS = 300.0
 SENSITIVITY_PARAMETERS = {
     "drone_count": ("Number of UAVs", 8.0),
     "deadline_multiplier": ("Deadline multiplier", 1.0),
-    "station_count": ("Number of position stations", 4.0),
+    "station_count": ("Number of stations", 4.0),
+}
+SENSITIVITY_LEVELS = {
+    "drone_count": (8.0, 9.0, 10.0, 12.0, 16.0),
+    "deadline_multiplier": (0.8, 0.9, 1.0, 1.1, 1.2),
+    "station_count": (2.0, 3.0, 4.0, 5.0, 6.0),
+}
+SENSITIVITY_SCENARIOS = {
+    parameter: tuple(
+        scenario
+        for scenario in SCENARIO_LABELS
+        if parameter != "station_count" or scenario != "pure_direct"
+    )
+    for parameter in SENSITIVITY_PARAMETERS
+}
+SENSITIVITY_SCENARIO_STYLES = {
+    "pure_direct": ("#1F77B4", "o", "-"),
+    "direct_relay": ("#FF7F0E", "s", "--"),
+    "direct_stations": ("#2CA02C", "^", "-."),
+    "direct_relay_stations": ("#A65673", "D", ":"),
 }
 METRIC_LINE_STYLES = {
     "late_count": (METHOD_LINE_PALETTE[0], "o"),
@@ -1089,27 +1108,26 @@ def plot_route_layouts(
 def _validated_sensitivity_rows(
     rows: Sequence[dict[str, Any]],
     parameter: str,
-) -> tuple[dict[str, Any], ...]:
+) -> dict[str, tuple[dict[str, Any], ...]]:
+    """Require one complete formal level series per applicable strategy."""
+
     if parameter not in SENSITIVITY_PARAMETERS:
         raise ValueError(f"unsupported sensitivity parameter: {parameter}")
-    selected = unique_rows_by_numeric_key(
-        tuple(row for row in rows if row["parameter"] == parameter),
-        "level",
-        context=f"sensitivity {parameter}",
-    )
-    if not selected:
-        raise ValueError(f"sensitivity {parameter}: no rows available")
-    seeds = {int(row["seed"]) for row in selected}
-    if seeds != {SENSITIVITY_SEED}:
+    selected = tuple(row for row in rows if row["parameter"] == parameter)
+    expected_scenarios = SENSITIVITY_SCENARIOS[parameter]
+    observed_scenarios = {str(row["scenario"]) for row in selected}
+    if observed_scenarios != set(expected_scenarios):
+        missing = sorted(set(expected_scenarios) - observed_scenarios)
+        unexpected = sorted(observed_scenarios - set(expected_scenarios))
         raise ValueError(
-            f"sensitivity {parameter} must use the single seed "
-            f"{SENSITIVITY_SEED}; got {sorted(seeds)}"
+            f"sensitivity {parameter}: incomplete or unexpected scenarios; "
+            f"missing={missing}, unexpected={unexpected}"
         )
     for row in selected:
-        scenario = str(row["scenario"])
-        if scenario != "direct_relay_stations":
+        if row["seed"] != SENSITIVITY_SEED:
             raise ValueError(
-                f"sensitivity {parameter} must use D+P+R; got {scenario}"
+                f"sensitivity {parameter} must use the single seed "
+                f"{SENSITIVITY_SEED}; got {row['seed']}"
             )
         observed_budget = float(row["effective_time_limit_seconds"])
         if not np.isclose(
@@ -1123,17 +1141,39 @@ def _validated_sensitivity_rows(
                 f"{SENSITIVITY_BUDGET_SECONDS:g} s total budget; "
                 f"got {observed_budget:g} s"
             )
-    return selected
+    grouped: dict[str, tuple[dict[str, Any], ...]] = {}
+    expected_levels = SENSITIVITY_LEVELS[parameter]
+    for scenario in expected_scenarios:
+        series = unique_rows_by_numeric_key(
+            tuple(row for row in selected if row["scenario"] == scenario),
+            "level",
+            context=f"sensitivity {parameter} scenario={scenario}",
+        )
+        levels = tuple(float(row["level"]) for row in series)
+        if levels != expected_levels:
+            raise ValueError(
+                f"sensitivity {parameter} scenario={scenario}: expected levels "
+                f"{expected_levels}; got {levels}"
+            )
+        for row in series:
+            for field in ("late_count", "total_lateness_min", "distance_km"):
+                if not np.isfinite(float(row[field])):
+                    raise ValueError(
+                        f"sensitivity {parameter} scenario={scenario} "
+                        f"level={row['level']}: nonfinite {field}"
+                    )
+        grouped[scenario] = series
+    return grouped
 
 
 def build_sensitivity_figure(
     rows: Sequence[dict[str, Any]],
     parameter: str,
 ) -> plt.Figure:
-    """Build one explicitly exploratory, single-seed OFAT figure."""
+    """Compare applicable strategies without collapsing their OFAT curves."""
 
-    xlabel, baseline = SENSITIVITY_PARAMETERS[parameter]
     selected = _validated_sensitivity_rows(rows, parameter)
+    xlabel, baseline = SENSITIVITY_PARAMETERS[parameter]
     metrics = (
         ("late_count", "Late deliveries", "Priority 1"),
         (
@@ -1147,23 +1187,25 @@ def build_sensitivity_figure(
             "Priority 3 (conditional)",
         ),
     )
-    x = [float(row["level"]) for row in selected]
+    x = SENSITIVITY_LEVELS[parameter]
     with reference_plot_style({"axes.grid": True}):
-        figure, axes = plt.subplots(1, 3, figsize=(7.1, 3.1))
+        figure, axes = plt.subplots(1, 3, figsize=(7.1, 3.6))
         for axis, (field, ylabel, title), panel in zip(
             axes,
             metrics,
             ("(a)", "(b)", "(c)"),
             strict=True,
         ):
-            color, marker = METRIC_LINE_STYLES[field]
-            values = [float(row[field]) for row in selected]
-            axis.plot(
-                x,
-                values,
-                color=color,
-                marker=marker,
-            )
+            for scenario, series in selected.items():
+                color, marker, linestyle = SENSITIVITY_SCENARIO_STYLES[scenario]
+                axis.plot(
+                    x,
+                    [float(row[field]) for row in series],
+                    color=color,
+                    marker=marker,
+                    linestyle=linestyle,
+                    label=SCENARIO_LABELS[scenario],
+                )
             axis.axvline(
                 baseline,
                 color="#555555",
@@ -1171,17 +1213,6 @@ def build_sensitivity_figure(
                 linewidth=0.75,
                 alpha=0.8,
                 zorder=1,
-            )
-            baseline_index = x.index(baseline)
-            axis.scatter(
-                [baseline],
-                [values[baseline_index]],
-                marker=marker,
-                s=34,
-                facecolor="white",
-                edgecolor=color,
-                linewidth=0.9,
-                zorder=4,
                 label="Baseline level",
             )
             axis.set_xlabel(xlabel)
@@ -1189,25 +1220,42 @@ def build_sensitivity_figure(
             axis.set_xticks(x)
             axis.set_title(title)
             _panel_label(axis, panel, y=-0.34)
-        axes[0].legend(
-            loc="best",
-            frameon=True,
-            framealpha=1.0,
-            facecolor="white",
+        figure.legend(
+            *axes[0].get_legend_handles_labels(),
+            loc="upper center",
+            bbox_to_anchor=(0.5, 0.86),
+            ncol=len(selected) + 1,
         )
         figure.suptitle(
-            "OFAT exploratory (n=1; no error bars); D+P+R; "
+            "OFAT exploratory (n=1 per strategy/level; no error bars); "
             "fixed 300 s total budget\n"
             "Lexicographic order: Priority 1 → Priority 2 → Priority 3; "
             "later priorities are conditional",
             fontsize=8.0,
             y=0.995,
         )
-        figure.subplots_adjust(top=0.73, bottom=0.32, wspace=0.44)
+        note = (
+            "D = direct; R = relay; P = demand-driven predeployment; "
+            f"shared seed = {SENSITIVITY_SEED}"
+        )
+        if parameter == "station_count":
+            note += "\nD: N/A for station count (uses no stations)."
+        figure.text(0.5, 0.025, note, ha="center", va="bottom", fontsize=7.5)
+        figure.subplots_adjust(top=0.73, bottom=0.32, wspace=0.48)
     return figure
 
 
 def plot_sensitivity(rows: Sequence[dict[str, Any]], output_dir: Path) -> None:
+    unknown_parameters = {row["parameter"] for row in rows} - set(
+        SENSITIVITY_PARAMETERS
+    )
+    if unknown_parameters:
+        raise ValueError(
+            f"unexpected sensitivity parameters: {sorted(unknown_parameters)}"
+        )
+    # Reject partial or mixed protocols before replacing any published figure.
+    for parameter in SENSITIVITY_PARAMETERS:
+        _validated_sensitivity_rows(rows, parameter)
     for parameter in SENSITIVITY_PARAMETERS:
         figure = build_sensitivity_figure(rows, parameter)
         with reference_plot_style():

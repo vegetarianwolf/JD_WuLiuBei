@@ -1,11 +1,9 @@
-"""One-factor sensitivity analysis for Direct + Relay + Station.
+"""Four-strategy one-factor sensitivity with a fixed 300 s per solve.
 
-The final protocol uses one fixed seed and five levels for each of three
-parameters: fleet size, deadline tightness and station count.  All runs use
-the combined scenario under a fixed 300 s total wall-clock allowance.  This
-6.2 budget is an explicit override and does not inherit the cumulative 240 s
-mechanism modules used by the 6.1 four-scenario comparison.  Historical
-results are never imported.
+Fleet size and deadlines apply to all four strategies. Station count applies
+only to strategies using relay stations or station predeployment. Identical
+baseline cells reuse one freshly generated solve within the same invocation.
+Checkpoints can resume only under the same source/configuration fingerprints.
 """
 
 from __future__ import annotations
@@ -14,6 +12,7 @@ import argparse
 import csv
 import hashlib
 import json
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime, timezone
 from dataclasses import asdict
 from pathlib import Path
@@ -53,13 +52,20 @@ SENSITIVITY_LEVELS: dict[str, tuple[int | float, ...]] = {
     "station_count": (2, 3, 4, 5, 6),
 }
 SENSITIVITY_RELAY_WARMUP_FRACTION = 0.80
-COMBINED_SCENARIO = {
-    **next(
-        scenario
-        for scenario in SCENARIOS
-        if scenario["id"] == "direct_relay_stations"
-    ),
-    "warmup": SENSITIVITY_RELAY_WARMUP_FRACTION,
+SENSITIVITY_SCENARIOS = tuple(
+    {
+        **scenario,
+        "warmup": SENSITIVITY_RELAY_WARMUP_FRACTION if scenario["relay"] else 0.0,
+    }
+    for scenario in SCENARIOS
+)
+PARAMETER_APPLICABILITY = {
+    scenario["id"]: tuple(
+        parameter
+        for parameter in SENSITIVITY_LEVELS
+        if parameter != "station_count" or scenario["id"] != "pure_direct"
+    )
+    for scenario in SENSITIVITY_SCENARIOS
 }
 
 
@@ -107,22 +113,28 @@ def _write_csv(path: Path, rows: Sequence[dict[str, Any]]) -> None:
         writer.writerows(scalar)
 
 
-def _write_report(path: Path, rows: Sequence[dict[str, Any]]) -> None:
+def _write_report(
+    path: Path, rows: Sequence[dict[str, Any]], *, formal: bool, budget_seconds: float,
+) -> None:
     lines = [
-        "# 三机制组合灵敏度分析",
+        "# 四策略灵敏度分析" + ("" if formal else "（快速检查，非正式结果）"),
         "",
-        "所有试验仅运行 Direct + Relay + Station，采用同一随机种子和"
-        "（逾期任务数、总逾期时间、总航程）三级词典序目标。",
+        "四种策略采用同一随机种子和（逾期任务数、总逾期时间、总航程）三级词典序目标。"
+        f"本次每次独立求解均为 {budget_seconds:g} s 总预算；两种 Relay 策略的阶段占比均为 80% / 20%。",
+        "每个配置仅采用一个随机种子（n=1），属于探索性比较，不提供置信区间或统计显著性结论。",
+        "纯 Direct 不使用站点，因此站点数量分析不适用。相同策略的基准点在不同参数轴中"
+        "复用同一个本次生成的解；这些重复展示不构成独立重复试验。",
         "",
-        "| 参数 | 水平 | 无人机 | 截止期倍率 | 中继站 | 逾期数 | 总逾期/min | 航程/km | Relay任务 |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| 策略 | 参数 | 水平 | 无人机 | 截止期倍率 | 站点 | 逾期数 | 总逾期/min | 航程/km | Relay任务 | 复用来源 |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|",
     ]
     for row in rows:
         lines.append(
-            f"| {row['parameter']} | {row['level']} | {row['drone_count']} | "
-            f"{row['deadline_multiplier']} | {row['requested_station_count']} | "
-            f"{row['late_count']} | {row['total_lateness_min']:.3f} | "
-            f"{row['distance_km']:.3f} | {row['relay_task_count']} |"
+            f"| {row['scenario_label']} | {row['parameter']} | {row['level']} | "
+            f"{row['drone_count']} | {row['deadline_multiplier']} | "
+            f"{row['requested_station_count']} | {row['late_count']} | "
+            f"{row['total_lateness_min']:.3f} | {row['distance_km']:.3f} | "
+            f"{row['relay_task_count']} | {row['reused_from'] or '—'} |"
         )
     lines.append("")
     path.write_text("\n".join(lines), encoding="utf-8")
@@ -140,6 +152,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-iterations", type=int, default=10_000_000)
     parser.add_argument("--candidate-limit", type=int, default=48)
     parser.add_argument("--quick", action="store_true")
+    parser.add_argument("--workers", type=int, default=1)
+    parser.add_argument(
+        "--resume", action="store_true",
+        help="Resume source/configuration-matched checkpoints after verifying solution hashes",
+    )
     return parser
 
 
@@ -174,27 +191,31 @@ def build_manifest(
         None if args.candidate_limit == 0 else args.candidate_limit
     )
     effective_seconds = args.base_seconds + args.bonus_seconds
-    combined_config = asdict(
-        scenario_alns_config(
-            COMBINED_SCENARIO,
-            seed=args.seed,
-            solve_seconds=effective_seconds,
-            max_iterations=args.max_iterations,
-            candidate_limit=candidate_limit,
-            home_aware=True,
+    alns_by_scenario = {}
+    for scenario in SENSITIVITY_SCENARIOS:
+        config = asdict(
+            scenario_alns_config(
+                scenario,
+                seed=args.seed,
+                solve_seconds=effective_seconds,
+                max_iterations=args.max_iterations,
+                candidate_limit=candidate_limit,
+                home_aware=scenario["drone_homes"] == "stations",
+            )
         )
-    )
-    combined_config.pop("seed")
-    combined_config.pop("time_limit_seconds")
-    combined_config["scenario_relay"] = True
+        config.pop("seed")
+        config.pop("time_limit_seconds")
+        config["scenario_relay"] = bool(scenario["relay"])
+        alns_by_scenario[scenario["id"]] = config
+    cells = build_cells(args)
     git_commit, git_dirty = _git_state()
     environment = _environment_manifest()
     scenario_script = (
         ROOT / "algorithm" / "experiments" / "run_scenario_comparison.py"
     )
     return {
-        "schema_version": 1,
-        "protocol": "combined_mode_one_factor_sensitivity",
+        "schema_version": 2,
+        "protocol": "four_strategy_one_factor_sensitivity",
         "formal": not args.quick,
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
         "git_commit": git_commit,
@@ -218,7 +239,20 @@ def build_manifest(
         "effective_seconds_per_run": effective_seconds,
         "budget_policy": "fixed_total_override",
         "levels": _levels(args.quick),
-        "scenario": COMBINED_SCENARIO,
+        "scenarios": list(SENSITIVITY_SCENARIOS),
+        "parameter_applicability": PARAMETER_APPLICABILITY,
+        "not_applicable": {"pure_direct": {"station_count": "No relay or station predeployment"}},
+        "workers": args.workers,
+        "planned_rows": len(cells),
+        "planned_unique_solves": len({cell["run_id"] for cell in cells}),
+        "reuse_policy": "identical baseline within scenario and this run only; no historical results",
+        "scenario_stage_targets_seconds": {
+            scenario["id"]: {
+                "direct_search": effective_seconds * (scenario["warmup"] if scenario["relay"] else 1.0),
+                "relay_search": effective_seconds * (1.0 - scenario["warmup"]) if scenario["relay"] else 0.0,
+            }
+            for scenario in SENSITIVITY_SCENARIOS
+        },
         "solver_config": {
             "max_iterations": args.max_iterations,
             "candidate_limit": candidate_limit,
@@ -245,85 +279,217 @@ def build_manifest(
                 "official task prefix; deadline_min multiplied by each "
                 "runs[].deadline_multiplier"
             ),
-            "alns_combined": combined_config,
+            "alns_by_scenario": alns_by_scenario,
         },
     }
+
+
+def build_cells(args: argparse.Namespace) -> list[dict[str, Any]]:
+    """Enumerate every applicable cell and its canonical within-run solve."""
+
+    cells = []
+    sources: dict[str, dict[str, Any]] = {}
+    for scenario in SENSITIVITY_SCENARIOS:
+        for parameter in PARAMETER_APPLICABILITY[scenario["id"]]:
+            for level in _levels(args.quick)[parameter]:
+                drones = int(level) if parameter == "drone_count" else 8
+                deadline = float(level) if parameter == "deadline_multiplier" else 1.0
+                stations = int(level) if parameter == "station_count" else 4
+                if scenario["id"] == "pure_direct":
+                    stations = 0
+                cell_id = f"{scenario['id']}__{parameter}__{level}"
+                run_id = (
+                    f"{scenario['id']}__seed_{args.seed}__drones_{drones}"
+                    f"__deadline_{deadline:g}__stations_{stations}"
+                )
+                cell = {
+                    "cell_id": cell_id,
+                    "run_id": run_id,
+                    "scenario": scenario["id"],
+                    "parameter": parameter,
+                    "level": level,
+                    "drone_count": drones,
+                    "deadline_multiplier": deadline,
+                    "requested_station_count": stations,
+                    "cell_output_dir": f"{scenario['id']}/{parameter}__{level}",
+                    "reused_from": None,
+                }
+                if run_id in sources:
+                    cell["cell_output_dir"] = sources[run_id]["cell_output_dir"]
+                    cell["reused_from"] = sources[run_id]["cell_id"]
+                else:
+                    sources[run_id] = cell
+                cells.append(cell)
+    return cells
+
+
+def _json_normalize(value: Any) -> Any:
+    return json.loads(json.dumps(value, ensure_ascii=False))
+
+
+def _manifest_contract(manifest: dict[str, Any]) -> dict[str, Any]:
+    # Git status and timestamps can change while unrelated report work continues.
+    # Actual source, input, dependency, environment and runtime config fingerprints
+    # remain mandatory; concurrency is included because it affects wall-time runs.
+    return {
+        key: value for key, value in manifest.items()
+        if key not in {"created_at_utc", "git_commit", "git_dirty"}
+    }
+
+
+def _contract_sha256(manifest: dict[str, Any]) -> str:
+    return hashlib.sha256(
+        json.dumps(_manifest_contract(manifest), sort_keys=True).encode("utf-8")
+    ).hexdigest()
+
+
+def _write_json(path: Path, value: Any) -> None:
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(
+        json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    temporary.replace(path)
+
+
+def _verify_row(
+    row: dict[str, Any], cell: dict[str, Any], args: argparse.Namespace,
+) -> None:
+    for key, expected in cell.items():
+        if row.get(key) != expected:
+            raise ValueError(f"敏感性单元 {cell['cell_id']} 字段 {key} 不一致")
+    scenario = next(s for s in SENSITIVITY_SCENARIOS if s["id"] == cell["scenario"])
+    expected_fields = {
+        "seed": args.seed,
+        "relay": scenario["relay"],
+        "station_predeployment": scenario["drone_homes"] == "stations",
+        "station_count": cell["requested_station_count"],
+        "effective_time_limit_seconds": args.base_seconds + args.bonus_seconds,
+    }
+    for key, expected in expected_fields.items():
+        if row.get(key) != expected:
+            raise ValueError(f"敏感性单元 {cell['cell_id']} 字段 {key} 不一致")
+    if not scenario["relay"] and row.get("relay_task_count") != 0:
+        raise ValueError(f"非 Relay 策略存在 Relay 任务：{cell['cell_id']}")
+    solution_path = (args.output_dir / row["cell_output_dir"] / row["solution_file"]).resolve()
+    if not solution_path.is_relative_to(args.output_dir.resolve()):
+        raise ValueError("solution_file 必须位于当前输出目录")
+    if not solution_path.is_file() or _sha256(solution_path) != row.get("solution_sha256"):
+        raise ValueError(f"原始解校验失败：{solution_path}")
+
+
+def validate_rows(rows: Sequence[dict[str, Any]], args: argparse.Namespace) -> None:
+    """Reject missing/duplicate/inapplicable cells and incorrect mechanisms."""
+
+    cells = build_cells(args)
+    expected = {cell["cell_id"]: cell for cell in cells}
+    ids = [row.get("cell_id") for row in rows]
+    if len(ids) != len(set(ids)) or set(ids) != set(expected):
+        raise ValueError("敏感性单元缺失、重复或包含不适用组合")
+    canonical = {row["run_id"]: row for row in rows if row["reused_from"] is None}
+    for row in rows:
+        _verify_row(row, expected[row["cell_id"]], args)
+        if row["reused_from"] is not None:
+            source = canonical[row["run_id"]]
+            differing = {"cell_id", "parameter", "level", "reused_from"}
+            if any(row[key] != value for key, value in source.items() if key not in differing):
+                raise ValueError(f"基准解复用不一致：{row['cell_id']}")
+
+
+def _run_cell(
+    args: argparse.Namespace, source_tasks: Sequence[Task], cell: dict[str, Any],
+) -> dict[str, Any]:
+    scenario = next(s for s in SENSITIVITY_SCENARIOS if s["id"] == cell["scenario"])
+    print(f"[sensitivity] {cell['cell_id']}", flush=True)
+    row = run_scenario(
+        scale_deadlines(source_tasks, cell["deadline_multiplier"]),
+        scenario,
+        seed=args.seed,
+        output_dir=args.output_dir / cell["cell_output_dir"],
+        input_path=args.input,
+        drones=cell["drone_count"],
+        max_tasks=25,
+        base_seconds=args.base_seconds,
+        bonus_seconds=args.bonus_seconds,
+        safety_margin_seconds=args.safety_margin_seconds,
+        effective_seconds_override=args.base_seconds + args.bonus_seconds,
+        max_iterations=args.max_iterations,
+        candidate_limit=None if args.candidate_limit == 0 else args.candidate_limit,
+        relay_count=cell["requested_station_count"],
+        relay_location_seed=42,
+    )
+    row.update(cell)
+    _verify_row(row, cell, args)
+    return row
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     validate_formal_protocol(args)
+    if args.workers < 1:
+        raise ValueError("workers 必须为正整数")
     if args.quick:
         args.tasks = min(args.tasks, 24)
         args.base_seconds = min(args.base_seconds, 0.4)
         args.bonus_seconds = min(args.bonus_seconds, 0.2)
-    source_tasks = load_tasks_csv(args.input)[: args.tasks]
+    source_tasks = load_tasks_csv(args.input)[:args.tasks]
     if len(source_tasks) != args.tasks:
         raise ValueError("输入任务数量不足")
     args.output_dir.mkdir(parents=True, exist_ok=True)
+    manifest = _json_normalize(build_manifest(args, task_count=len(source_tasks)))
+    manifest_path = args.output_dir / "manifest.json"
+    if args.resume:
+        if not manifest_path.is_file():
+            raise ValueError("恢复运行需要已有 manifest.json")
+        previous = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if _manifest_contract(previous) != _manifest_contract(manifest):
+            raise ValueError("恢复运行的配置或来源指纹与 manifest 不一致")
+        manifest = previous
+    else:
+        if any(args.output_dir.iterdir()):
+            raise ValueError("输出目录非空；请使用新目录，或用 --resume 恢复匹配的检查点")
+        _write_json(manifest_path, manifest)
+    fingerprint = _contract_sha256(manifest)
+    cells = build_cells(args)
+    unique = {cell["run_id"]: cell for cell in cells if cell["reused_from"] is None}
+    checkpoint_dir = args.output_dir / "checkpoints"
+    checkpoint_dir.mkdir(exist_ok=True)
+    completed = {}
+    for checkpoint in sorted(checkpoint_dir.glob("*.json")):
+        payload = json.loads(checkpoint.read_text(encoding="utf-8"))
+        run_id = payload.get("run_id")
+        if payload.get("contract_sha256") != fingerprint or run_id not in unique or run_id in completed:
+            raise ValueError(f"检查点来源、单元或重复性校验失败：{checkpoint}")
+        row = payload["row"]
+        _verify_row(row, unique[run_id], args)
+        completed[run_id] = row
 
-    rows: list[dict[str, Any]] = []
-    effective_seconds = args.base_seconds + args.bonus_seconds
-    for parameter, levels in _levels(args.quick).items():
-        for level in levels:
-            drones = int(level) if parameter == "drone_count" else 8
-            deadline_multiplier = (
-                float(level) if parameter == "deadline_multiplier" else 1.0
-            )
-            station_count = int(level) if parameter == "station_count" else 4
-            tasks = scale_deadlines(source_tasks, deadline_multiplier)
-            cell_dir = args.output_dir / f"{parameter}__{level}"
-            print(
-                f"[sensitivity] {parameter}={level} "
-                f"(drones={drones}, deadline×{deadline_multiplier}, "
-                f"stations={station_count})",
-                flush=True,
-            )
-            row = run_scenario(
-                tasks,
-                COMBINED_SCENARIO,
-                seed=args.seed,
-                output_dir=cell_dir,
-                input_path=args.input,
-                drones=drones,
-                max_tasks=25,
-                base_seconds=args.base_seconds,
-                bonus_seconds=args.bonus_seconds,
-                safety_margin_seconds=args.safety_margin_seconds,
-                effective_seconds_override=effective_seconds,
-                max_iterations=args.max_iterations,
-                candidate_limit=(
-                    None if args.candidate_limit == 0 else args.candidate_limit
-                ),
-                relay_count=station_count,
-                relay_location_seed=42,
-            )
-            row.update(
-                {
-                    "parameter": parameter,
-                    "level": level,
-                    "drone_count": drones,
-                    "deadline_multiplier": deadline_multiplier,
-                    "requested_station_count": station_count,
-                    "cell_output_dir": cell_dir.relative_to(
-                        args.output_dir
-                    ).as_posix(),
-                }
-            )
-            rows.append(row)
+    def record(row: dict[str, Any]) -> None:
+        run_id = row["run_id"]
+        _write_json(checkpoint_dir / f"{run_id}.json", {
+            "schema_version": 1, "contract_sha256": fingerprint,
+            "run_id": run_id, "row": row,
+        })
+        completed[run_id] = row
+        print(f"[sensitivity] completed {len(completed)}/{len(unique)} unique solves", flush=True)
 
-    manifest = build_manifest(args, task_count=len(source_tasks))
-    (args.output_dir / "runs.json").write_text(
-        json.dumps(rows, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    (args.output_dir / "manifest.json").write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    pending = [cell for run_id, cell in unique.items() if run_id not in completed]
+    if args.workers == 1:
+        for cell in pending:
+            record(_run_cell(args, source_tasks, cell))
+    else:
+        with ProcessPoolExecutor(max_workers=args.workers) as pool:
+            futures = [pool.submit(_run_cell, args, source_tasks, cell) for cell in pending]
+            for future in as_completed(futures):
+                record(future.result())
+    rows = [{**completed[cell["run_id"]], **cell} for cell in cells]
+    validate_rows(rows, args)
+    _write_json(args.output_dir / "runs.json", rows)
     _write_csv(args.output_dir / "runs.csv", rows)
-    _write_report(args.output_dir / "REPORT.md", rows)
-    print(f"结果已写入 {args.output_dir}", flush=True)
+    _write_report(
+        args.output_dir / "REPORT.md", rows, formal=not args.quick,
+        budget_seconds=args.base_seconds + args.bonus_seconds,
+    )
+    print(f"结果已写入 {args.output_dir}（{len(rows)} 行 / {len(unique)} 次独立求解）", flush=True)
     return 0
 
 

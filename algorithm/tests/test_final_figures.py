@@ -534,17 +534,23 @@ def _sensitivity_rows(parameter: str) -> list[dict[str, object]]:
         "deadline_multiplier": (0.8, 0.9, 1.0, 1.1, 1.2),
         "station_count": (2, 3, 4, 5, 6),
     }[parameter]
+    scenarios = (
+        FORMAL_SCENARIOS[1:]
+        if parameter == "station_count"
+        else FORMAL_SCENARIOS
+    )
     return [
         {
             "parameter": parameter,
             "level": level,
             "seed": FORMAL_SCENARIO_SEEDS[0],
-            "scenario": "direct_relay_stations",
+            "scenario": scenario,
             "effective_time_limit_seconds": 300.0,
-            "late_count": index,
-            "total_lateness_min": 100.0 + index,
-            "distance_km": 600.0 + index,
+            "late_count": 20 + scenario_index * 5 + index,
+            "total_lateness_min": 100.0 + scenario_index * 20 + index,
+            "distance_km": 600.0 + scenario_index * 30 + index,
         }
+        for scenario_index, scenario in enumerate(scenarios)
         for index, level in enumerate(levels)
     ]
 
@@ -569,17 +575,26 @@ def test_sensitivity_figure_is_explicitly_single_seed_exploratory(
             "Priority 2 (conditional)",
             "Priority 3 (conditional)",
         ]
-        assert [
-            text.get_text() for text in figure.axes[0].get_legend().get_texts()
-        ] == ["Baseline level"]
+        labels = (
+            ["D+R", "D+P", "D+P+R"]
+            if parameter == "station_count"
+            else ["D", "D+R", "D+P", "D+P+R"]
+        )
+        assert [text.get_text() for text in figure.legends[0].get_texts()] == (
+            labels + ["Baseline level"]
+        )
         for axis in figure.axes:
             baseline_lines = [
                 line
                 for line in axis.lines
-                if line.get_linestyle() == "--"
-                and tuple(line.get_xdata()) == (baseline, baseline)
+                if line.get_label() == "Baseline level"
             ]
             assert len(baseline_lines) == 1
+            assert tuple(baseline_lines[0].get_xdata()) == (baseline, baseline)
+        notes = "\n".join(text.get_text() for text in figure.texts)
+        assert "shared seed = 2026081701" in notes
+        if parameter == "station_count":
+            assert "D: N/A for station count (uses no stations)" in notes
     finally:
         plt.close(figure)
 
@@ -590,3 +605,125 @@ def test_sensitivity_figure_rejects_a_budget_other_than_fixed_300_seconds():
 
     with pytest.raises(ValueError, match="fixed 300 s.*720"):
         build_sensitivity_figure(rows, "drone_count")
+
+
+@pytest.mark.parametrize("parameter", final_figures.SENSITIVITY_PARAMETERS)
+def test_sensitivity_curves_preserve_every_strategy_and_its_exact_values(parameter):
+    rows = _sensitivity_rows(parameter)
+    # Input order must not alter strategy identity or level ordering.
+    figure = build_sensitivity_figure(list(reversed(rows)), parameter)
+    try:
+        scenarios = final_figures.SENSITIVITY_SCENARIOS[parameter]
+        for axis, field in zip(
+            figure.axes,
+            ("late_count", "total_lateness_min", "distance_km"),
+            strict=True,
+        ):
+            curves = [
+                line
+                for line in axis.lines
+                if line.get_label() != "Baseline level"
+            ]
+            assert len(curves) == len(scenarios)
+            assert len({line.get_color() for line in curves}) == len(scenarios)
+            assert len({line.get_marker() for line in curves}) == len(scenarios)
+            assert len({line.get_linestyle() for line in curves}) == len(scenarios)
+            for curve, scenario in zip(curves, scenarios, strict=True):
+                series = [row for row in rows if row["scenario"] == scenario]
+                assert curve.get_label() == final_figures.SCENARIO_LABELS[scenario]
+                assert list(curve.get_xdata()) == [row["level"] for row in series]
+                assert list(curve.get_ydata()) == [row[field] for row in series]
+    finally:
+        plt.close(figure)
+
+
+@pytest.mark.parametrize("parameter", final_figures.SENSITIVITY_PARAMETERS)
+def test_sensitivity_figure_rejects_a_missing_strategy(parameter):
+    rows = _sensitivity_rows(parameter)
+    omitted = rows[0]["scenario"]
+    rows = [row for row in rows if row["scenario"] != omitted]
+
+    with pytest.raises(ValueError, match=f"missing=.*{omitted}"):
+        build_sensitivity_figure(rows, parameter)
+
+
+@pytest.mark.parametrize("parameter", final_figures.SENSITIVITY_PARAMETERS)
+def test_sensitivity_figure_rejects_a_missing_level(parameter):
+    rows = _sensitivity_rows(parameter)
+    rows.pop()
+
+    with pytest.raises(ValueError, match="expected levels"):
+        build_sensitivity_figure(rows, parameter)
+
+
+@pytest.mark.parametrize("parameter", final_figures.SENSITIVITY_PARAMETERS)
+def test_sensitivity_figure_rejects_a_duplicate_strategy_level(parameter):
+    rows = _sensitivity_rows(parameter)
+    rows.append(dict(rows[0]))
+
+    with pytest.raises(ValueError, match="scenario=.*duplicate level"):
+        build_sensitivity_figure(rows, parameter)
+
+
+def test_sensitivity_figure_rejects_an_unexpected_level():
+    rows = _sensitivity_rows("drone_count")
+    rows[0]["level"] = 7
+
+    with pytest.raises(ValueError, match="expected levels"):
+        build_sensitivity_figure(rows, "drone_count")
+
+
+@pytest.mark.parametrize("seed", (2026081702, 2026081701.5))
+def test_sensitivity_figure_rejects_a_nonformal_seed(seed):
+    rows = _sensitivity_rows("drone_count")
+    rows[0]["seed"] = seed
+
+    with pytest.raises(ValueError, match="single seed 2026081701"):
+        build_sensitivity_figure(rows, "drone_count")
+
+
+def test_sensitivity_station_count_rejects_an_inapplicable_direct_curve():
+    rows = _sensitivity_rows("station_count")
+    rows.append({**rows[0], "scenario": "pure_direct"})
+
+    with pytest.raises(ValueError, match="unexpected=.*pure_direct"):
+        build_sensitivity_figure(rows, "station_count")
+
+
+@pytest.mark.parametrize("field", ("late_count", "total_lateness_min", "distance_km"))
+def test_sensitivity_figure_rejects_nonfinite_metrics(field):
+    rows = _sensitivity_rows("deadline_multiplier")
+    rows[0][field] = float("nan")
+
+    with pytest.raises(ValueError, match=f"nonfinite {field}"):
+        build_sensitivity_figure(rows, "deadline_multiplier")
+
+
+def test_sensitivity_plot_validates_the_complete_55_row_matrix_before_saving(
+    tmp_path, monkeypatch
+):
+    rows = [
+        row
+        for parameter in final_figures.SENSITIVITY_PARAMETERS
+        for row in _sensitivity_rows(parameter)
+    ]
+    assert len(rows) == 55
+    writes = []
+    monkeypatch.setattr(final_figures, "_save_pair", lambda *args: writes.append(args))
+    rows.pop()
+
+    with pytest.raises(ValueError, match="station_count.*expected levels"):
+        final_figures.plot_sensitivity(rows, tmp_path)
+    assert not writes
+
+
+def test_sensitivity_plot_rejects_unknown_parameter_rows(tmp_path):
+    rows = [
+        row
+        for parameter in final_figures.SENSITIVITY_PARAMETERS
+        for row in _sensitivity_rows(parameter)
+    ]
+    rows.append({**rows[0], "parameter": "unknown"})
+
+    with pytest.raises(ValueError, match="unexpected sensitivity parameters.*unknown"):
+        final_figures.plot_sensitivity(rows, tmp_path)

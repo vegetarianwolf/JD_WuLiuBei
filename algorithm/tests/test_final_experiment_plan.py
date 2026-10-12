@@ -64,7 +64,7 @@ def test_sensitivity_can_override_the_combined_budget_to_fixed_300_seconds():
     ) == 300.0
 
 
-def test_sensitivity_plan_uses_combined_mode_and_five_levels_per_parameter():
+def test_sensitivity_plan_uses_four_strategies_and_five_levels_per_parameter():
     assert SENSITIVITY_LEVELS == {
         "drone_count": (8, 9, 10, 12, 16),
         "deadline_multiplier": (0.8, 0.9, 1.0, 1.1, 1.2),
@@ -259,15 +259,13 @@ def test_scenario_manifest_captures_the_reproducibility_contract():
 
 def test_sensitivity_manifest_captures_the_reproducibility_contract():
     args = sensitivity_experiment._parser().parse_args([])
-
     manifest = sensitivity_experiment.build_manifest(args, task_count=200)
 
-    assert manifest["schema_version"] == 1
+    assert manifest["schema_version"] == 2
+    assert manifest["protocol"] == "four_strategy_one_factor_sensitivity"
     assert manifest["formal"] is True
-    assert manifest["input_sha256"]
-    assert manifest["solver_source_sha256"]
-    assert manifest["experiment_script_sha256"]
-    assert manifest["scenario_script_sha256"]
+    for key in ("input_sha256", "solver_source_sha256", "experiment_script_sha256", "scenario_script_sha256"):
+        assert manifest[key]
     assert manifest["git_commit"] is None or len(manifest["git_commit"]) == 40
     assert isinstance(manifest["git_dirty"], (bool, type(None)))
     assert manifest["environment"]["python_version"]
@@ -277,58 +275,162 @@ def test_sensitivity_manifest_captures_the_reproducibility_contract():
     assert manifest["solver_config"]["relay_location_seed"] == 42
     assert manifest["solver_config"]["relay_location_method"] == "weighted_kmedoids"
     assert manifest["effective_seconds_per_run"] == 300.0
-    assert manifest["solver_config"]["time_limit_policy"].startswith(
-        "fixed 300 s"
-    )
-    assert manifest["solver_config"]["alns_combined"][
-        "relay_direct_warmup_fraction"
-    ] == 0.8
-    assert manifest["scenario"]["warmup"] == 0.8
+    assert manifest["solver_config"]["time_limit_policy"].startswith("fixed 300 s")
+    assert manifest["planned_rows"] == 55
+    assert manifest["planned_unique_solves"] == 48
+    assert manifest["workers"] == 1
+    assert manifest["parameter_applicability"]["pure_direct"] == ("drone_count", "deadline_multiplier")
+    assert set(manifest["solver_config"]["alns_by_scenario"]) == {s["id"] for s in SCENARIOS}
+    for scenario in manifest["scenarios"]:
+        config = manifest["solver_config"]["alns_by_scenario"][scenario["id"]]
+        assert config["scenario_relay"] is scenario["relay"]
+        assert config["enable_home_seed"] is (scenario["drone_homes"] == "stations")
+        assert config["enable_home_bias"] is (scenario["drone_homes"] == "stations")
+        assert config["relay_direct_warmup_fraction"] == (0.8 if scenario["relay"] else 0.0)
+        stages = manifest["scenario_stage_targets_seconds"][scenario["id"]]
+        assert stages["direct_search"] == (240.0 if scenario["relay"] else 300.0)
+        assert stages["relay_search"] == pytest.approx(60.0 if scenario["relay"] else 0.0)
     assert manifest["solver_config"]["baseline"] == {
-        "drone_count": 8,
-        "deadline_multiplier": 1.0,
-        "station_count": 4,
+        "drone_count": 8, "deadline_multiplier": 1.0, "station_count": 4,
     }
     assert manifest["levels"] == SENSITIVITY_LEVELS
 
 
-def test_sensitivity_main_passes_300_seconds_as_an_explicit_override(
-    monkeypatch,
-    tmp_path,
-):
-    tasks = tuple(
-        Task(
-            task_id,
-            Point(float(task_id), 0.0),
-            Point(float(task_id), 1.0),
-            60.0,
-        )
-        for task_id in range(1, 201)
-    )
-    overrides = []
+@pytest.mark.parametrize("quick, expected_rows, expected_solves", [(False, 55, 48), (True, 33, 26)])
+def test_sensitivity_grid_covers_applicable_strategies_and_reuses_only_baselines(quick, expected_rows, expected_solves):
+    args = sensitivity_experiment._parser().parse_args(["--quick"] if quick else [])
+    cells = sensitivity_experiment.build_cells(args)
+    assert len(cells) == expected_rows
+    assert len({cell["run_id"] for cell in cells}) == expected_solves
+    assert len({cell["cell_id"] for cell in cells}) == expected_rows
+    for cell in cells:
+        if cell["scenario"] == "pure_direct":
+            assert cell["parameter"] != "station_count"
+            assert cell["requested_station_count"] == 0
+        if cell["reused_from"] is not None:
+            assert cell["reused_from"] == f"{cell['scenario']}__drone_count__8"
+            assert cell["drone_count"] == 8
+            assert cell["deadline_multiplier"] == 1.0
+            assert cell["requested_station_count"] == (0 if cell["scenario"] == "pure_direct" else 4)
 
-    def fake_run_scenario(*_args, **kwargs):
-        overrides.append(kwargs["effective_seconds_override"])
+
+def _fake_sensitivity_solves(monkeypatch):
+    calls = []
+
+    def fake_run_scenario(tasks, scenario, **kwargs):
+        calls.append((scenario, kwargs, tasks))
+        solution_path = kwargs["output_dir"] / "run_solutions" / "solution.json"
+        solution_path.parent.mkdir(parents=True, exist_ok=True)
+        solution_path.write_text(json.dumps({"scenario": scenario["id"], "seed": kwargs["seed"]}), encoding="utf-8")
         return {
-            "scenario": "direct_relay_stations",
-            "late_count": 0,
-            "total_lateness_min": 0.0,
-            "distance_km": 0.0,
+            "scenario": scenario["id"],
+            "scenario_label": scenario["label"],
+            "seed": kwargs["seed"],
+            "relay": scenario["relay"],
+            "station_predeployment": scenario["drone_homes"] == "stations",
+            "station_count": kwargs["relay_count"],
+            "effective_time_limit_seconds": kwargs["effective_seconds_override"],
+            "late_count": 0, "total_lateness_min": 0.0, "distance_km": 0.0,
             "relay_task_count": 0,
+            "solution_file": "run_solutions/solution.json",
+            "solution_sha256": sensitivity_experiment._sha256(solution_path),
         }
 
-    monkeypatch.setattr(
-        sensitivity_experiment,
-        "load_tasks_csv",
-        lambda _path: tasks,
-    )
     monkeypatch.setattr(sensitivity_experiment, "run_scenario", fake_run_scenario)
+    return calls
 
-    assert sensitivity_experiment.main(
-        ["--output-dir", str(tmp_path)]
-    ) == 0
-    assert len(overrides) == 15
-    assert set(overrides) == {300.0}
+
+def test_sensitivity_main_passes_300_seconds_to_all_48_unique_solves(monkeypatch, tmp_path):
+    calls = _fake_sensitivity_solves(monkeypatch)
+    assert sensitivity_experiment.main(["--output-dir", str(tmp_path)]) == 0
+    assert len(calls) == 48
+    assert {kwargs["effective_seconds_override"] for _, kwargs, _ in calls} == {300.0}
+    assert {scenario["id"] for scenario, _, _ in calls} == {s["id"] for s in SCENARIOS}
+    assert all(s["warmup"] == 0.8 for s, _, _ in calls if s["relay"])
+    rows = json.loads((tmp_path / "runs.json").read_text())
+    assert len(rows) == 55
+    assert len(list((tmp_path / "checkpoints").glob("*.json"))) == 48
+    assert "n=1" in (tmp_path / "REPORT.md").read_text()
+    calls.clear()
+    assert sensitivity_experiment.main(["--output-dir", str(tmp_path), "--resume"]) == 0
+    assert calls == []
+
+
+
+def test_sensitivity_resume_completes_only_missing_checkpoints(monkeypatch, tmp_path):
+    calls = _fake_sensitivity_solves(monkeypatch)
+    fake_run = sensitivity_experiment.run_scenario
+
+    def interrupted(*args, **kwargs):
+        if len(calls) == 2:
+            raise RuntimeError("simulated interruption")
+        return fake_run(*args, **kwargs)
+
+    monkeypatch.setattr(sensitivity_experiment, "run_scenario", interrupted)
+    argv = ["--output-dir", str(tmp_path), "--quick"]
+    with pytest.raises(RuntimeError, match="simulated interruption"):
+        sensitivity_experiment.main(argv)
+    assert len(list((tmp_path / "checkpoints").glob("*.json"))) == 2
+    assert not (tmp_path / "runs.json").exists()
+
+    calls.clear()
+    monkeypatch.setattr(sensitivity_experiment, "run_scenario", fake_run)
+    assert sensitivity_experiment.main([*argv, "--resume"]) == 0
+    assert len(calls) == 24
+    assert len(json.loads((tmp_path / "runs.json").read_text())) == 33
+    assert len(list((tmp_path / "checkpoints").glob("*.json"))) == 26
+
+def test_sensitivity_quick_report_is_explicitly_nonformal(monkeypatch, tmp_path):
+    calls = _fake_sensitivity_solves(monkeypatch)
+    assert sensitivity_experiment.main(["--output-dir", str(tmp_path), "--quick"]) == 0
+    assert len(calls) == 26
+    text = (tmp_path / "REPORT.md").read_text()
+    assert "非正式结果" in text
+    assert "0.6 s" in text
+
+
+@pytest.mark.parametrize("mutation", ["missing", "duplicate", "mechanism", "reuse"])
+def test_sensitivity_validation_rejects_incomplete_or_inconsistent_cells(monkeypatch, tmp_path, mutation):
+    _fake_sensitivity_solves(monkeypatch)
+    sensitivity_experiment.main(["--output-dir", str(tmp_path)])
+    args = sensitivity_experiment._parser().parse_args(["--output-dir", str(tmp_path)])
+    rows = json.loads((tmp_path / "runs.json").read_text())
+    if mutation == "missing":
+        rows.pop()
+    elif mutation == "duplicate":
+        rows.append(rows[0])
+    elif mutation == "mechanism":
+        rows[0]["station_predeployment"] = True
+    else:
+        next(row for row in rows if row["reused_from"] is not None)["distance_km"] += 1.0
+    with pytest.raises(ValueError):
+        sensitivity_experiment.validate_rows(rows, args)
+
+
+@pytest.mark.parametrize("mutation", ["config", "source", "solution", "checkpoint"])
+def test_sensitivity_resume_rejects_mismatched_provenance(monkeypatch, tmp_path, mutation):
+    calls = _fake_sensitivity_solves(monkeypatch)
+    sensitivity_experiment.main(["--output-dir", str(tmp_path)])
+    args = ["--output-dir", str(tmp_path), "--resume"]
+    if mutation == "config":
+        args.extend(["--workers", "2"])
+    elif mutation == "source":
+        path = tmp_path / "manifest.json"
+        manifest = json.loads(path.read_text())
+        manifest["solver_source_sha256"] = "changed"
+        path.write_text(json.dumps(manifest))
+    elif mutation == "solution":
+        next(tmp_path.glob("**/run_solutions/*.json")).write_text("tampered")
+    else:
+        path = next((tmp_path / "checkpoints").glob("*.json"))
+        payload = json.loads(path.read_text())
+        payload["row"]["relay"] = not payload["row"]["relay"]
+        path.write_text(json.dumps(payload))
+    calls.clear()
+    with pytest.raises(ValueError):
+        sensitivity_experiment.main(args)
+    assert calls == []
+
 
 
 def _write_complete_scenario_shards(output_dir):

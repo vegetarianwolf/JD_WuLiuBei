@@ -111,6 +111,37 @@ EXPECTED_SENSITIVITY_LEVELS = {
     "deadline_multiplier": (0.8, 0.9, 1.0, 1.1, 1.2),
     "station_count": (2.0, 3.0, 4.0, 5.0, 6.0),
 }
+SENSITIVITY_SCENARIO_LABELS = {
+    "pure_direct": "Direct",
+    "direct_relay": "Direct+Relay",
+    "direct_stations": "Direct+Position",
+    "direct_relay_stations": "Direct+Position+Relay",
+}
+SENSITIVITY_TABLE_LABELS = {
+    "pure_direct": "D",
+    "direct_relay": "D+R",
+    "direct_stations": "D+P",
+    "direct_relay_stations": "D+P+R",
+}
+SENSITIVITY_PARAMETER_LABELS = {
+    "drone_count": "无人机数",
+    "deadline_multiplier": "截止倍率",
+    "station_count": "站点数",
+}
+
+
+def _sensitivity_parameters(scenario: str) -> tuple[str, ...]:
+    return SENSITIVITY_PARAMETERS[:2] if scenario == "pure_direct" else SENSITIVITY_PARAMETERS
+
+
+def _sensitivity_sort_key(row: Mapping[str, Any]) -> tuple[int, int, float]:
+    return (
+        SCENARIO_IDS.index(str(row["scenario"])),
+        SENSITIVITY_PARAMETERS.index(str(row["parameter"])),
+        float(row["level"]),
+    )
+
+
 EXPECTED_VIRTUAL_SIZES = (30, 60, 90)
 EXPECTED_VIRTUAL_SEEDS = tuple(range(2026082601, 2026082606))
 VIRTUAL_METHOD_IDS = (
@@ -1274,23 +1305,47 @@ def _validate_sensitivity(directory: Path) -> tuple[dict[str, Any], list[dict[st
             "bonus_seconds",
             "effective_seconds_per_run",
             "levels",
-            "scenario",
+            "schema_version",
+            "scenarios",
+            "solver_config",
+            "parameter_applicability",
         ),
         "敏感性manifest",
     )
-    if manifest["protocol"] != "combined_mode_one_factor_sensitivity" or manifest["formal"] is not True:
-        raise ArtefactError("敏感性结果不是正式 combined_mode_one_factor_sensitivity 协议")
+    if manifest["protocol"] != "four_strategy_one_factor_sensitivity" or manifest["formal"] is not True:
+        raise ArtefactError("敏感性结果不是正式 four_strategy_one_factor_sensitivity 协议")
+    if manifest["schema_version"] != 2:
+        raise ArtefactError("敏感性manifest.schema_version必须为2")
     if manifest["tasks"] != 200:
         raise ArtefactError("正式敏感性分析必须使用200项任务")
     _close(manifest["base_seconds"], 240.0, "敏感性基础预算")
-    _close(manifest["bonus_seconds"], 60.0, "敏感性Relay/Station加时")
+    _close(manifest["bonus_seconds"], 60.0, "敏感性统一预算补足量")
     if str(manifest["solver_source_sha256"]) != _solver_source_sha256():
         raise ArtefactError("敏感性manifest的求解器源码SHA-256与当前源码不一致")
     if int(manifest["seed"]) != EXPECTED_SCENARIO_SEEDS[0]:
         raise ArtefactError("正式敏感性分析的固定种子必须为2026081701")
-    scenario = _mapping(manifest["scenario"], "敏感性场景")
-    if scenario.get("id") != "direct_relay_stations":
-        raise ArtefactError("敏感性分析只能运行direct_relay_stations组合场景")
+    scenario_specs = _rows(manifest["scenarios"], "敏感性场景")
+    if len(scenario_specs) != 4 or {spec.get("id") for spec in scenario_specs} != set(SCENARIO_IDS):
+        raise ArtefactError("敏感性分析必须恰含四种策略")
+    configs = _mapping(manifest["solver_config"], "敏感性solver_config")
+    alns_configs = _mapping(configs.get("alns_by_scenario"), "敏感性ALNS场景配置")
+    if set(alns_configs) != set(SCENARIO_IDS):
+        raise ArtefactError("敏感性ALNS配置没有覆盖四种策略")
+    applicability = _mapping(manifest["parameter_applicability"], "敏感性参数适用性")
+    if applicability != {scenario: list(_sensitivity_parameters(scenario)) for scenario in SCENARIO_IDS}:
+        raise ArtefactError("敏感性参数适用性与四策略定义不一致")
+    if manifest.get("planned_rows") != 55 or manifest.get("planned_unique_solves") != 48:
+        raise ArtefactError("敏感性计划必须为55个单元格和48次唯一求解")
+    for spec in scenario_specs:
+        scenario_id = str(spec["id"])
+        expected = EXPECTED_SCENARIO_SPECS[scenario_id]
+        if spec.get("relay") is not expected["relay"] or spec.get("drone_homes") != expected["drone_homes"]:
+            raise ArtefactError(f"敏感性{scenario_id}机制定义错误")
+        _close(spec.get("warmup"), 0.8 if expected["relay"] else 0.0, f"敏感性{scenario_id}.warmup")
+        config = _mapping(alns_configs[scenario_id], f"敏感性{scenario_id}ALNS配置")
+        _close(config.get("relay_direct_warmup_fraction"), 0.8 if expected["relay"] else 0.0, f"敏感性{scenario_id}ALNS预热比例")
+        if config.get("scenario_relay") is not expected["relay"]:
+            raise ArtefactError(f"敏感性{scenario_id}ALNS机制配置错误")
     _close(manifest["effective_seconds_per_run"], 300.0, "敏感性每次名义预算")
     levels = _mapping(manifest["levels"], "敏感性水平")
     if set(levels) != set(SENSITIVITY_PARAMETERS):
@@ -1302,7 +1357,7 @@ def _validate_sensitivity(directory: Path) -> tuple[dict[str, Any], list[dict[st
         actual_levels = tuple(float(value) for value in parameter_levels)
         if actual_levels != EXPECTED_SENSITIVITY_LEVELS[parameter]:
             raise ArtefactError(f"敏感性参数{parameter}的五档水平与最终协议不一致")
-    expected_count = sum(len(levels[name]) for name in SENSITIVITY_PARAMETERS)
+    expected_count = sum(len(levels[name]) for scenario_id in SCENARIO_IDS for name in _sensitivity_parameters(scenario_id))
     if len(rows) != expected_count:
         raise ArtefactError(f"敏感性结果应为{expected_count}条，实际为{len(rows)}条")
     required = (
@@ -1328,19 +1383,29 @@ def _validate_sensitivity(directory: Path) -> tuple[dict[str, Any], list[dict[st
         "deadline_multiplier",
         "requested_station_count",
         "cell_output_dir",
+        "cell_id",
+        "run_id",
+        "reused_from",
+        "relay",
+        "station_predeployment",
     )
     enriched: list[dict[str, Any]] = []
-    seen: set[tuple[str, float]] = set()
+    seen: set[tuple[str, str, float]] = set()
     for index, source_row in enumerate(rows):
         row = dict(source_row)
         label = f"敏感性runs[{index}]"
         _require_keys(row, required, label)
-        if row["scenario"] != "direct_relay_stations" or int(row["seed"]) != int(manifest["seed"]):
-            raise ArtefactError(f"{label}不是组合场景固定种子运行")
+        scenario_id = str(row["scenario"])
+        if scenario_id not in SCENARIO_IDS or int(row["seed"]) != int(manifest["seed"]):
+            raise ArtefactError(f"{label}不是正式四策略固定种子运行")
+        expected_spec = EXPECTED_SCENARIO_SPECS[scenario_id]
+        expected_station = expected_spec["drone_homes"] == "stations"
+        if row["relay"] is not expected_spec["relay"] or row["station_predeployment"] is not expected_station:
+            raise ArtefactError(f"{label}机制开关与策略不一致")
         parameter = str(row["parameter"])
-        if parameter not in SENSITIVITY_PARAMETERS:
-            raise ArtefactError(f"{label}.parameter未知：{parameter}")
-        cell = (parameter, float(row["level"]))
+        if parameter not in _sensitivity_parameters(scenario_id):
+            raise ArtefactError(f"{label}.parameter不适用于{scenario_id}：{parameter}")
+        cell = (scenario_id, parameter, float(row["level"]))
         if cell in seen:
             raise ArtefactError(f"敏感性单元格重复：{cell}")
         seen.add(cell)
@@ -1350,6 +1415,8 @@ def _validate_sensitivity(directory: Path) -> tuple[dict[str, Any], list[dict[st
             "deadline_multiplier": (8, float(row["level"]), 4),
             "station_count": (8, 1.0, int(float(row["level"]))),
         }[parameter]
+        if scenario_id == "pure_direct":
+            expected_design = (*expected_design[:2], 0)
         if int(row["drone_count"]) != expected_design[0]:
             raise ArtefactError(f"{label}.drone_count没有遵循单因素基准")
         if not math.isclose(float(row["deadline_multiplier"]), expected_design[1], rel_tol=0.0, abs_tol=1e-12):
@@ -1368,12 +1435,17 @@ def _validate_sensitivity(directory: Path) -> tuple[dict[str, Any], list[dict[st
             or int(problem["max_tasks_per_drone"]) != 25
         ):
             raise ArtefactError(f"{label}解文件规模与敏感性行不一致")
-        if all(str(home) == "origin" for home in problem["drone_homes"]):
-            raise ArtefactError(f"{label}组合场景没有任何异地home")
+        homes = [str(home) for home in problem["drone_homes"]]
+        if expected_station and all(home == "origin" for home in homes):
+            raise ArtefactError(f"{label}预部署策略没有任何异地home")
+        if not expected_station and any(home != "origin" for home in homes):
+            raise ArtefactError(f"{label}原点策略出现异地home")
         if int(relay_payload["relay_count"]) != int(row["requested_station_count"]):
             raise ArtefactError(f"{label}请求站点数与解文件实际站点数不一致")
         if int(row["station_count"]) != int(row["requested_station_count"]):
             raise ArtefactError(f"{label}.station_count与requested_station_count不一致")
+        if not expected_spec["relay"] and (int(row["relay_task_count"]) or int(row["cross_uav_handoff_count"]) or float(row["total_relay_waiting_min"])):
+            raise ArtefactError(f"{label}未启用Relay却记录接力使用")
         if int(relay_payload["relay_task_count"]) != int(row["relay_task_count"]):
             raise ArtefactError(f"{label}.relay_task_count与解文件不一致")
         if int(relay_payload["cross_uav_handoff_count"]) != int(row["cross_uav_handoff_count"]):
@@ -1397,12 +1469,42 @@ def _validate_sensitivity(directory: Path) -> tuple[dict[str, Any], list[dict[st
         row["_solution"] = solution
         enriched.append(row)
     expected_cells = {
-        (parameter, level)
-        for parameter, parameter_levels in EXPECTED_SENSITIVITY_LEVELS.items()
-        for level in parameter_levels
+        (scenario_id, parameter, level)
+        for scenario_id in SCENARIO_IDS
+        for parameter in _sensitivity_parameters(scenario_id)
+        for level in EXPECTED_SENSITIVITY_LEVELS[parameter]
     }
     if seen != expected_cells:
-        raise ArtefactError("敏感性runs没有完整覆盖最终三参数各五档")
+        raise ArtefactError("敏感性runs没有完整覆盖四策略全部适用参数的五档水平")
+    by_cell_id = {str(row["cell_id"]): row for row in enriched}
+    if len(by_cell_id) != len(enriched):
+        raise ArtefactError("敏感性cell_id存在重复")
+    unique_runs: dict[str, dict[str, Any]] = {}
+    for row in enriched:
+        run_id = str(row["run_id"])
+        if row["reused_from"]:
+            canonical = by_cell_id.get(str(row["reused_from"]))
+            if canonical is None or canonical["reused_from"] or canonical["run_id"] != run_id:
+                raise ArtefactError("敏感性基准复用必须指向同一次实际求解的原始单元格")
+            shared_fields = (
+                "scenario", "seed", "drone_count", "deadline_multiplier", "requested_station_count",
+                "cell_output_dir", "solution_file", "solution_sha256", "late_count",
+                "total_lateness_min", "distance_km", "wall_seconds", "operator_statistics",
+            )
+            if any(row[key] != canonical[key] for key in shared_fields):
+                raise ArtefactError("敏感性跨轴基准复用的解文件或结果不一致")
+        else:
+            if run_id in unique_runs:
+                raise ArtefactError("敏感性相同run_id被作为多个独立求解")
+            unique_runs[run_id] = row
+    if len(unique_runs) != 48:
+        raise ArtefactError("敏感性55个单元格应对应48次唯一求解")
+    for scenario_id in SCENARIO_IDS:
+        baseline = [row for row in enriched if row["scenario"] == scenario_id
+                    and int(row["drone_count"]) == 8 and float(row["deadline_multiplier"]) == 1.0
+                    and int(row["requested_station_count"]) == (0 if scenario_id == "pure_direct" else 4)]
+        if len({row["run_id"] for row in baseline}) != 1:
+            raise ArtefactError(f"敏感性{scenario_id}的跨轴基准没有复用同一次求解")
     return manifest, enriched
 
 
@@ -2178,13 +2280,18 @@ def _sensitivity_groups(rows: Sequence[dict[str, Any]]) -> dict[str, list[dict[s
     return {
         parameter: sorted(
             (row for row in rows if row["parameter"] == parameter),
-            key=lambda row: float(row["level"]),
+            key=_sensitivity_sort_key,
         )
         for parameter in SENSITIVITY_PARAMETERS
     }
 
 
 def _sensitivity_finding(parameter: str, rows: Sequence[dict[str, Any]]) -> str:
+    scenarios = {str(row["scenario"]) for row in rows}
+    if len(scenarios) != 1:
+        raise ValueError("单策略敏感性结论不得混合策略")
+    scenario = next(iter(scenarios))
+    rows = sorted(rows, key=lambda row: float(row["level"]))
     best = min(rows, key=_score)
     first, last = rows[0], rows[-1]
     label = {
@@ -2192,14 +2299,50 @@ def _sensitivity_finding(parameter: str, rows: Sequence[dict[str, Any]]) -> str:
         "deadline_multiplier": "截止期倍率",
         "station_count": "中继站数量",
     }[parameter]
+    trend = (
+        "相邻档位的三层得分并非单调改善，增加该参数不能保证更优观测解。"
+        if any(_score(current) > _score(previous) for previous, current in zip(rows, rows[1:]))
+        else "各相邻档位的观测三层得分未变差。"
+    )
+    mechanism = ""
+    if EXPECTED_SCENARIO_SPECS[scenario]["relay"]:
+        zero_levels = [_fmt(row["level"]) for row in rows if not int(row["relay_task_count"])]
+        mechanism = (
+            f"该轴Relay任务数为{min(int(row['relay_task_count']) for row in rows)}—"
+            f"{max(int(row['relay_task_count']) for row in rows)}，真实跨机交接数为"
+            f"{min(int(row['cross_uav_handoff_count']) for row in rows)}—"
+            f"{max(int(row['cross_uav_handoff_count']) for row in rows)}。"
+        )
+        if zero_levels:
+            mechanism += f"其中{'、'.join(zero_levels)}档未采用接力，不能把这些档位的结果差异归因于实际接力。"
     return (
-        f"在本次单种子、单因素取值范围内，{label}的字典序最优观测点为"
+        f"{SENSITIVITY_SCENARIO_LABELS[scenario]}：在本次单种子、单因素范围内，{label}的字典序最优观测点为"
         f"{_fmt(best['level'])}，得分为{_fmt_score(best)}。从最低水平到最高水平，"
         f"逾期任务数由{int(first['late_count'])}变为{int(last['late_count'])}，"
         f"总逾期由{float(first['total_lateness_min']):.2f} min变为"
         f"{float(last['total_lateness_min']):.2f} min，航程由"
         f"{float(first['distance_km']):.2f} km变为{float(last['distance_km']):.2f} km。"
+        + trend + mechanism +
         "该比较只描述本固定种子下的方向，不作显著性推断。"
+    )
+
+
+def _sensitivity_comparison(parameter: str, rows: Sequence[dict[str, Any]]) -> str:
+    """Compare strategies only at matched levels within the common budget."""
+    by_level: dict[float, list[dict[str, Any]]] = defaultdict(list)
+    for row in rows:
+        by_level[float(row["level"])].append(row)
+    winners = []
+    for level, selected in sorted(by_level.items()):
+        best_score = min(_score(row) for row in selected)
+        tied = [SENSITIVITY_TABLE_LABELS[row["scenario"]] for row in selected if _score(row) == best_score]
+        winners.append(f"{_fmt(level)}档：{'、'.join(tied)}")
+    comparator = "三个使用站点的策略" if parameter == "station_count" else "四种策略"
+    return (
+        f"在相同水平和300 s名义预算下，{comparator}中最低观测三层得分对应的策略为："
+        + "；".join(winners)
+        + "（并列时全部列示）。这是同一实例、同一种子的描述性比较，"
+        "尚不能证明策略排名对其他随机流、机器负载或需求分布保持稳定。"
     )
 
 
@@ -2881,97 +3024,109 @@ def write_chapter_six(writer: ManuscriptWriter, bundle: Bundle) -> None:
         "图6-2 四场景固定种子2026081701的路线布局（图题列示累计模块预算）",
     )
 
-    writer.heading("6.2 组合场景敏感性分析", 2)
+    writer.heading("6.2 四策略敏感性分析", 2)
     sens_manifest = bundle.sensitivity_manifest
     writer.paragraph(
-        f"敏感性分析固定使用direct_relay_stations和种子{sens_manifest['seed']}，"
-        f"每次名义预算{_fmt(sens_manifest['effective_seconds_per_run'])} s。"
-        "每次只改变一个参数，其余参数回到组合场景基准值；三个参数各有5个"
-        "水平。由于每个水平只有一次运行，本节只讨论观察趋势，不提供误差线或"
-        "统计显著性。"
-    )
-    design_rows: list[list[Any]] = []
-    for row in sorted(
-        bundle.sensitivity_rows,
-        key=lambda item: (SENSITIVITY_PARAMETERS.index(item["parameter"]), float(item["level"])),
-    ):
-        design_rows.append(
-            [
-                row["parameter"],
-                _fmt(row["level"]),
-                row["drone_count"],
-                _fmt(row["deadline_multiplier"]),
-                row["requested_station_count"],
-                row["seed"],
-                _fmt(row["effective_time_limit_seconds"]),
-                "其余参数取基准值",
-            ]
-        )
-    writer.table(
-        "表6-5 敏感性实验设计",
-        ("参数", "水平", "无人机", "截止期倍率", "中继站", "种子", "预算/s", "控制"),
-        design_rows,
-        ratios=(1.25, 0.75, 0.7, 0.95, 0.7, 1.05, 0.75, 1.35),
-        font_size=7.0,
+        f"敏感性分析覆盖Direct、Direct+Relay、Direct+Position和Direct+Position+Relay，"
+        f"固定使用种子{sens_manifest['seed']}，各策略每次名义总预算均为"
+        f"{_fmt(sens_manifest['effective_seconds_per_run'])} s。每次只改变一个参数，"
+        "其余参数保持本策略基准值。无人机数和截止期倍率均对四策略设置5档；"
+        "站点数只对使用站点的三策略设置5档。Pure Direct既无接力也无异地预部署，"
+        "站点数不适用，实际站数保持0，不能把重复的无效站数变化当作敏感性证据。"
     )
     writer.paragraph(
-        "三个单因素轴都独立包含基准组合（8架无人机、截止期倍率1.0、4个站点），"
-        "不跨轴复用已求得的基准解。固定seed用于控制随机流，但墙钟终止会使实际"
-        "迭代数受运行速度影响，因此三个基准点不作为独立重复合并，也不要求逐位"
-        "相同；每条曲线只使用本参数轴内部的五次运行。"
+        "表中D表示Direct，R表示Relay，P表示Position预部署。Pure Direct有10个"
+        "参数水平单元格，其余策略各15个，共55个。基准为8架无人机、截止期倍率1.0，"
+        "三种使用站点的策略固定4站。同一策略的各参数轴复用同一次基准求解，"
+        "共48次唯一求解；复用行具有相同run_id、解文件和SHA-256，不能视为额外重复样本。"
+        "每个策略与水平仍只有一个种子，本节不提供误差线或显著性推断。"
+    )
+    writer.table(
+        "表6-5 四策略敏感性实验设计",
+        ("策略", "无人机数", "截止期倍率", "站点数", "基准站数", "结果行/唯一求解"),
+        [
+            [SENSITIVITY_TABLE_LABELS[scenario], "8/9/10/12/16", "0.8/0.9/1.0/1.1/1.2",
+             "不适用" if scenario == "pure_direct" else "2/3/4/5/6",
+             0 if scenario == "pure_direct" else 4,
+             "10/9" if scenario == "pure_direct" else "15/13"]
+            for scenario in SCENARIO_IDS
+        ],
+        ratios=(0.7, 1.35, 1.85, 1.0, 0.7, 1.1),
+        font_size=7.5,
+    )
+    writer.paragraph(
+        "该300 s协议独立于第6.1节的240/480/480/720 s模块累计预算，不能把两节"
+        "的同名策略结果混用。两个Relay策略均按0.8的Direct预热比例分配搜索阶段，"
+        "非Relay策略全程执行Direct搜索。构造时间和安全余量从总预算中扣除。"
+        f"本批次并发工作进程数为{sens_manifest.get('workers', 1)}，实际墙钟与迭代数详见原始结果；"
+        "固定种子控制随机流，但墙钟终止与并发负载仍可能改变迭代数，不保证逐位复现。"
     )
 
     sensitivity_sections = (
-        ("drone_count", "6.2.1 无人机数量", "无人机数", "fig6_3_drone_count_sensitivity.png", "图6-3 无人机数量敏感性"),
-        ("deadline_multiplier", "6.2.2 最晚送达时间紧度", "截止期倍率", "fig6_3_deadline_multiplier_sensitivity.png", "图6-4 截止期紧度敏感性"),
-        ("station_count", "6.2.3 中继站数量", "中继站数", "fig6_3_station_count_sensitivity.png", "图6-5 中继站数量敏感性"),
+        ("drone_count", "6.2.1 无人机数量", "无人机数", "fig6_3_drone_count_sensitivity.png", "图6-3 四策略无人机数量敏感性"),
+        ("deadline_multiplier", "6.2.2 最晚送达时间紧度", "截止期倍率", "fig6_3_deadline_multiplier_sensitivity.png", "图6-4 四策略截止期紧度敏感性"),
+        ("station_count", "6.2.3 站点数量", "站点数", "fig6_3_station_count_sensitivity.png", "图6-5 三策略站点数量敏感性"),
     )
     for table_index, (parameter, heading, level_label, filename, caption) in enumerate(sensitivity_sections, start=6):
         selected = sensitivity_groups[parameter]
         writer.heading(heading, 3)
+        if parameter == "station_count":
+            writer.paragraph(
+                "站点变化的作用通道随策略不同：Direct+Relay只改变接力候选网络，"
+                "Direct+Position只改变预部署候选起点，组合策略同时改变两者。"
+                "各档采用相同weighted_kmedoids方法和选址种子42；站数增加也会"
+                "重新计算站点位置，因此本实验评估的是站点配置整体变化。Pure Direct不适用此轴。"
+            )
         writer.table(
             f"表6-{table_index} {level_label}单因素结果",
-            (level_label, "逾期数", "总逾期/min", "航程/km", "Relay任务", "跨机交接", "等待/min", "首段空飞/km", "有效"),
+            ("策略", level_label, "逾期数", "总逾期/min", "航程/km", "Relay任务", "跨机交接", "等待/min", "首段空飞/km"),
             [
                 [
-                    _fmt(row["level"]),
-                    row["late_count"],
-                    f"{float(row['total_lateness_min']):.2f}",
-                    f"{float(row['distance_km']):.2f}",
-                    row["relay_task_count"],
-                    row["cross_uav_handoff_count"],
-                    f"{float(row['total_relay_waiting_min']):.2f}",
+                    SENSITIVITY_TABLE_LABELS[row["scenario"]], _fmt(row["level"]),
+                    row["late_count"], f"{float(row['total_lateness_min']):.2f}",
+                    f"{float(row['distance_km']):.2f}", row["relay_task_count"],
+                    row["cross_uav_handoff_count"], f"{float(row['total_relay_waiting_min']):.2f}",
                     f"{float(row['deadhead_km']):.2f}",
-                    "是" if row["_solution"]["valid"] else "否",
                 ]
                 for row in selected
             ],
-            ratios=(0.85, 0.65, 0.9, 0.9, 0.75, 0.75, 0.75, 0.8, 0.55),
+            ratios=(0.75, 0.65, 0.6, 0.85, 0.85, 0.75, 0.75, 0.75, 0.85),
             font_size=7.1,
         )
-        writer.paragraph(_sensitivity_finding(parameter, selected))
+        for scenario in SCENARIO_IDS:
+            strategy_rows = [row for row in selected if row["scenario"] == scenario]
+            if strategy_rows:
+                writer.paragraph(_sensitivity_finding(parameter, strategy_rows))
+        writer.paragraph(_sensitivity_comparison(parameter, selected))
         writer.figure(filename, caption)
 
     writer.heading("6.3 管理启示", 2)
-    best_drone = min(sensitivity_groups["drone_count"], key=_score)
-    best_station = min(sensitivity_groups["station_count"], key=_score)
-    deadline_low = sensitivity_groups["deadline_multiplier"][0]
-    deadline_high = sensitivity_groups["deadline_multiplier"][-1]
+    fleet_findings = []
+    station_findings = []
+    deadline_findings = []
+    for scenario in SCENARIO_IDS:
+        short = SENSITIVITY_TABLE_LABELS[scenario]
+        drone_rows = [row for row in sensitivity_groups["drone_count"] if row["scenario"] == scenario]
+        best_drone = min(drone_rows, key=_score)
+        fleet_findings.append(f"{short}为{_fmt(best_drone['level'])}架")
+        deadline_rows = [row for row in sensitivity_groups["deadline_multiplier"] if row["scenario"] == scenario]
+        low, high = deadline_rows[0], deadline_rows[-1]
+        deadline_findings.append(f"{short}的逾期数由{low['late_count']}变为{high['late_count']}")
+        station_rows = [row for row in sensitivity_groups["station_count"] if row["scenario"] == scenario]
+        if station_rows:
+            best_station = min(station_rows, key=_score)
+            station_findings.append(f"{short}为{_fmt(best_station['level'])}站")
     writer.paragraph(
-        f"第一，本固定种子下，无人机数量为{_fmt(best_drone['level'])}时取得最低"
-        f"观测三层得分{_fmt_score(best_drone)}。该结果仅提示应先检查增加运力后"
-        "逾期数是否仍下降，再比较里程，并不构成最优机队规模的统计估计。"
+        "第一，表6-6中的字典序最优观测机队规模分别是：" + "；".join(fleet_findings)
+        + "。增配运力应先比较逾期数，再比较总逾期与航程；单种子观测不能估计稳定的最优机队规模。"
     )
     writer.paragraph(
-        f"第二，本次站数轴以{_fmt(best_station['level'])}站取得最低观测得分"
-        f"{_fmt_score(best_station)}。站数同时改变接力候选网与预部署起点，故需"
-        "结合Relay任务、跨机交接、等待和首段调位，不能单归因于接力覆盖。"
+        "第二，表6-8中的字典序最优观测站数分别是：" + "；".join(station_findings)
+        + "。站点配置需结合跨机交接、等待与首段空飞评价；各策略的观测得分均非单调改善，Pure Direct不提供选站依据。"
     )
     writer.paragraph(
-        f"第三，截止期倍率由{_fmt(deadline_low['level'])}提高到"
-        f"{_fmt(deadline_high['level'])}时，逾期数由{deadline_low['late_count']}"
-        f"降至{deadline_high['late_count']}。解释Relay作用还须确认Relay任务和"
-        "跨机交接均非零，不能只由总得分反推机制使用。"
+        "第三，表6-7中截止期倍率由0.8提高到1.2时，" + "；".join(deadline_findings)
+        + "。时限放宽会改变服务压力，Relay贡献还须由接力任务与真实跨机交接支持。"
     )
 
 
@@ -3016,7 +3171,9 @@ def write_chapter_seven(writer: ManuscriptWriter, bundle: Bundle) -> None:
         f"{best_summary['mean_total_lateness_min']:.2f}, "
         f"{best_summary['mean_distance_km']:.2f})；相对纯Direct的配对结果为"
         + "；".join(outcome_summary)
-        + "。敏感性分析只支持单种子下的方向性解释，完整水平和结果见表6-6至表6-8。"
+        + "。第6.2节以统一300 s预算补全四策略的55个适用参数水平单元格（48次唯一求解），"
+        "覆盖运力、时限和站点配置。敏感性分析只支持单种子下的方向性解释，"
+        "完整水平和结果见表6-6至表6-8。"
     )
 
     writer.heading("7.2 理论与实践贡献", 2)
@@ -3036,7 +3193,7 @@ def write_chapter_seven(writer: ManuscriptWriter, bundle: Bundle) -> None:
         "固定中继站允许等待与缓存，但未设置最大缓存时长、库存容量、服务容量或并发队列；",
         "第6.1节采用差异化预算，机制收益与额外计算时间不能完全分离；",
         "第6.1节只有一个200任务实例和3个种子，不能代表更广泛需求分布；",
-        "第6.2节每个参数水平只有一个种子，单因素设计不能识别参数交互；",
+        "第6.2节虽覆盖四策略并统一总预算，但每个参数水平只有一个种子，单因素设计不能识别参数交互，墙钟终止还受并发负载影响；",
         "首段空飞与最近home分配率只是局部代理指标，不能替代完整运营成本；",
         "精确动态规划仅支持单机、DIRECT、公共原点的小规模验证，不能证明大规模或扩展场景全局最优。",
     )
@@ -3045,7 +3202,7 @@ def write_chapter_seven(writer: ManuscriptWriter, bundle: Bundle) -> None:
 
     writer.heading("7.4 后续研究", 2)
     future = (
-        "补充相同总墙钟下的纯机制比较，并与当前最终预算协议并列报告；",
+        "将第6.2节相同名义总预算下的策略比较扩展至多种子与多实例，并与第6.1节累计模块预算并列报告；",
         "为敏感性实验增加多种子、置信区间和预先规定的统计比较；",
         "引入随机飞行时间、电池、充换电和空域冲突约束；",
         "联合优化中继站选址与无人机预部署，而非在搜索前固定；",
@@ -3270,6 +3427,11 @@ def write_appendix_b(writer: ManuscriptWriter, bundle: Bundle) -> None:
         ("第5章种子", benchmark_manifest["seed"]),
         ("敏感性生成时间UTC", sensitivity_manifest["created_at_utc"]),
         ("敏感性固定种子", sensitivity_manifest["seed"]),
+        ("敏感性协议", sensitivity_manifest["protocol"]),
+        ("敏感性适用性", "四策略扫描运力与截止期；站点数仅适用D+R、D+P、D+P+R，Pure Direct不适用"),
+        ("敏感性结果行/唯一求解", "55/48；同一策略跨轴基准复用同一解文件"),
+        ("敏感性并发工作进程数", sensitivity_manifest.get("workers", 1)),
+        ("敏感性Relay预热比例", "D+R与D+P+R均为0.8"),
         (
             "第6.1节预算协议",
             "pure_direct=240 s；direct_relay=480 s；direct_stations=480 s；"
@@ -3463,7 +3625,7 @@ def write_appendix_b(writer: ManuscriptWriter, bundle: Bundle) -> None:
                     f"{mean_weight:.4f}",
                 ]
             )
-        writer.table(
+        operator_table = writer.table(
             f"表B-5{suffix} {scenario}三种子算子汇总",
             (
                 "类型",
@@ -3480,71 +3642,94 @@ def write_appendix_b(writer: ManuscriptWriter, bundle: Bundle) -> None:
             ratios=(0.65, 1.35, 0.65, 0.65, 0.8, 0.8, 0.8, 0.75, 0.9),
             font_size=7.3,
         )
+        # Explicit borders and physical margins also work in headless Writer,
+        # which can misplace centred short numeric cells inherited from Word.
+        borders = OxmlElement("w:tblBorders")
+        for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+            border = OxmlElement(f"w:{side}")
+            border.set(qn("w:val"), "single")
+            border.set(qn("w:sz"), "4")
+            border.set(qn("w:color"), "D9D9D9")
+            borders.append(border)
+        operator_table._tbl.tblPr.append(borders)
+        for table_row in operator_table.rows[1:]:
+            for cell in table_row.cells[2:]:
+                for paragraph in cell.paragraphs:
+                    paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                margins = cell._tc.get_or_add_tcPr().find(qn("w:tcMar"))
+                for side in ("left", "right"):
+                    margin = OxmlElement(f"w:{side}")
+                    margin.set(qn("w:w"), "120")
+                    margin.set(qn("w:type"), "dxa")
+                    margins.append(margin)
 
     writer.heading("B.6 敏感性逐水平完整结果", 2)
-    sensitivity_rows = sorted(
-        bundle.sensitivity_rows,
-        key=lambda row: (SENSITIVITY_PARAMETERS.index(row["parameter"]), float(row["level"])),
+    sensitivity_rows = sorted(bundle.sensitivity_rows, key=_sensitivity_sort_key)
+    writer.paragraph(
+        "D、R、P分别表示Direct、Relay、Position；参数按策略和水平排序。"
+        "55行中有7行复用同策略基准，共48个唯一解文件。每行种子均为2026081701，"
+        "名义总预算均为300 s；Pure Direct的站数为0，站数敏感性不适用。"
     )
     writer.table(
         "表B-6a 敏感性逐水平实验设计",
-        ("参数", "水平", "种子", "无人机", "截止倍率", "请求站点"),
+        ("策略", "参数", "水平", "无人机", "截止倍率", "请求站点", "基准复用"),
         [
             [
-                row["parameter"], _fmt(row["level"]), row["seed"], row["drone_count"],
-                _fmt(row["deadline_multiplier"]), row["requested_station_count"],
+                SENSITIVITY_TABLE_LABELS[row["scenario"]], SENSITIVITY_PARAMETER_LABELS[row["parameter"]],
+                _fmt(row["level"]), row["drone_count"], _fmt(row["deadline_multiplier"]),
+                row["requested_station_count"], "是" if row["reused_from"] else "否",
             ]
             for row in sensitivity_rows
         ],
-        ratios=(1.3, 0.7, 1.0, 0.75, 0.9, 0.85),
+        ratios=(0.85, 1.0, 0.65, 0.75, 0.9, 0.85, 0.85),
         font_size=7.5,
     )
     writer.table(
         "表B-6b 敏感性逐水平解质量",
-        ("参数", "水平", "逾期", "总逾期/min", "航程/km", "有效"),
+        ("策略", "参数", "水平", "逾期", "总逾期/min", "航程/km", "有效"),
         [
             [
-                row["parameter"], _fmt(row["level"]), row["late_count"],
-                f"{float(row['total_lateness_min']):.3f}",
-                f"{float(row['distance_km']):.3f}",
-                "是" if row["_solution"]["valid"] else "否",
+                SENSITIVITY_TABLE_LABELS[row["scenario"]], SENSITIVITY_PARAMETER_LABELS[row["parameter"]],
+                _fmt(row["level"]), row["late_count"], f"{float(row['total_lateness_min']):.3f}",
+                f"{float(row['distance_km']):.3f}", "是" if row["_solution"]["valid"] else "否",
             ]
             for row in sensitivity_rows
         ],
-        ratios=(1.3, 0.7, 0.7, 1.0, 1.0, 0.65),
+        ratios=(0.85, 1.0, 0.65, 0.7, 1.0, 1.0, 0.65),
         font_size=7.5,
     )
     writer.table(
         "表B-6c 敏感性逐水平机制与效率",
-        ("参数", "水平", "实际站点", "Relay任务", "跨机", "等待/min", "首段空飞/km", "墙钟/s"),
+        ("策略", "参数", "水平", "站点", "Relay任务", "跨机", "等待/min", "首段空飞/km", "墙钟/s"),
         [
             [
-                row["parameter"], _fmt(row["level"]), row["station_count"],
-                row["relay_task_count"], row["cross_uav_handoff_count"],
-                f"{float(row['total_relay_waiting_min']):.3f}",
+                SENSITIVITY_TABLE_LABELS[row["scenario"]], SENSITIVITY_PARAMETER_LABELS[row["parameter"]],
+                _fmt(row["level"]), row["station_count"], row["relay_task_count"],
+                row["cross_uav_handoff_count"], f"{float(row['total_relay_waiting_min']):.3f}",
                 f"{float(row['deadhead_km']):.3f}", f"{float(row['wall_seconds']):.3f}",
             ]
             for row in sensitivity_rows
         ],
-        ratios=(1.25, 0.65, 0.8, 0.8, 0.65, 0.85, 0.95, 0.8),
+        ratios=(0.8, 0.9, 0.6, 0.6, 0.8, 0.6, 0.85, 0.95, 0.8),
         font_size=7.5,
     )
     writer.table(
         "表B-6d 敏感性逐水平解文件审计",
-        ("参数", "水平", "解文件SHA-256"),
+        ("策略", "参数", "水平", "基准复用", "解文件SHA-256"),
         [
             [
-                row["parameter"], _fmt(row["level"]),
+                SENSITIVITY_TABLE_LABELS[row["scenario"]], SENSITIVITY_PARAMETER_LABELS[row["parameter"]],
+                _fmt(row["level"]), "是" if row["reused_from"] else "否",
                 _soft_wrap_hash(row["solution_sha256"]),
             ]
             for row in sensitivity_rows
         ],
-        ratios=(1.2, 0.7, 4.1),
+        ratios=(0.8, 0.9, 0.6, 0.7, 3.0),
         font_size=7.5,
     )
     writer.paragraph(
-        "表B-6a至表B-6d中每个水平对应一个正式解文件，均记录运行时的valid与"
-        "violations审计结果。"
+        "表B-6a至表B-6d中每个策略与水平都链接到通过valid与violations审计的正式解文件，"
+        "其中同策略各轴基准链接至同一文件。cell_id、run_id、reused_from、完整路径、"
         "三层得分、机制计数、墙钟时间和solution_sha256均保留在原始JSON中；"
         "图6-3至图6-5只从这些正式行生成。"
     )
@@ -3553,7 +3738,7 @@ def write_appendix_b(writer: ManuscriptWriter, bundle: Bundle) -> None:
     total_solutions = (
         len(bundle.benchmark_solutions)
         + len(bundle.scenario_rows)
-        + len(bundle.sensitivity_rows)
+        + len({row["run_id"] for row in bundle.sensitivity_rows})
     )
     writer.paragraph(
         f"终稿生成前共读取并审计{total_solutions}个已序列化正式解文件。"

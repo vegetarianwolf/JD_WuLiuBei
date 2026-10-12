@@ -47,7 +47,8 @@ experiments/
 ├── run_benchmarks.py             第5章精确/多规模实验
 ├── run_virtual_ablation.py       第5.5节虚拟算法对比与组件消融
 ├── run_scenario_comparison.py    第6.1节四场景×三种子实验
-├── run_sensitivity_analysis.py   第6.2节三参数单因素灵敏度
+├── run_sensitivity_analysis.py   第6.2节四策略单因素灵敏度
+├── audit_sensitivity_results.py  独立完整评价器复核敏感性结果
 └── final_plot_style.py           论文结果图公共样式
 ```
 
@@ -106,15 +107,37 @@ PYTHONPATH=algorithm/src python -m \
   algorithm.experiments.run_scenario_comparison
 ```
 
-第 6.2 节只运行 `direct_relay_stations`，采用独立的 300 s 单次总预算，
-固定一个种子，并分别扫描无人机数
-`8/9/10/12/16`、截止期倍率 `0.8/0.9/1.0/1.1/1.2`、中继站数
-`2/3/4/5/6`：
+第 6.2 节覆盖上述四种策略，统一采用独立的 300 s 单次总预算，固定种子
+`2026081701`，扫描无人机数 `8/9/10/12/16` 和截止期倍率
+`0.8/0.9/1.0/1.1/1.2`；使用站点的三个策略另扫描站点数 `2/3/4/5/6`。
+`pure_direct` 没有 Relay 或预部署，站点数敏感性不适用，实际站数为 0。
+Pure Direct 共 10 行，其余策略各 15 行，共 55 个参数水平单元格。同一策略
+各轴复用同一基准解，实际求解 48 次。两个 Relay 策略的 Direct 预热比例均为
+0.8；基准为 8 架无人机、截止期倍率 1.0，使用站点时为 4 站。
 
 ```bash
 PYTHONPATH=algorithm/src python -m \
-  algorithm.experiments.run_sensitivity_analysis
+  algorithm.experiments.run_sensitivity_analysis \
+  --output-dir algorithm/results/sensitivity_rerun --workers 8
 ```
+
+仓库中的 `final_sensitivity/` 为已完成的正式产物，重跑须指定新的空目录。
+可用 `--workers N` 并发求解；断点续跑时保持同一输出目录、并发数与其他配置，
+增加 `--resume`，从通过协议与哈希检查的检查点继续。
+manifest 记录并发数、各策略求解配置、参数适用性与计划数量；每行的
+`cell_id`、`run_id`、`reused_from` 和解文件 SHA-256 区分结果单元格、实际求解
+与基准复用。300 s 为包含构造的名义总预算；墙钟终止受并发负载影响，固定
+种子不保证逐位复现。这一单实例、单种子单因素设计不估计统计显著性或交互效应。
+
+完成后，从官方 CSV 重建问题，用独立完整评价器重新计算全部唯一解：
+
+```bash
+PYTHONPATH=algorithm/src python -m \
+  algorithm.experiments.audit_sensitivity_results algorithm/results/sensitivity_rerun
+```
+
+审计写入 `validation.json`。正文生成器另外核对 55 行覆盖、48 次唯一求解、
+策略开关、单因素控制、基准复用、解文件哈希与图像来源。
 
 四个入口均支持 `--quick` 冒烟模式。正式输出会保存 manifest、输入/源码
 指纹、CSV/JSON 汇总及逐运行完整路线；`--quick` 结果明确标记为非正式，
