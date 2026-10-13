@@ -1,0 +1,376 @@
+{
+  "manifest": {
+    "generated_at": "2026-08-15T02:44:38.414280+00:00",
+    "input": "D:\\uav_project\\algorithm\\命题1-低空经济场景下的物流无人机调度算法数据.csv",
+    "input_sha256": "386d3fbaa9009aeed947493782d657ed0b30b25d369c8187bfc9619fc7e31d25",
+    "wall_time_limit": 30.0,
+    "wall_safety_margin": 1.0,
+    "wall_seed_count": 3,
+    "seed_base": 2026080500,
+    "candidate_limit": 48,
+    "relay_count": 4,
+    "relay_candidates_per_task": 2,
+    "relay_direct_warmup_fraction": 0.6,
+    "relay_detour_ratio": 2.0,
+    "relay_plan_beam": 6,
+    "relay_leg_beam": 8,
+    "relay_event_cap": 60,
+    "relay_sample_every": 3,
+    "relay_global_limit": 5,
+    "relay_location_seed": 42,
+    "relay_probe_fraction": 0.4,
+    "relay_probe_min": 1,
+    "relay_probe_max_tasks": 6,
+    "direct_exact_top_k": 2,
+    "repair_rank_candidate_limit": 24,
+    "repair_exact_candidate_limit": 48,
+    "direct_destroy_fraction": [
+      0.03,
+      0.08
+    ],
+    "relay_destroy_fraction": [
+      0.03,
+      0.06
+    ],
+    "relay_large_destroy": {
+      "interval": 30,
+      "fraction": [
+        0.06,
+        0.1
+      ]
+    },
+    "solver_source_sha256": "06379e9720d13f15f035a6d64dae255f426bc01e827a3805612adfc8d53517c5",
+    "solver_method": {
+      "direct": "solve_alns_core",
+      "relay": "solve_relay_staged(core=True)"
+    },
+    "initialization": "shared_direct_regret2",
+    "construction_in_wall_budget": true,
+    "variant_order": "alternating_by_seed",
+    "environment": {
+      "python": "3.13.3 (tags/v3.13.3:6280bb5, Apr  8 2025, 14:47:33) [MSC v.1943 64 bit (AMD64)]",
+      "platform": "Windows-11-10.0.22621-SP0",
+      "processor": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel"
+    },
+    "task_count": 200,
+    "drone_count": 8,
+    "max_tasks_per_drone": 25,
+    "objective_order": [
+      "late_count",
+      "total_lateness_min",
+      "distance_km"
+    ]
+  },
+  "comparison": {
+    "left_variant": "direct",
+    "right_variant": "relay",
+    "direct_win": 3,
+    "tie": 0,
+    "relay_win": 0,
+    "paired_count": 3,
+    "pairs": [
+      {
+        "seed": 2026080500,
+        "winner": "direct",
+        "direct_score": [
+          76,
+          2637.6940009152886,
+          667.5069718680072
+        ],
+        "relay_score": [
+          82,
+          2890.6409816814908,
+          697.5222064508432
+        ],
+        "late_count_delta_relay_minus_direct": 6,
+        "total_lateness_delta_relay_minus_direct": 252.94698076620216,
+        "distance_delta_relay_minus_direct": 30.015234582836,
+        "relay_task_count": 5,
+        "cross_uav_handoff_count": 5,
+        "iterations_per_second_relay": 18.48527222280019,
+        "iterations_per_second_direct": 27.28639496978505,
+        "shared_initial_routes": true
+      },
+      {
+        "seed": 2026080501,
+        "winner": "direct",
+        "direct_score": [
+          76,
+          2666.6965451513724,
+          691.5287445952347
+        ],
+        "relay_score": [
+          80,
+          2812.4853689383863,
+          701.4815735946376
+        ],
+        "late_count_delta_relay_minus_direct": 4,
+        "total_lateness_delta_relay_minus_direct": 145.78882378701383,
+        "distance_delta_relay_minus_direct": 9.952828999402868,
+        "relay_task_count": 10,
+        "cross_uav_handoff_count": 8,
+        "iterations_per_second_relay": 19.007600552624456,
+        "iterations_per_second_direct": 27.416087848528935,
+        "shared_initial_routes": true
+      },
+      {
+        "seed": 2026080502,
+        "winner": "direct",
+        "direct_score": [
+          77,
+          2642.9335257906373,
+          683.3848589571693
+        ],
+        "relay_score": [
+          83,
+          2953.4172243290045,
+          692.7197799003974
+        ],
+        "late_count_delta_relay_minus_direct": 6,
+        "total_lateness_delta_relay_minus_direct": 310.4836985383672,
+        "distance_delta_relay_minus_direct": 9.334920943228099,
+        "relay_task_count": 10,
+        "cross_uav_handoff_count": 8,
+        "iterations_per_second_relay": 17.648671362329356,
+        "iterations_per_second_direct": 26.696612856715525,
+        "shared_initial_routes": true
+      }
+    ]
+  },
+  "summaries": [
+    {
+      "variant": "direct",
+      "label": "Direct-only ALNS",
+      "runs": 3,
+      "mean_late_count": 76.33333333333333,
+      "mean_total_lateness_min": 2649.1080239524326,
+      "mean_distance_km": 680.8068584734704,
+      "mean_iterations_per_second": 27.133031891676502,
+      "mean_relay_task_count": 0,
+      "mean_cross_uav_handoff_count": 0
+    },
+    {
+      "variant": "relay",
+      "label": "Relay-aware ALNS",
+      "runs": 3,
+      "mean_late_count": 81.66666666666667,
+      "mean_total_lateness_min": 2885.5145249829607,
+      "mean_distance_km": 697.241186648626,
+      "mean_iterations_per_second": 18.380514712584667,
+      "mean_relay_task_count": 8.333333333333334,
+      "mean_cross_uav_handoff_count": 7
+    }
+  ],
+  "runs": [
+    {
+      "variant": "direct",
+      "seed": 2026080500,
+      "valid": true,
+      "late_count": 76,
+      "total_lateness_min": 2637.6940009152886,
+      "distance_km": 667.5069718680072,
+      "construction_seconds": 2.2840933999978006,
+      "runtime_seconds": 26.716610999996192,
+      "total_wall_seconds": 29.000704399993992,
+      "iterations": 729,
+      "iterations_per_second": 27.28639496978505,
+      "relay_count": 0,
+      "relay_task_count": 0,
+      "relay_share": 0.0,
+      "cross_uav_handoff_count": 0,
+      "same_uav_relay_count": 0,
+      "total_relay_waiting_time": 0.0,
+      "global_evaluation_count": 0,
+      "initial_score": [
+        108,
+        4464.183540734935,
+        775.7731679286859
+      ],
+      "staged_relay": false,
+      "relay_direct_warmup_fraction": 0.0,
+      "relay_warmup_runtime_seconds": 0.0,
+      "relay_search_runtime_seconds": 0.0,
+      "relay_warmup_score": [],
+      "initial_routes_sha256": "0aa05645d9ca61227c51c1d69993de896ecca045136165dec06a4bd1636288b6",
+      "solution_file": "run_solutions\\wall_direct__seed_2026080500.json",
+      "solution_sha256": "ba143885b36e79b67095f4919352ea11f19fc54691f4278dbd5ee8edd207f5c5"
+    },
+    {
+      "variant": "relay",
+      "seed": 2026080500,
+      "valid": true,
+      "late_count": 82,
+      "total_lateness_min": 2890.6409816814908,
+      "distance_km": 697.5222064508432,
+      "construction_seconds": 1.903309299988905,
+      "runtime_seconds": 27.10265739998431,
+      "total_wall_seconds": 29.005966699973214,
+      "iterations": 501,
+      "iterations_per_second": 18.48527222280019,
+      "relay_count": 4,
+      "relay_task_count": 5,
+      "relay_share": 0.025,
+      "cross_uav_handoff_count": 5,
+      "same_uav_relay_count": 0,
+      "total_relay_waiting_time": 2.2439085331006225,
+      "global_evaluation_count": 6412,
+      "initial_score": [
+        108,
+        4464.183540734935,
+        775.7731679286859
+      ],
+      "staged_relay": true,
+      "relay_direct_warmup_fraction": 0.6,
+      "relay_warmup_runtime_seconds": 16.260424099993543,
+      "relay_search_runtime_seconds": 10.842233299990767,
+      "relay_warmup_score": [
+        82,
+        2906.330679060317,
+        698.6695221746522
+      ],
+      "initial_routes_sha256": "0aa05645d9ca61227c51c1d69993de896ecca045136165dec06a4bd1636288b6",
+      "solution_file": "run_solutions\\wall_relay__seed_2026080500.json",
+      "solution_sha256": "cf14a2675a9a9aaca95e863380b7f6d6c5073dfbfe9440dc2d7c36b8584fcab3"
+    },
+    {
+      "variant": "relay",
+      "seed": 2026080501,
+      "valid": true,
+      "late_count": 80,
+      "total_lateness_min": 2812.4853689383863,
+      "distance_km": 701.4815735946376,
+      "construction_seconds": 1.917526099990937,
+      "runtime_seconds": 27.09442459999991,
+      "total_wall_seconds": 29.011950699990848,
+      "iterations": 515,
+      "iterations_per_second": 19.007600552624456,
+      "relay_count": 4,
+      "relay_task_count": 10,
+      "relay_share": 0.05,
+      "cross_uav_handoff_count": 8,
+      "same_uav_relay_count": 2,
+      "total_relay_waiting_time": 4.391737426852224,
+      "global_evaluation_count": 6020,
+      "initial_score": [
+        108,
+        4464.183540734935,
+        775.7731679286859
+      ],
+      "staged_relay": true,
+      "relay_direct_warmup_fraction": 0.6,
+      "relay_warmup_runtime_seconds": 16.258178899995983,
+      "relay_search_runtime_seconds": 10.836245700003929,
+      "relay_warmup_score": [
+        80,
+        2853.9218535264395,
+        707.6888994303927
+      ],
+      "initial_routes_sha256": "0aa05645d9ca61227c51c1d69993de896ecca045136165dec06a4bd1636288b6",
+      "solution_file": "run_solutions\\wall_relay__seed_2026080501.json",
+      "solution_sha256": "6d377e347d74f3487c8d7d850f917ac8cf57a718c83166b19211cee554fb5ea6"
+    },
+    {
+      "variant": "direct",
+      "seed": 2026080501,
+      "valid": true,
+      "late_count": 76,
+      "total_lateness_min": 2666.6965451513724,
+      "distance_km": 691.5287445952347,
+      "construction_seconds": 2.0091642000043066,
+      "runtime_seconds": 26.991451299996697,
+      "total_wall_seconds": 29.000615500001004,
+      "iterations": 740,
+      "iterations_per_second": 27.416087848528935,
+      "relay_count": 0,
+      "relay_task_count": 0,
+      "relay_share": 0.0,
+      "cross_uav_handoff_count": 0,
+      "same_uav_relay_count": 0,
+      "total_relay_waiting_time": 0.0,
+      "global_evaluation_count": 0,
+      "initial_score": [
+        108,
+        4464.183540734935,
+        775.7731679286859
+      ],
+      "staged_relay": false,
+      "relay_direct_warmup_fraction": 0.0,
+      "relay_warmup_runtime_seconds": 0.0,
+      "relay_search_runtime_seconds": 0.0,
+      "relay_warmup_score": [],
+      "initial_routes_sha256": "0aa05645d9ca61227c51c1d69993de896ecca045136165dec06a4bd1636288b6",
+      "solution_file": "run_solutions\\wall_direct__seed_2026080501.json",
+      "solution_sha256": "6f663a46f321380f16bd191d23a59632931d8b6a7f7fb1338efbfb046a304f8d"
+    },
+    {
+      "variant": "direct",
+      "seed": 2026080502,
+      "valid": true,
+      "late_count": 77,
+      "total_lateness_min": 2642.9335257906373,
+      "distance_km": 683.3848589571693,
+      "construction_seconds": 1.918575800009421,
+      "runtime_seconds": 27.082087300004787,
+      "total_wall_seconds": 29.000663100014208,
+      "iterations": 723,
+      "iterations_per_second": 26.696612856715525,
+      "relay_count": 0,
+      "relay_task_count": 0,
+      "relay_share": 0.0,
+      "cross_uav_handoff_count": 0,
+      "same_uav_relay_count": 0,
+      "total_relay_waiting_time": 0.0,
+      "global_evaluation_count": 0,
+      "initial_score": [
+        108,
+        4464.183540734935,
+        775.7731679286859
+      ],
+      "staged_relay": false,
+      "relay_direct_warmup_fraction": 0.0,
+      "relay_warmup_runtime_seconds": 0.0,
+      "relay_search_runtime_seconds": 0.0,
+      "relay_warmup_score": [],
+      "initial_routes_sha256": "0aa05645d9ca61227c51c1d69993de896ecca045136165dec06a4bd1636288b6",
+      "solution_file": "run_solutions\\wall_direct__seed_2026080502.json",
+      "solution_sha256": "26e7c8159493b2dc02da4d79af09e05efd8a97bb043dc9270a0aaeff3355ca72"
+    },
+    {
+      "variant": "relay",
+      "seed": 2026080502,
+      "valid": true,
+      "late_count": 83,
+      "total_lateness_min": 2953.4172243290045,
+      "distance_km": 692.7197799003974,
+      "construction_seconds": 1.9793494000041392,
+      "runtime_seconds": 27.027530299994396,
+      "total_wall_seconds": 29.006879699998535,
+      "iterations": 477,
+      "iterations_per_second": 17.648671362329356,
+      "relay_count": 4,
+      "relay_task_count": 10,
+      "relay_share": 0.05,
+      "cross_uav_handoff_count": 8,
+      "same_uav_relay_count": 2,
+      "total_relay_waiting_time": 0.36548264186852464,
+      "global_evaluation_count": 6163,
+      "initial_score": [
+        108,
+        4464.183540734935,
+        775.7731679286859
+      ],
+      "staged_relay": true,
+      "relay_direct_warmup_fraction": 0.6,
+      "relay_warmup_runtime_seconds": 16.215346500001033,
+      "relay_search_runtime_seconds": 10.812183799993363,
+      "relay_warmup_score": [
+        85,
+        2996.8666713698444,
+        689.7849566111627
+      ],
+      "initial_routes_sha256": "0aa05645d9ca61227c51c1d69993de896ecca045136165dec06a4bd1636288b6",
+      "solution_file": "run_solutions\\wall_relay__seed_2026080502.json",
+      "solution_sha256": "444b760941fee6fdb1e35ac3d2b4a7f28bf672d5b0ad32e303ecdbd26a1cb49e"
+    }
+  ]
+}

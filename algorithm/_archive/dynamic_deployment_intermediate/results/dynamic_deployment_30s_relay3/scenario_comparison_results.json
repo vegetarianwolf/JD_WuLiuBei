@@ -1,0 +1,1070 @@
+{
+  "manifest": {
+    "generated_at": "2026-08-15T08:09:45.295921+00:00",
+    "input": "D:\\uav_project\\algorithm\\命题1-低空经济场景下的物流无人机调度算法数据.csv",
+    "input_sha256": "386d3fbaa9009aeed947493782d657ed0b30b25d369c8187bfc9619fc7e31d25",
+    "output_dir": "d:\\uav_project\\algorithm\\results\\dynamic_deployment_30s_relay3",
+    "wall_time_limit": 30.0,
+    "wall_safety_margin": 2.0,
+    "wall_seed_count": 1,
+    "seed_base": 2026080500,
+    "candidate_limit": 48,
+    "relay_count": 3,
+    "relay_candidates_per_task": 2,
+    "relay_detour_ratio": 2.0,
+    "relay_location_seed": 42,
+    "relay_location_method": "weighted_kmedoids",
+    "relay_direct_warmup_fraction_default": 0.8,
+    "enable_home_seed": false,
+    "enable_home_displaced": false,
+    "enable_home_bias": false,
+    "disable_home_aware_init": false,
+    "include_fixed_deployment_baseline": true,
+    "deployment": {
+      "method": "demand_driven",
+      "speed_km_per_min": 0.9,
+      "urgency_alpha": 10.0,
+      "urgency_cap": 3.0,
+      "cap_fraction": 0.5,
+      "local_search_rounds": 3,
+      "home_aware_init_default": true
+    },
+    "relay_plan_beam": 4,
+    "relay_leg_beam": 5,
+    "relay_event_cap": 60,
+    "relay_sample_every": 3,
+    "relay_global_limit": 3,
+    "relay_probe_fraction": 0.25,
+    "relay_probe_min": 1,
+    "relay_probe_max_tasks": 2,
+    "direct_exact_top_k": 2,
+    "repair_rank_candidate_limit": 24,
+    "repair_exact_candidate_limit": 48,
+    "direct_destroy_fraction": [
+      0.03,
+      0.08
+    ],
+    "relay_destroy_fraction": [
+      0.03,
+      0.06
+    ],
+    "relay_large_destroy": {
+      "interval": 30,
+      "fraction": [
+        0.06,
+        0.1
+      ]
+    },
+    "solver_source_sha256": "ccdf1412942d1c383de00debd2d41b4fc6569cc3e1c6bcf39567f92847b90c46",
+    "solver_method": {
+      "direct": "solve_alns_core",
+      "relay": "solve_relay_staged(core=True)"
+    },
+    "initialization": "shared_direct_regret2",
+    "construction_in_wall_budget": true,
+    "scenario_order": "alternating_by_seed",
+    "scenarios": [
+      {
+        "id": "pure_direct",
+        "label": "纯 Direct（原点起点，无中继）",
+        "relay": false,
+        "warmup": null,
+        "drone_homes": "origin"
+      },
+      {
+        "id": "pure_relay",
+        "label": "纯 Relay（原点起点，warmup=0）",
+        "relay": true,
+        "warmup": 0.0,
+        "drone_homes": "origin"
+      },
+      {
+        "id": "direct_relay",
+        "label": "Direct + Relay（原点起点，80/20 分阶段）",
+        "relay": true,
+        "warmup": 0.8,
+        "drone_homes": "origin"
+      },
+      {
+        "id": "direct_stations",
+        "label": "Direct + 起点不同（预部署中继站）",
+        "relay": false,
+        "warmup": null,
+        "drone_homes": "stations"
+      },
+      {
+        "id": "direct_relay_stations",
+        "label": "Direct + Relay + 起点不同（预部署 + 80/20）",
+        "relay": true,
+        "warmup": 0.8,
+        "drone_homes": "stations"
+      },
+      {
+        "id": "direct_stations_fixed",
+        "label": "Direct + 起点不同（固定一站一机，A/B 基准）",
+        "relay": false,
+        "warmup": null,
+        "drone_homes": "stations_fixed"
+      },
+      {
+        "id": "direct_relay_stations_fixed",
+        "label": "Direct + Relay + 起点不同（固定一站一机 + 80/20，A/B 基准）",
+        "relay": true,
+        "warmup": 0.8,
+        "drone_homes": "stations_fixed"
+      }
+    ],
+    "baseline": "pure_direct",
+    "environment": {
+      "python": "3.13.3 (tags/v3.13.3:6280bb5, Apr  8 2025, 14:47:33) [MSC v.1943 64 bit (AMD64)]",
+      "platform": "Windows-11-10.0.22621-SP0",
+      "processor": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel"
+    },
+    "task_count": 200,
+    "drone_count": 8,
+    "max_tasks_per_drone": 25,
+    "objective_order": [
+      "late_count",
+      "total_lateness_min",
+      "distance_km"
+    ]
+  },
+  "paired_vs_baseline": {
+    "pure_relay": {
+      "baseline": "pure_direct",
+      "scenario": "pure_relay",
+      "pure_direct_win": 1,
+      "tie": 0,
+      "pure_relay_win": 0,
+      "paired_count": 1,
+      "pairs": [
+        {
+          "seed": 2026080500,
+          "winner": "pure_direct",
+          "baseline_score": [
+            77,
+            2728.392471440155,
+            678.7650927805944
+          ],
+          "pure_relay_score": [
+            96,
+            3487.63956619066,
+            756.2737846814905
+          ],
+          "late_count_delta": 19,
+          "total_lateness_delta": 759.2470947505049,
+          "distance_delta": 77.50869190089611,
+          "relay_task_count": 23
+        }
+      ]
+    },
+    "direct_relay": {
+      "baseline": "pure_direct",
+      "scenario": "direct_relay",
+      "pure_direct_win": 1,
+      "tie": 0,
+      "direct_relay_win": 0,
+      "paired_count": 1,
+      "pairs": [
+        {
+          "seed": 2026080500,
+          "winner": "pure_direct",
+          "baseline_score": [
+            77,
+            2728.392471440155,
+            678.7650927805944
+          ],
+          "direct_relay_score": [
+            82,
+            2724.5185400210553,
+            694.486285136378
+          ],
+          "late_count_delta": 5,
+          "total_lateness_delta": -3.87393141909979,
+          "distance_delta": 15.721192355783614,
+          "relay_task_count": 4
+        }
+      ]
+    },
+    "direct_stations": {
+      "baseline": "pure_direct",
+      "scenario": "direct_stations",
+      "pure_direct_win": 0,
+      "tie": 0,
+      "direct_stations_win": 1,
+      "paired_count": 1,
+      "pairs": [
+        {
+          "seed": 2026080500,
+          "winner": "direct_stations",
+          "baseline_score": [
+            77,
+            2728.392471440155,
+            678.7650927805944
+          ],
+          "direct_stations_score": [
+            68,
+            2432.3475709197965,
+            648.099197238366
+          ],
+          "late_count_delta": -9,
+          "total_lateness_delta": -296.0449005203586,
+          "distance_delta": -30.66589554222844,
+          "relay_task_count": 0
+        }
+      ]
+    },
+    "direct_relay_stations": {
+      "baseline": "pure_direct",
+      "scenario": "direct_relay_stations",
+      "pure_direct_win": 0,
+      "tie": 0,
+      "direct_relay_stations_win": 1,
+      "paired_count": 1,
+      "pairs": [
+        {
+          "seed": 2026080500,
+          "winner": "direct_relay_stations",
+          "baseline_score": [
+            77,
+            2728.392471440155,
+            678.7650927805944
+          ],
+          "direct_relay_stations_score": [
+            72,
+            2448.5989391334438,
+            651.6217953244296
+          ],
+          "late_count_delta": -5,
+          "total_lateness_delta": -279.7935323067113,
+          "distance_delta": -27.14329745616476,
+          "relay_task_count": 2
+        }
+      ]
+    },
+    "direct_stations_fixed": {
+      "baseline": "pure_direct",
+      "scenario": "direct_stations_fixed",
+      "pure_direct_win": 1,
+      "tie": 0,
+      "direct_stations_fixed_win": 0,
+      "paired_count": 1,
+      "pairs": [
+        {
+          "seed": 2026080500,
+          "winner": "pure_direct",
+          "baseline_score": [
+            77,
+            2728.392471440155,
+            678.7650927805944
+          ],
+          "direct_stations_fixed_score": [
+            81,
+            2557.186999608848,
+            682.2678451536598
+          ],
+          "late_count_delta": 4,
+          "total_lateness_delta": -171.20547183130702,
+          "distance_delta": 3.502752373065391,
+          "relay_task_count": 0
+        }
+      ]
+    },
+    "direct_relay_stations_fixed": {
+      "baseline": "pure_direct",
+      "scenario": "direct_relay_stations_fixed",
+      "pure_direct_win": 1,
+      "tie": 0,
+      "direct_relay_stations_fixed_win": 0,
+      "paired_count": 1,
+      "pairs": [
+        {
+          "seed": 2026080500,
+          "winner": "pure_direct",
+          "baseline_score": [
+            77,
+            2728.392471440155,
+            678.7650927805944
+          ],
+          "direct_relay_stations_fixed_score": [
+            81,
+            2668.196941318889,
+            696.0279423379843
+          ],
+          "late_count_delta": 4,
+          "total_lateness_delta": -60.195530121266074,
+          "distance_delta": 17.262849557389927,
+          "relay_task_count": 5
+        }
+      ]
+    }
+  },
+  "full_pairwise_matrix": {
+    "scenarios": [
+      "pure_direct",
+      "pure_relay",
+      "direct_relay",
+      "direct_stations",
+      "direct_relay_stations",
+      "direct_stations_fixed",
+      "direct_relay_stations_fixed"
+    ],
+    "matrix": {
+      "pure_direct": {
+        "pure_direct": {
+          "win": 0,
+          "tie": 0,
+          "loss": 0
+        },
+        "pure_relay": {
+          "win": 1,
+          "tie": 0,
+          "loss": 0
+        },
+        "direct_relay": {
+          "win": 1,
+          "tie": 0,
+          "loss": 0
+        },
+        "direct_stations": {
+          "win": 0,
+          "tie": 0,
+          "loss": 1
+        },
+        "direct_relay_stations": {
+          "win": 0,
+          "tie": 0,
+          "loss": 1
+        },
+        "direct_stations_fixed": {
+          "win": 1,
+          "tie": 0,
+          "loss": 0
+        },
+        "direct_relay_stations_fixed": {
+          "win": 1,
+          "tie": 0,
+          "loss": 0
+        }
+      },
+      "pure_relay": {
+        "pure_direct": {
+          "win": 0,
+          "tie": 0,
+          "loss": 1
+        },
+        "pure_relay": {
+          "win": 0,
+          "tie": 0,
+          "loss": 0
+        },
+        "direct_relay": {
+          "win": 0,
+          "tie": 0,
+          "loss": 1
+        },
+        "direct_stations": {
+          "win": 0,
+          "tie": 0,
+          "loss": 1
+        },
+        "direct_relay_stations": {
+          "win": 0,
+          "tie": 0,
+          "loss": 1
+        },
+        "direct_stations_fixed": {
+          "win": 0,
+          "tie": 0,
+          "loss": 1
+        },
+        "direct_relay_stations_fixed": {
+          "win": 0,
+          "tie": 0,
+          "loss": 1
+        }
+      },
+      "direct_relay": {
+        "pure_direct": {
+          "win": 0,
+          "tie": 0,
+          "loss": 1
+        },
+        "pure_relay": {
+          "win": 1,
+          "tie": 0,
+          "loss": 0
+        },
+        "direct_relay": {
+          "win": 0,
+          "tie": 0,
+          "loss": 0
+        },
+        "direct_stations": {
+          "win": 0,
+          "tie": 0,
+          "loss": 1
+        },
+        "direct_relay_stations": {
+          "win": 0,
+          "tie": 0,
+          "loss": 1
+        },
+        "direct_stations_fixed": {
+          "win": 0,
+          "tie": 0,
+          "loss": 1
+        },
+        "direct_relay_stations_fixed": {
+          "win": 0,
+          "tie": 0,
+          "loss": 1
+        }
+      },
+      "direct_stations": {
+        "pure_direct": {
+          "win": 1,
+          "tie": 0,
+          "loss": 0
+        },
+        "pure_relay": {
+          "win": 1,
+          "tie": 0,
+          "loss": 0
+        },
+        "direct_relay": {
+          "win": 1,
+          "tie": 0,
+          "loss": 0
+        },
+        "direct_stations": {
+          "win": 0,
+          "tie": 0,
+          "loss": 0
+        },
+        "direct_relay_stations": {
+          "win": 1,
+          "tie": 0,
+          "loss": 0
+        },
+        "direct_stations_fixed": {
+          "win": 1,
+          "tie": 0,
+          "loss": 0
+        },
+        "direct_relay_stations_fixed": {
+          "win": 1,
+          "tie": 0,
+          "loss": 0
+        }
+      },
+      "direct_relay_stations": {
+        "pure_direct": {
+          "win": 1,
+          "tie": 0,
+          "loss": 0
+        },
+        "pure_relay": {
+          "win": 1,
+          "tie": 0,
+          "loss": 0
+        },
+        "direct_relay": {
+          "win": 1,
+          "tie": 0,
+          "loss": 0
+        },
+        "direct_stations": {
+          "win": 0,
+          "tie": 0,
+          "loss": 1
+        },
+        "direct_relay_stations": {
+          "win": 0,
+          "tie": 0,
+          "loss": 0
+        },
+        "direct_stations_fixed": {
+          "win": 1,
+          "tie": 0,
+          "loss": 0
+        },
+        "direct_relay_stations_fixed": {
+          "win": 1,
+          "tie": 0,
+          "loss": 0
+        }
+      },
+      "direct_stations_fixed": {
+        "pure_direct": {
+          "win": 0,
+          "tie": 0,
+          "loss": 1
+        },
+        "pure_relay": {
+          "win": 1,
+          "tie": 0,
+          "loss": 0
+        },
+        "direct_relay": {
+          "win": 1,
+          "tie": 0,
+          "loss": 0
+        },
+        "direct_stations": {
+          "win": 0,
+          "tie": 0,
+          "loss": 1
+        },
+        "direct_relay_stations": {
+          "win": 0,
+          "tie": 0,
+          "loss": 1
+        },
+        "direct_stations_fixed": {
+          "win": 0,
+          "tie": 0,
+          "loss": 0
+        },
+        "direct_relay_stations_fixed": {
+          "win": 1,
+          "tie": 0,
+          "loss": 0
+        }
+      },
+      "direct_relay_stations_fixed": {
+        "pure_direct": {
+          "win": 0,
+          "tie": 0,
+          "loss": 1
+        },
+        "pure_relay": {
+          "win": 1,
+          "tie": 0,
+          "loss": 0
+        },
+        "direct_relay": {
+          "win": 1,
+          "tie": 0,
+          "loss": 0
+        },
+        "direct_stations": {
+          "win": 0,
+          "tie": 0,
+          "loss": 1
+        },
+        "direct_relay_stations": {
+          "win": 0,
+          "tie": 0,
+          "loss": 1
+        },
+        "direct_stations_fixed": {
+          "win": 0,
+          "tie": 0,
+          "loss": 1
+        },
+        "direct_relay_stations_fixed": {
+          "win": 0,
+          "tie": 0,
+          "loss": 0
+        }
+      }
+    }
+  },
+  "summaries": [
+    {
+      "scenario": "pure_direct",
+      "label": "纯 Direct（原点起点，无中继）",
+      "runs": 1,
+      "relay": false,
+      "relay_direct_warmup_fraction": 0.0,
+      "drone_homes": "origin",
+      "mean_late_count": 77,
+      "mean_total_lateness_min": 2728.392471440155,
+      "mean_distance_km": 678.7650927805944,
+      "mean_iterations_per_second": 26.10920117497647,
+      "mean_relay_task_count": 0,
+      "mean_cross_uav_handoff_count": 0,
+      "mean_initial_deadhead_km": 2.827468751154625,
+      "mean_home_assignment_rate": 1.0
+    },
+    {
+      "scenario": "pure_relay",
+      "label": "纯 Relay（原点起点，warmup=0）",
+      "runs": 1,
+      "relay": true,
+      "relay_direct_warmup_fraction": 0.0,
+      "drone_homes": "origin",
+      "mean_late_count": 96,
+      "mean_total_lateness_min": 3487.63956619066,
+      "mean_distance_km": 756.2737846814905,
+      "mean_iterations_per_second": 9.648043107180465,
+      "mean_relay_task_count": 23,
+      "mean_cross_uav_handoff_count": 19,
+      "mean_initial_deadhead_km": 2.827468751154625,
+      "mean_home_assignment_rate": 1.0
+    },
+    {
+      "scenario": "direct_relay",
+      "label": "Direct + Relay（原点起点，80/20 分阶段）",
+      "runs": 1,
+      "relay": true,
+      "relay_direct_warmup_fraction": 0.8,
+      "drone_homes": "origin",
+      "mean_late_count": 82,
+      "mean_total_lateness_min": 2724.5185400210553,
+      "mean_distance_km": 694.486285136378,
+      "mean_iterations_per_second": 21.534148820350854,
+      "mean_relay_task_count": 4,
+      "mean_cross_uav_handoff_count": 3,
+      "mean_initial_deadhead_km": 2.827468751154625,
+      "mean_home_assignment_rate": 1.0
+    },
+    {
+      "scenario": "direct_stations",
+      "label": "Direct + 起点不同（预部署中继站）",
+      "runs": 1,
+      "relay": false,
+      "relay_direct_warmup_fraction": 0.0,
+      "drone_homes": "stations",
+      "mean_late_count": 68,
+      "mean_total_lateness_min": 2432.3475709197965,
+      "mean_distance_km": 648.099197238366,
+      "mean_iterations_per_second": 27.562814264146724,
+      "mean_relay_task_count": 0,
+      "mean_cross_uav_handoff_count": 0,
+      "mean_initial_deadhead_km": 0.45113474049162344,
+      "mean_home_assignment_rate": 0.34
+    },
+    {
+      "scenario": "direct_relay_stations",
+      "label": "Direct + Relay + 起点不同（预部署 + 80/20）",
+      "runs": 1,
+      "relay": true,
+      "relay_direct_warmup_fraction": 0.8,
+      "drone_homes": "stations",
+      "mean_late_count": 72,
+      "mean_total_lateness_min": 2448.5989391334438,
+      "mean_distance_km": 651.6217953244296,
+      "mean_iterations_per_second": 23.373773668280986,
+      "mean_relay_task_count": 2,
+      "mean_cross_uav_handoff_count": 2,
+      "mean_initial_deadhead_km": 0.45113474049162344,
+      "mean_home_assignment_rate": 0.32323232323232326
+    },
+    {
+      "scenario": "direct_stations_fixed",
+      "label": "Direct + 起点不同（固定一站一机，A/B 基准）",
+      "runs": 1,
+      "relay": false,
+      "relay_direct_warmup_fraction": 0.0,
+      "drone_homes": "stations_fixed",
+      "mean_late_count": 81,
+      "mean_total_lateness_min": 2557.186999608848,
+      "mean_distance_km": 682.2678451536598,
+      "mean_iterations_per_second": 25.103853363278205,
+      "mean_relay_task_count": 0,
+      "mean_cross_uav_handoff_count": 0,
+      "mean_initial_deadhead_km": 1.405061609985807,
+      "mean_home_assignment_rate": 0.145
+    },
+    {
+      "scenario": "direct_relay_stations_fixed",
+      "label": "Direct + Relay + 起点不同（固定一站一机 + 80/20，A/B 基准）",
+      "runs": 1,
+      "relay": true,
+      "relay_direct_warmup_fraction": 0.8,
+      "drone_homes": "stations_fixed",
+      "mean_late_count": 81,
+      "mean_total_lateness_min": 2668.196941318889,
+      "mean_distance_km": 696.0279423379843,
+      "mean_iterations_per_second": 21.97721792835903,
+      "mean_relay_task_count": 5,
+      "mean_cross_uav_handoff_count": 5,
+      "mean_initial_deadhead_km": 1.405061609985807,
+      "mean_home_assignment_rate": 0.14358974358974358
+    }
+  ],
+  "runs": [
+    {
+      "scenario": "pure_direct",
+      "scenario_label": "纯 Direct（原点起点，无中继）",
+      "relay": false,
+      "relay_direct_warmup_fraction": 0.0,
+      "drone_homes": "origin",
+      "seed": 2026080500,
+      "valid": true,
+      "late_count": 77,
+      "total_lateness_min": 2728.392471440155,
+      "distance_km": 678.7650927805944,
+      "construction_seconds": 1.8796181999932742,
+      "runtime_seconds": 26.1210596000019,
+      "total_wall_seconds": 28.000677799995174,
+      "iterations": 682,
+      "iterations_per_second": 26.10920117497647,
+      "relay_count": 0,
+      "relay_task_count": 0,
+      "relay_share": 0.0,
+      "cross_uav_handoff_count": 0,
+      "same_uav_relay_count": 0,
+      "total_relay_waiting_time": 0.0,
+      "global_evaluation_count": 0,
+      "initial_score": [
+        108,
+        4464.183540734935,
+        775.7731679286859
+      ],
+      "staged_relay": false,
+      "relay_warmup_runtime_seconds": 0.0,
+      "relay_search_runtime_seconds": 0.0,
+      "relay_warmup_score": [],
+      "initial_routes_sha256": "0aa05645d9ca61227c51c1d69993de896ecca045136165dec06a4bd1636288b6",
+      "deployment_distribution": {
+        "depot": 8
+      },
+      "deployment_scores": {},
+      "initial_deadhead_km": 22.619750009237,
+      "mean_initial_deadhead_km": 2.827468751154625,
+      "home_assignment_rate": 1.0,
+      "deadhead_km": 22.842086266205165,
+      "deadhead_vs_origin_km": 0.0,
+      "home_mismatch_count": 0,
+      "min_deadhead_lb_km": 13.975292483522482,
+      "origin_min_deadhead_lb_km": 13.975292483522482,
+      "solution_file": "run_solutions\\pure_direct__seed_2026080500.json",
+      "solution_sha256": "81d7c1b4a1ba7f6f4cc1fdcbcbf37e0c6d60baf2417fcbcad18fbfdeb4f445c6"
+    },
+    {
+      "scenario": "pure_relay",
+      "scenario_label": "纯 Relay（原点起点，warmup=0）",
+      "relay": true,
+      "relay_direct_warmup_fraction": 0.0,
+      "drone_homes": "origin",
+      "seed": 2026080500,
+      "valid": true,
+      "late_count": 96,
+      "total_lateness_min": 3487.63956619066,
+      "distance_km": 756.2737846814905,
+      "construction_seconds": 2.195188900004723,
+      "runtime_seconds": 25.808342399992398,
+      "total_wall_seconds": 28.00353129999712,
+      "iterations": 249,
+      "iterations_per_second": 9.648043107180465,
+      "relay_count": 3,
+      "relay_task_count": 23,
+      "relay_share": 0.115,
+      "cross_uav_handoff_count": 19,
+      "same_uav_relay_count": 4,
+      "total_relay_waiting_time": 4.097614745013164,
+      "global_evaluation_count": 11189,
+      "initial_score": [
+        107,
+        4453.628826338797,
+        783.9293759928464
+      ],
+      "staged_relay": false,
+      "relay_warmup_runtime_seconds": 0.0,
+      "relay_search_runtime_seconds": 0.0,
+      "relay_warmup_score": [],
+      "initial_routes_sha256": "0aa05645d9ca61227c51c1d69993de896ecca045136165dec06a4bd1636288b6",
+      "deployment_distribution": {
+        "depot": 8
+      },
+      "deployment_scores": {},
+      "initial_deadhead_km": 22.619750009237,
+      "mean_initial_deadhead_km": 2.827468751154625,
+      "home_assignment_rate": 1.0,
+      "deadhead_km": 22.96883177959327,
+      "deadhead_vs_origin_km": 0.0,
+      "home_mismatch_count": 0,
+      "min_deadhead_lb_km": 13.975292483522482,
+      "origin_min_deadhead_lb_km": 13.975292483522482,
+      "solution_file": "run_solutions\\pure_relay__seed_2026080500.json",
+      "solution_sha256": "1464f1c83bdbba400101eceaa2dd9e11fe180e8758615c40f1272083da45c4b0"
+    },
+    {
+      "scenario": "direct_relay",
+      "scenario_label": "Direct + Relay（原点起点，80/20 分阶段）",
+      "relay": true,
+      "relay_direct_warmup_fraction": 0.8,
+      "drone_homes": "origin",
+      "seed": 2026080500,
+      "valid": true,
+      "late_count": 82,
+      "total_lateness_min": 2724.5185400210553,
+      "distance_km": 694.486285136378,
+      "construction_seconds": 2.148123000006308,
+      "runtime_seconds": 25.86589349998394,
+      "total_wall_seconds": 28.014016499990248,
+      "iterations": 557,
+      "iterations_per_second": 21.534148820350854,
+      "relay_count": 3,
+      "relay_task_count": 4,
+      "relay_share": 0.02,
+      "cross_uav_handoff_count": 3,
+      "same_uav_relay_count": 1,
+      "total_relay_waiting_time": 3.0315316913857657,
+      "global_evaluation_count": 2473,
+      "initial_score": [
+        108,
+        4464.183540734935,
+        775.7731679286859
+      ],
+      "staged_relay": true,
+      "relay_warmup_runtime_seconds": 20.687627099992824,
+      "relay_search_runtime_seconds": 5.1782663999911165,
+      "relay_warmup_score": [
+        82,
+        2735.296336921312,
+        692.6374679357795
+      ],
+      "initial_routes_sha256": "0aa05645d9ca61227c51c1d69993de896ecca045136165dec06a4bd1636288b6",
+      "deployment_distribution": {
+        "depot": 8
+      },
+      "deployment_scores": {},
+      "initial_deadhead_km": 22.619750009237,
+      "mean_initial_deadhead_km": 2.827468751154625,
+      "home_assignment_rate": 1.0,
+      "deadhead_km": 22.23225833932607,
+      "deadhead_vs_origin_km": 0.0,
+      "home_mismatch_count": 0,
+      "min_deadhead_lb_km": 13.975292483522482,
+      "origin_min_deadhead_lb_km": 13.975292483522482,
+      "solution_file": "run_solutions\\direct_relay__seed_2026080500.json",
+      "solution_sha256": "215d2e115b21bb6b8e8e93bc84e295753362f820672c2667bfb0a915e40f8cb7"
+    },
+    {
+      "scenario": "direct_stations",
+      "scenario_label": "Direct + 起点不同（预部署中继站）",
+      "relay": false,
+      "relay_direct_warmup_fraction": 0.0,
+      "drone_homes": "stations",
+      "seed": 2026080500,
+      "valid": true,
+      "late_count": 68,
+      "total_lateness_min": 2432.3475709197965,
+      "distance_km": 648.099197238366,
+      "construction_seconds": 1.7417229999991832,
+      "runtime_seconds": 26.26727419999952,
+      "total_wall_seconds": 28.008997199998703,
+      "iterations": 724,
+      "iterations_per_second": 27.562814264146724,
+      "relay_count": 0,
+      "relay_task_count": 0,
+      "relay_share": 0.0,
+      "cross_uav_handoff_count": 0,
+      "same_uav_relay_count": 0,
+      "total_relay_waiting_time": 0.0,
+      "global_evaluation_count": 0,
+      "initial_score": [
+        105,
+        4294.867838603565,
+        752.6075074778007
+      ],
+      "staged_relay": false,
+      "relay_warmup_runtime_seconds": 0.0,
+      "relay_search_runtime_seconds": 0.0,
+      "relay_warmup_score": [],
+      "initial_routes_sha256": "3b9372b9e564325f422b3ed9a06d87a418d0f42b7ae2e1939ee67ed4c0cff67c",
+      "deployment_distribution": {
+        "depot": 1,
+        "relay_1": 3,
+        "relay_2": 2,
+        "relay_3": 2
+      },
+      "deployment_scores": {
+        "depot": 102.54675390802221,
+        "relay_1": 155.15635881470726,
+        "relay_2": 153.9246304364322,
+        "relay_3": 153.71450595777586
+      },
+      "initial_deadhead_km": 3.6090779239329875,
+      "mean_initial_deadhead_km": 0.45113474049162344,
+      "home_assignment_rate": 0.34,
+      "deadhead_km": 9.374706310759956,
+      "deadhead_vs_origin_km": 36.42223599767725,
+      "home_mismatch_count": 132,
+      "min_deadhead_lb_km": 3.2830791361975202,
+      "origin_min_deadhead_lb_km": 13.975292483522482,
+      "solution_file": "run_solutions\\direct_stations__seed_2026080500.json",
+      "solution_sha256": "60be3625d4502a7fa89f60834803f32e4e2ddc8b46877334e378276868dd1deb"
+    },
+    {
+      "scenario": "direct_relay_stations",
+      "scenario_label": "Direct + Relay + 起点不同（预部署 + 80/20）",
+      "relay": true,
+      "relay_direct_warmup_fraction": 0.8,
+      "drone_homes": "stations",
+      "seed": 2026080500,
+      "valid": true,
+      "late_count": 72,
+      "total_lateness_min": 2448.5989391334438,
+      "distance_km": 651.6217953244296,
+      "construction_seconds": 1.566225000002305,
+      "runtime_seconds": 26.439889800021774,
+      "total_wall_seconds": 28.00611480002408,
+      "iterations": 618,
+      "iterations_per_second": 23.373773668280986,
+      "relay_count": 3,
+      "relay_task_count": 2,
+      "relay_share": 0.01,
+      "cross_uav_handoff_count": 2,
+      "same_uav_relay_count": 0,
+      "total_relay_waiting_time": 0,
+      "global_evaluation_count": 2424,
+      "initial_score": [
+        105,
+        4294.867838603565,
+        752.6075074778007
+      ],
+      "staged_relay": true,
+      "relay_warmup_runtime_seconds": 21.149711700010812,
+      "relay_search_runtime_seconds": 5.290178100010962,
+      "relay_warmup_score": [
+        72,
+        2472.113308688729,
+        656.5420288288223
+      ],
+      "initial_routes_sha256": "3b9372b9e564325f422b3ed9a06d87a418d0f42b7ae2e1939ee67ed4c0cff67c",
+      "deployment_distribution": {
+        "depot": 1,
+        "relay_1": 3,
+        "relay_2": 2,
+        "relay_3": 2
+      },
+      "deployment_scores": {
+        "depot": 102.54675390802221,
+        "relay_1": 155.15635881470726,
+        "relay_2": 153.9246304364322,
+        "relay_3": 153.71450595777586
+      },
+      "initial_deadhead_km": 3.6090779239329875,
+      "mean_initial_deadhead_km": 0.45113474049162344,
+      "home_assignment_rate": 0.32323232323232326,
+      "deadhead_km": 9.821450419083687,
+      "deadhead_vs_origin_km": 39.80456610852569,
+      "home_mismatch_count": 134,
+      "min_deadhead_lb_km": 3.2830791361975202,
+      "origin_min_deadhead_lb_km": 13.975292483522482,
+      "solution_file": "run_solutions\\direct_relay_stations__seed_2026080500.json",
+      "solution_sha256": "ccc71e48f44e7b5466269f323a10d05ee44ef3aeb5c521c8b729a513cc8967af"
+    },
+    {
+      "scenario": "direct_stations_fixed",
+      "scenario_label": "Direct + 起点不同（固定一站一机，A/B 基准）",
+      "relay": false,
+      "relay_direct_warmup_fraction": 0.0,
+      "drone_homes": "stations_fixed",
+      "seed": 2026080500,
+      "valid": true,
+      "late_count": 81,
+      "total_lateness_min": 2557.186999608848,
+      "distance_km": 682.2678451536598,
+      "construction_seconds": 1.7895551999972668,
+      "runtime_seconds": 26.21111550000205,
+      "total_wall_seconds": 28.00067069999932,
+      "iterations": 658,
+      "iterations_per_second": 25.103853363278205,
+      "relay_count": 0,
+      "relay_task_count": 0,
+      "relay_share": 0.0,
+      "cross_uav_handoff_count": 0,
+      "same_uav_relay_count": 0,
+      "total_relay_waiting_time": 0.0,
+      "global_evaluation_count": 0,
+      "initial_score": [
+        105,
+        4234.8768000797945,
+        732.0168827129094
+      ],
+      "staged_relay": false,
+      "relay_warmup_runtime_seconds": 0.0,
+      "relay_search_runtime_seconds": 0.0,
+      "relay_warmup_score": [],
+      "initial_routes_sha256": "ef05b17a588bbd42f8dcc56a6ab7de7ed175ac0dfd16a0b59b05ab7e0a778624",
+      "deployment_distribution": {
+        "depot": 5,
+        "relay_1": 1,
+        "relay_2": 1,
+        "relay_3": 1
+      },
+      "deployment_scores": {
+        "depot": 102.54675390802221,
+        "relay_1": 155.15635881470726,
+        "relay_2": 153.9246304364322,
+        "relay_3": 153.71450595777586
+      },
+      "initial_deadhead_km": 11.240492879886457,
+      "mean_initial_deadhead_km": 1.405061609985807,
+      "home_assignment_rate": 0.145,
+      "deadhead_km": 15.50513836827543,
+      "deadhead_vs_origin_km": 16.381483763983653,
+      "home_mismatch_count": 171,
+      "min_deadhead_lb_km": 9.407608701036416,
+      "origin_min_deadhead_lb_km": 13.975292483522482,
+      "solution_file": "run_solutions\\direct_stations_fixed__seed_2026080500.json",
+      "solution_sha256": "a9ef0638a7906a375bbd450f96efbdbf90c52756cfcb1e3ac292e7578c3575ea"
+    },
+    {
+      "scenario": "direct_relay_stations_fixed",
+      "scenario_label": "Direct + Relay + 起点不同（固定一站一机 + 80/20，A/B 基准）",
+      "relay": true,
+      "relay_direct_warmup_fraction": 0.8,
+      "drone_homes": "stations_fixed",
+      "seed": 2026080500,
+      "valid": true,
+      "late_count": 81,
+      "total_lateness_min": 2668.196941318889,
+      "distance_km": 696.0279423379843,
+      "construction_seconds": 1.7536757000052603,
+      "runtime_seconds": 26.254460500000278,
+      "total_wall_seconds": 28.008136200005538,
+      "iterations": 577,
+      "iterations_per_second": 21.97721792835903,
+      "relay_count": 3,
+      "relay_task_count": 5,
+      "relay_share": 0.025,
+      "cross_uav_handoff_count": 5,
+      "same_uav_relay_count": 0,
+      "total_relay_waiting_time": 1.727181279559673,
+      "global_evaluation_count": 2331,
+      "initial_score": [
+        105,
+        4234.8768000797945,
+        732.0168827129094
+      ],
+      "staged_relay": true,
+      "relay_warmup_runtime_seconds": 20.99965750001138,
+      "relay_search_runtime_seconds": 5.254802999988897,
+      "relay_warmup_score": [
+        82,
+        2666.8463120450733,
+        692.5554821486805
+      ],
+      "initial_routes_sha256": "ef05b17a588bbd42f8dcc56a6ab7de7ed175ac0dfd16a0b59b05ab7e0a778624",
+      "deployment_distribution": {
+        "depot": 5,
+        "relay_1": 1,
+        "relay_2": 1,
+        "relay_3": 1
+      },
+      "deployment_scores": {
+        "depot": 102.54675390802221,
+        "relay_1": 155.15635881470726,
+        "relay_2": 153.9246304364322,
+        "relay_3": 153.71450595777586
+      },
+      "initial_deadhead_km": 11.240492879886457,
+      "mean_initial_deadhead_km": 1.405061609985807,
+      "home_assignment_rate": 0.14358974358974358,
+      "deadhead_km": 15.50513836827543,
+      "deadhead_vs_origin_km": 16.381483763983653,
+      "home_mismatch_count": 167,
+      "min_deadhead_lb_km": 9.407608701036416,
+      "origin_min_deadhead_lb_km": 13.975292483522482,
+      "solution_file": "run_solutions\\direct_relay_stations_fixed__seed_2026080500.json",
+      "solution_sha256": "54c8e3eb6e7779fb08291f7641613ab9d2f3126078418b0653b9621d069b5d00"
+    }
+  ]
+}

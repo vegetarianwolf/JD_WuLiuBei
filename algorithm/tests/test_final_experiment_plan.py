@@ -1,0 +1,994 @@
+import json
+from concurrent.futures import Future, ThreadPoolExecutor
+from threading import Event
+from types import SimpleNamespace
+
+import pytest
+
+from algorithm.experiments import run_benchmarks as benchmark_experiment
+from algorithm.experiments import run_scenario_comparison as scenario_experiment
+from algorithm.experiments import run_sensitivity_analysis as sensitivity_experiment
+from algorithm.experiments.run_scenario_comparison import (
+    SCENARIOS,
+    scenario_time_limit_seconds,
+)
+from algorithm.experiments.run_sensitivity_analysis import (
+    SENSITIVITY_LEVELS,
+    scale_deadlines,
+)
+from uav_dispatch import Point, Task
+
+
+def test_final_scenario_plan_accumulates_one_240_second_module_per_extension():
+    assert [scenario["id"] for scenario in SCENARIOS] == [
+        "pure_direct",
+        "direct_relay",
+        "direct_stations",
+        "direct_relay_stations",
+    ]
+
+    budgets = {
+        scenario["id"]: scenario_time_limit_seconds(
+            scenario,
+            base_seconds=240.0,
+            relay_or_station_bonus_seconds=240.0,
+        )
+        for scenario in SCENARIOS
+    }
+    assert budgets == {
+        "pure_direct": 240.0,
+        "direct_relay": 480.0,
+        "direct_stations": 480.0,
+        "direct_relay_stations": 720.0,
+    }
+    assert {
+        scenario["id"]: scenario["warmup"] for scenario in SCENARIOS
+    } == {
+        "pure_direct": 0.0,
+        "direct_relay": 0.5,
+        "direct_stations": 0.0,
+        "direct_relay_stations": pytest.approx(2 / 3),
+    }
+
+
+def test_sensitivity_can_override_the_combined_budget_to_fixed_300_seconds():
+    combined = next(
+        scenario
+        for scenario in SCENARIOS
+        if scenario["id"] == "direct_relay_stations"
+    )
+
+    assert scenario_time_limit_seconds(
+        combined,
+        base_seconds=240.0,
+        relay_or_station_bonus_seconds=240.0,
+        effective_seconds_override=300.0,
+    ) == 300.0
+
+
+def test_sensitivity_plan_uses_four_strategies_and_five_levels_per_parameter():
+    assert SENSITIVITY_LEVELS == {
+        "drone_count": (8, 9, 10, 12, 16),
+        "deadline_multiplier": (0.8, 0.9, 1.0, 1.1, 1.2),
+        "station_count": (2, 3, 4, 5, 6),
+    }
+
+
+def test_deadline_scaling_preserves_geometry_and_task_identity():
+    task = Task(7, Point(1.0, 2.0), Point(3.0, 4.0), 50.0)
+
+    scaled = scale_deadlines((task,), 0.8)
+
+    assert scaled == (Task(7, task.pickup, task.delivery, 40.0),)
+
+
+@pytest.mark.parametrize(
+    "argv",
+    (
+        ("--seeds", "1", "2", "3"),
+        ("--tasks", "24"),
+        ("--base-seconds", "239"),
+        ("--bonus-seconds", "60"),
+        ("--relay-count", "4"),
+    ),
+)
+def test_formal_scenario_cli_rejects_non_protocol_overrides(monkeypatch, argv):
+    monkeypatch.setattr(
+        scenario_experiment,
+        "load_tasks_csv",
+        lambda _path: pytest.fail("formal validation must precede data loading"),
+    )
+
+    with pytest.raises(ValueError, match="正式四场景协议"):
+        scenario_experiment.main(argv)
+
+
+@pytest.mark.parametrize(
+    "argv",
+    (
+        ("--seed", "7"),
+        ("--tasks", "24"),
+        ("--bonus-seconds", "59"),
+        ("--candidate-limit", "24"),
+    ),
+)
+def test_formal_sensitivity_cli_rejects_non_protocol_overrides(monkeypatch, argv):
+    monkeypatch.setattr(
+        sensitivity_experiment,
+        "load_tasks_csv",
+        lambda _path: pytest.fail("formal validation must precede data loading"),
+    )
+
+    with pytest.raises(ValueError, match="正式敏感性协议"):
+        sensitivity_experiment.main(argv)
+
+
+def test_formal_benchmark_cli_rejects_seed_override_before_loading_data(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        benchmark_experiment,
+        "load_tasks_csv",
+        lambda _path: pytest.fail("formal validation must precede data loading"),
+    )
+
+    with pytest.raises(ValueError, match="正式第5章协议"):
+        benchmark_experiment.main(["--seed", "7"])
+
+
+def test_formal_benchmark_cli_rejects_non_official_input_before_loading_data(
+    monkeypatch,
+    tmp_path,
+):
+    other_input = tmp_path / "other.csv"
+    other_input.write_text("different input\n", encoding="utf-8")
+    monkeypatch.setattr(
+        benchmark_experiment,
+        "load_tasks_csv",
+        lambda _path: pytest.fail("formal validation must precede data loading"),
+    )
+
+    with pytest.raises(ValueError, match="input_sha256"):
+        benchmark_experiment.main(["--input", str(other_input)])
+
+
+@pytest.mark.parametrize(
+    "argv",
+    (
+        ("--scale-seconds", "29"),
+        ("--max-iterations", "999"),
+        ("--candidate-limit", "24"),
+    ),
+)
+def test_formal_benchmark_cli_rejects_non_protocol_alns_overrides(
+    monkeypatch,
+    argv,
+):
+    monkeypatch.setattr(
+        benchmark_experiment,
+        "load_tasks_csv",
+        lambda _path: pytest.fail("formal validation must precede data loading"),
+    )
+
+    with pytest.raises(ValueError, match="正式第5章协议"):
+        benchmark_experiment.main(argv)
+
+
+def test_default_formal_configs_validate_and_quick_runs_may_override():
+    scenario_experiment.validate_formal_protocol(
+        scenario_experiment._parser().parse_args([])
+    )
+    sensitivity_experiment.validate_formal_protocol(
+        sensitivity_experiment._parser().parse_args([])
+    )
+    scenario_experiment.validate_formal_protocol(
+        scenario_experiment._parser().parse_args(
+            ["--quick", "--seeds", "1", "2"]
+        )
+    )
+    sensitivity_experiment.validate_formal_protocol(
+        sensitivity_experiment._parser().parse_args(
+            ["--quick", "--seed", "7"]
+        )
+    )
+    benchmark_experiment.validate_formal_protocol(
+        benchmark_experiment._parser().parse_args([])
+    )
+    benchmark_experiment.validate_formal_protocol(
+        benchmark_experiment._parser().parse_args(
+            [
+                "--quick",
+                "--seed",
+                "7",
+                "--scale-seconds",
+                "0.25",
+                "--max-iterations",
+                "99",
+                "--candidate-limit",
+                "4",
+            ]
+        )
+    )
+
+
+def test_scenario_manifest_captures_the_reproducibility_contract():
+    args = scenario_experiment._parser().parse_args([])
+
+    manifest = scenario_experiment.build_manifest(args, task_count=200)
+
+    assert manifest["schema_version"] == 1
+    assert manifest["formal"] is True
+    assert manifest["input_sha256"]
+    assert manifest["solver_source_sha256"]
+    assert manifest["experiment_script_sha256"]
+    assert manifest["git_commit"] is None or len(manifest["git_commit"]) == 40
+    assert isinstance(manifest["git_dirty"], (bool, type(None)))
+    assert manifest["environment"]["python_version"]
+    assert manifest["environment"]["platform"]
+    assert "UAV_DISPATCH_LEGACY_CANDIDATE_EVAL" in manifest["environment"]
+    assert manifest["solver_config"]["max_iterations"] == 10_000_000
+    assert manifest["solver_config"]["candidate_limit"] == 48
+    assert manifest["solver_config"]["relay_location_seed"] == 42
+    assert manifest["solver_config"]["relay_location_method"] == "weighted_kmedoids"
+    assert manifest["solver_config"]["relay_detour_ratio"] == 2.0
+    assert manifest["base_seconds"] == 240.0
+    assert manifest["bonus_seconds"] == 240.0
+    assert manifest["scenario_budgets_seconds"] == {
+        "pure_direct": 240.0,
+        "direct_relay": 480.0,
+        "direct_stations": 480.0,
+        "direct_relay_stations": 720.0,
+    }
+    assert manifest["scenario_stage_targets_seconds"] == {
+        "pure_direct": {"direct_search": 240.0, "relay_search": 0.0},
+        "direct_relay": {"direct_search": 240.0, "relay_search": 240.0},
+        "direct_stations": {"direct_search": 480.0, "relay_search": 0.0},
+        "direct_relay_stations": {
+            "direct_search": 480.0,
+            "relay_search": pytest.approx(240.0),
+        },
+    }
+    assert manifest["solver_config"]["alns_by_scenario"]["direct_relay"][
+        "relay_direct_warmup_fraction"
+    ] == 0.5
+    assert manifest["solver_config"]["alns_by_scenario"][
+        "direct_relay_stations"
+    ]["relay_direct_warmup_fraction"] == pytest.approx(2 / 3)
+    assert set(manifest["solver_config"]["alns_by_scenario"]) == {
+        scenario["id"] for scenario in SCENARIOS
+    }
+
+
+def test_sensitivity_manifest_captures_the_reproducibility_contract():
+    args = sensitivity_experiment._parser().parse_args([])
+    manifest = sensitivity_experiment.build_manifest(args, task_count=200)
+
+    assert manifest["schema_version"] == 3
+    assert manifest["protocol"] == "four_strategy_one_factor_sensitivity"
+    assert manifest["formal"] is True
+    for key in ("input_sha256", "solver_source_sha256", "experiment_script_sha256", "scenario_script_sha256"):
+        assert manifest[key]
+    assert manifest["git_commit"] is None or len(manifest["git_commit"]) == 40
+    assert isinstance(manifest["git_dirty"], (bool, type(None)))
+    assert manifest["environment"]["python_version"]
+    assert manifest["environment"]["platform"]
+    assert manifest["solver_config"]["max_iterations"] == 10_000_000
+    assert manifest["solver_config"]["candidate_limit"] == 48
+    assert manifest["solver_config"]["relay_location_seed"] == 42
+    assert manifest["solver_config"]["relay_location_method"] == "weighted_kmedoids"
+    assert manifest["effective_seconds_per_run"] == 300.0
+    assert manifest["solver_config"]["time_limit_policy"].startswith("fixed 300 s")
+    assert manifest["planned_rows"] == 275
+    assert manifest["planned_unique_solves"] == 240
+    assert manifest["workers"] == 1
+    assert manifest["seeds"] == list(range(2026081701, 2026081706))
+    assert manifest["seed_count"] == 5
+    assert "seed" not in manifest
+    assert manifest["parameter_applicability"]["pure_direct"] == ("drone_count", "deadline_multiplier")
+    assert set(manifest["solver_config"]["alns_by_scenario"]) == {s["id"] for s in SCENARIOS}
+    for scenario in manifest["scenarios"]:
+        config = manifest["solver_config"]["alns_by_scenario"][scenario["id"]]
+        assert config["scenario_relay"] is scenario["relay"]
+        assert config["enable_home_seed"] is (scenario["drone_homes"] == "stations")
+        assert config["enable_home_bias"] is (scenario["drone_homes"] == "stations")
+        assert config["relay_direct_warmup_fraction"] == (0.8 if scenario["relay"] else 0.0)
+        stages = manifest["scenario_stage_targets_seconds"][scenario["id"]]
+        assert stages["direct_search"] == (240.0 if scenario["relay"] else 300.0)
+        assert stages["relay_search"] == pytest.approx(60.0 if scenario["relay"] else 0.0)
+    assert manifest["solver_config"]["baseline"] == {
+        "drone_count": 8, "deadline_multiplier": 1.0, "station_count": 4,
+    }
+    assert manifest["levels"] == SENSITIVITY_LEVELS
+
+
+@pytest.mark.parametrize("quick, expected_rows, expected_solves", [(False, 275, 240), (True, 66, 52)])
+def test_sensitivity_grid_covers_applicable_strategies_and_reuses_only_baselines(quick, expected_rows, expected_solves):
+    args = sensitivity_experiment._parser().parse_args(["--quick"] if quick else [])
+    cells = sensitivity_experiment.build_cells(args)
+    assert len(cells) == expected_rows
+    assert len({cell["run_id"] for cell in cells}) == expected_solves
+    assert len({cell["cell_id"] for cell in cells}) == expected_rows
+    by_setting = {}
+    for cell in cells:
+        key = (cell["scenario"], cell["parameter"], cell["level"])
+        by_setting.setdefault(key, set()).add(cell["seed"])
+    assert all(seeds == set(sensitivity_experiment.effective_seeds(args)) for seeds in by_setting.values())
+    for cell in cells:
+        assert f"__seed_{cell['seed']}__" in cell["cell_id"]
+        assert f"seed_{cell['seed']}/" in cell["cell_output_dir"]
+        if cell["scenario"] == "pure_direct":
+            assert cell["parameter"] != "station_count"
+            assert cell["requested_station_count"] == 0
+        if cell["reused_from"] is not None:
+            assert cell["reused_from"] == f"{cell['scenario']}__seed_{cell['seed']}__drone_count__8"
+            assert cell["drone_count"] == 8
+            assert cell["deadline_multiplier"] == 1.0
+            assert cell["requested_station_count"] == (0 if cell["scenario"] == "pure_direct" else 4)
+
+
+@pytest.mark.parametrize("argv, expected", [
+    (["--quick", "--seed", "7"], (7,)),
+    (["--quick", "--seeds", "7", "9", "11"], (7, 9, 11)),
+    (["--quick"], sensitivity_experiment.DEFAULT_SEEDS[:2]),
+])
+def test_sensitivity_quick_seed_selection_is_explicit(argv, expected):
+    args = sensitivity_experiment._parser().parse_args(argv)
+    sensitivity_experiment.validate_formal_protocol(args)
+    assert sensitivity_experiment.effective_seeds(args) == expected
+    cells = sensitivity_experiment.build_cells(args)
+    assert len(cells) == 33 * len(expected)
+    assert len({cell["run_id"] for cell in cells}) == 26 * len(expected)
+
+
+@pytest.mark.parametrize("seeds", [
+    [2026081701],
+    [2026081701, 2026081702, 2026081703],
+    list(reversed(sensitivity_experiment.DEFAULT_SEEDS)),
+    [2026081701, 2026081702, 2026081703, 2026081704, 7],
+])
+def test_sensitivity_formal_requires_the_prescribed_five_paired_seeds(seeds):
+    args = sensitivity_experiment._parser().parse_args(["--seeds", *map(str, seeds)])
+    with pytest.raises(ValueError, match="正式敏感性协议"):
+        sensitivity_experiment.validate_formal_protocol(args)
+
+
+def test_sensitivity_accepts_explicit_formal_seeds_and_rejects_duplicates():
+    args = sensitivity_experiment._parser().parse_args([
+        "--seeds", *map(str, sensitivity_experiment.DEFAULT_SEEDS),
+    ])
+    sensitivity_experiment.validate_formal_protocol(args)
+    assert sensitivity_experiment.effective_seeds(args) == sensitivity_experiment.DEFAULT_SEEDS
+    duplicate = sensitivity_experiment._parser().parse_args(["--quick", "--seeds", "7", "7"])
+    with pytest.raises(ValueError, match="重复"):
+        sensitivity_experiment.validate_formal_protocol(duplicate)
+    with pytest.raises(SystemExit):
+        sensitivity_experiment._parser().parse_args(["--quick", "--seed", "7", "--seeds", "9"])
+
+
+def _fake_sensitivity_solves(monkeypatch):
+    calls = []
+
+    def fake_run_scenario(tasks, scenario, **kwargs):
+        calls.append((scenario, kwargs, tasks))
+        solution_path = kwargs["output_dir"] / "run_solutions" / "solution.json"
+        solution_path.parent.mkdir(parents=True, exist_ok=True)
+        solution_path.write_text(json.dumps({"scenario": scenario["id"], "seed": kwargs["seed"]}), encoding="utf-8")
+        return {
+            "scenario": scenario["id"],
+            "scenario_label": scenario["label"],
+            "seed": kwargs["seed"],
+            "relay": scenario["relay"],
+            "station_predeployment": scenario["drone_homes"] == "stations",
+            "station_count": kwargs["relay_count"],
+            "effective_time_limit_seconds": kwargs["effective_seconds_override"],
+            "late_count": 0, "total_lateness_min": 0.0, "distance_km": 0.0,
+            "relay_task_count": 0,
+            "solution_file": "run_solutions/solution.json",
+            "solution_sha256": sensitivity_experiment._sha256(solution_path),
+        }
+
+    monkeypatch.setattr(sensitivity_experiment, "run_scenario", fake_run_scenario)
+    return calls
+
+
+def test_sensitivity_main_passes_300_seconds_to_all_240_unique_solves(monkeypatch, tmp_path):
+    calls = _fake_sensitivity_solves(monkeypatch)
+    assert sensitivity_experiment.main(["--output-dir", str(tmp_path)]) == 0
+    assert len(calls) == 240
+    assert {kwargs["seed"] for _, kwargs, _ in calls} == set(sensitivity_experiment.DEFAULT_SEEDS)
+    assert {kwargs["effective_seconds_override"] for _, kwargs, _ in calls} == {300.0}
+    assert {scenario["id"] for scenario, _, _ in calls} == {s["id"] for s in SCENARIOS}
+    assert all(s["warmup"] == 0.8 for s, _, _ in calls if s["relay"])
+    rows = json.loads((tmp_path / "runs.json").read_text())
+    assert len(rows) == 275
+    assert len(list((tmp_path / "checkpoints").glob("*.json"))) == 240
+    assert "n=5" in (tmp_path / "REPORT.md").read_text()
+    calls.clear()
+    assert sensitivity_experiment.main(["--output-dir", str(tmp_path), "--resume"]) == 0
+    assert calls == []
+
+
+
+def test_sensitivity_resume_completes_only_missing_checkpoints(monkeypatch, tmp_path):
+    calls = _fake_sensitivity_solves(monkeypatch)
+    fake_run = sensitivity_experiment.run_scenario
+
+    def interrupted(*args, **kwargs):
+        if len(calls) == 2:
+            raise RuntimeError("simulated interruption")
+        return fake_run(*args, **kwargs)
+
+    monkeypatch.setattr(sensitivity_experiment, "run_scenario", interrupted)
+    argv = ["--output-dir", str(tmp_path), "--quick"]
+    with pytest.raises(RuntimeError, match="simulated interruption"):
+        sensitivity_experiment.main(argv)
+    assert len(list((tmp_path / "checkpoints").glob("*.json"))) == 2
+    assert not (tmp_path / "runs.json").exists()
+    failure = json.loads(next((tmp_path / "failures").glob("*.json")).read_text())
+    manifest = json.loads((tmp_path / "manifest.json").read_text())
+    assert failure["contract_sha256"] == sensitivity_experiment._contract_sha256(manifest)
+    assert failure["run_id"] == failure["cell"]["run_id"]
+    assert failure["error_type"] == "RuntimeError"
+    assert failure["error_message"] == "simulated interruption"
+    assert "RuntimeError: simulated interruption" in failure["traceback"]
+
+    calls.clear()
+    monkeypatch.setattr(sensitivity_experiment, "run_scenario", fake_run)
+    assert sensitivity_experiment.main([*argv, "--resume"]) == 0
+    assert len(calls) == 50
+    assert len(json.loads((tmp_path / "runs.json").read_text())) == 66
+    assert len(list((tmp_path / "checkpoints").glob("*.json"))) == 52
+
+
+def test_parallel_sensitivity_records_failure_before_draining_and_resumes_survivors(monkeypatch, tmp_path):
+    calls = _fake_sensitivity_solves(monkeypatch)
+    successful_run = sensitivity_experiment._run_cell
+    second_started = Event()
+    failure_written = Event()
+    started = []
+    write_json = sensitivity_experiment._write_json
+
+    def observe_write(path, payload):
+        write_json(path, payload)
+        if path.parent.name == "failures":
+            failure_written.set()
+
+    def run_with_failure(args, tasks, cell):
+        started.append(cell["run_id"])
+        if cell["scenario"] == "pure_direct":
+            assert second_started.wait(3)
+            raise RuntimeError("parallel cell failed")
+        second_started.set()
+        # Completion depends on the failure being visible, not pool shutdown.
+        assert failure_written.wait(3)
+        return successful_run(args, tasks, cell)
+
+    monkeypatch.setattr(sensitivity_experiment, "ProcessPoolExecutor", ThreadPoolExecutor)
+    monkeypatch.setattr(sensitivity_experiment, "_write_json", observe_write)
+    monkeypatch.setattr(sensitivity_experiment, "_run_cell", run_with_failure)
+    argv = ["--output-dir", str(tmp_path), "--quick", "--workers", "2"]
+    with pytest.raises(RuntimeError, match="parallel cell failed"):
+        sensitivity_experiment.main(argv)
+    assert len(started) == 2  # No unbounded queue or replenishment after failure.
+    assert len(list((tmp_path / "failures").glob("*.json"))) == 1
+    checkpoints = list((tmp_path / "checkpoints").glob("*.json"))
+    assert len(checkpoints) == 1
+    assert json.loads(checkpoints[0].read_text())["row"]["scenario"] == "direct_relay"
+    assert not (tmp_path / "runs.json").exists()
+
+    calls.clear()
+    monkeypatch.setattr(sensitivity_experiment, "_run_cell", successful_run)
+    assert sensitivity_experiment.main([*argv, "--resume"]) == 0
+    assert len(calls) == 51
+    assert len(json.loads((tmp_path / "runs.json").read_text())) == 66
+
+
+def test_parallel_failure_cancels_submitted_work_that_has_not_started(monkeypatch):
+    failed = Future()
+    failed.set_exception(RuntimeError("first failure"))
+    queued = Future()
+    submitted = []
+
+    class ControlledPool:
+        def __init__(self, **kwargs):
+            assert kwargs == {"max_workers": 2}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            assert queued.cancelled()
+
+        def submit(self, function, args, tasks, cell):
+            submitted.append(cell)
+            return failed if len(submitted) == 1 else queued
+
+    monkeypatch.setattr(sensitivity_experiment, "ProcessPoolExecutor", ControlledPool)
+    errors = []
+    with pytest.raises(RuntimeError, match="first failure"):
+        sensitivity_experiment._execute_pending(
+            SimpleNamespace(workers=2), (), [{"id": i} for i in range(20)],
+            record=lambda row: pytest.fail("no completed solve expected"),
+            record_failure=lambda cell, error: errors.append((cell, error)),
+        )
+    assert submitted == [{"id": 0}, {"id": 1}]
+    assert len(errors) == 1
+    assert errors[0][0] == {"id": 0}
+
+
+def test_sensitivity_quick_report_is_explicitly_nonformal(monkeypatch, tmp_path):
+    calls = _fake_sensitivity_solves(monkeypatch)
+    assert sensitivity_experiment.main(["--output-dir", str(tmp_path), "--quick"]) == 0
+    assert len(calls) == 52
+    text = (tmp_path / "REPORT.md").read_text()
+    assert "非正式结果" in text
+    assert "0.6 s" in text
+    assert "n=2" in text
+
+
+@pytest.mark.parametrize("mutation", ["missing", "duplicate", "mechanism", "reuse", "cross_seed_reuse", "missing_seed"])
+def test_sensitivity_validation_rejects_incomplete_or_inconsistent_cells(monkeypatch, tmp_path, mutation):
+    _fake_sensitivity_solves(monkeypatch)
+    sensitivity_experiment.main(["--output-dir", str(tmp_path)])
+    args = sensitivity_experiment._parser().parse_args(["--output-dir", str(tmp_path)])
+    rows = json.loads((tmp_path / "runs.json").read_text())
+    if mutation == "missing":
+        rows.pop()
+    elif mutation == "duplicate":
+        rows.append(rows[0])
+    elif mutation == "mechanism":
+        rows[0]["station_predeployment"] = True
+    elif mutation == "cross_seed_reuse":
+        row = next(row for row in rows if row["reused_from"] is not None)
+        row["reused_from"] = row["reused_from"].replace("2026081701", "2026081702")
+    elif mutation == "missing_seed":
+        rows = [row for row in rows if row["seed"] != sensitivity_experiment.DEFAULT_SEEDS[-1]]
+    else:
+        next(row for row in rows if row["reused_from"] is not None)["distance_km"] += 1.0
+    with pytest.raises(ValueError):
+        sensitivity_experiment.validate_rows(rows, args)
+
+
+@pytest.mark.parametrize("mutation", ["config", "source", "solution", "checkpoint", "seed_list"])
+def test_sensitivity_resume_rejects_mismatched_provenance(monkeypatch, tmp_path, mutation):
+    calls = _fake_sensitivity_solves(monkeypatch)
+    sensitivity_experiment.main(["--output-dir", str(tmp_path)])
+    args = ["--output-dir", str(tmp_path), "--resume"]
+    if mutation == "config":
+        args.extend(["--workers", "2"])
+    elif mutation == "seed_list":
+        path = tmp_path / "manifest.json"
+        manifest = json.loads(path.read_text())
+        manifest["seeds"] = manifest["seeds"][:-1]
+        path.write_text(json.dumps(manifest))
+    elif mutation == "source":
+        path = tmp_path / "manifest.json"
+        manifest = json.loads(path.read_text())
+        manifest["solver_source_sha256"] = "changed"
+        path.write_text(json.dumps(manifest))
+    elif mutation == "solution":
+        next(tmp_path.glob("**/run_solutions/*.json")).write_text("tampered")
+    else:
+        path = next((tmp_path / "checkpoints").glob("*.json"))
+        payload = json.loads(path.read_text())
+        payload["row"]["relay"] = not payload["row"]["relay"]
+        path.write_text(json.dumps(payload))
+    calls.clear()
+    with pytest.raises(ValueError):
+        sensitivity_experiment.main(args)
+    assert calls == []
+
+
+
+def _write_complete_scenario_shards(output_dir):
+    args = scenario_experiment._parser().parse_args(
+        ["--output-dir", str(output_dir)]
+    )
+    shard_dir = output_dir / "shards"
+    shard_dir.mkdir(parents=True)
+    solution_dir = output_dir / "run_solutions"
+    solution_dir.mkdir(parents=True)
+    expected_budgets = {
+        "pure_direct": 240.0,
+        "direct_relay": 480.0,
+        "direct_stations": 480.0,
+        "direct_relay_stations": 720.0,
+    }
+    for seed in scenario_experiment.DEFAULT_SEEDS:
+        rows = []
+        for index, scenario in enumerate(SCENARIOS):
+            budget = expected_budgets[scenario["id"]]
+            construction_seconds = 0.5
+            solver_runtime_seconds = budget - construction_seconds - 0.05
+            warmup_fraction = float(scenario["warmup"])
+            solution_file = (
+                f"run_solutions/{scenario['id']}__seed_{seed}.json"
+            )
+            solution_path = output_dir / solution_file
+            solution_path.write_text(
+                json.dumps({"scenario": scenario["id"], "seed": seed})
+                + "\n",
+                encoding="utf-8",
+            )
+            rows.append(
+                {
+                    "scenario": scenario["id"],
+                    "scenario_label": scenario["label"],
+                    "seed": seed,
+                    "relay": bool(scenario["relay"]),
+                    "station_predeployment": (
+                        scenario["drone_homes"] == "stations"
+                    ),
+                    "effective_time_limit_seconds": expected_budgets[
+                        scenario["id"]
+                    ],
+                    "construction_seconds": construction_seconds,
+                    "solver_runtime_seconds": solver_runtime_seconds,
+                    "relay_warmup_runtime_seconds": (
+                        solver_runtime_seconds * warmup_fraction
+                        if scenario["relay"]
+                        else 0.0
+                    ),
+                    "relay_search_runtime_seconds": (
+                        solver_runtime_seconds * (1.0 - warmup_fraction)
+                        if scenario["relay"]
+                        else 0.0
+                    ),
+                    "late_count": index,
+                    "total_lateness_min": float(index),
+                    "distance_km": 100.0 + index,
+                    "relay_task_count": int(bool(scenario["relay"])),
+                    "wall_seconds": expected_budgets[scenario["id"]] - 0.05,
+                    "solution_file": solution_file,
+                    "solution_sha256": scenario_experiment._sha256(
+                        solution_path
+                    ),
+                }
+            )
+        payload = scenario_experiment._build_seed_shard_payload(
+            args,
+            seed=seed,
+            rows=rows,
+        )
+        (shard_dir / f"seed_{seed}.json").write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+
+
+def test_scenario_worker_seed_is_restricted_to_the_three_formal_seeds():
+    for seed in scenario_experiment.DEFAULT_SEEDS:
+        args = scenario_experiment._parser().parse_args(
+            ["--worker-seed", str(seed)]
+        )
+        assert args.worker_seed == seed
+
+    with pytest.raises(SystemExit):
+        scenario_experiment._parser().parse_args(["--worker-seed", "7"])
+    with pytest.raises(SystemExit):
+        scenario_experiment._parser().parse_args(
+            [
+                "--worker-seed",
+                str(scenario_experiment.DEFAULT_SEEDS[0]),
+                "--finalize-shards",
+            ]
+        )
+
+
+def test_scenario_worker_writes_only_its_seed_shard(monkeypatch, tmp_path):
+    tasks = tuple(
+        Task(
+            task_id,
+            Point(float(task_id), 0.0),
+            Point(float(task_id), 1.0),
+            60.0,
+        )
+        for task_id in range(1, 201)
+    )
+    selected_seed = scenario_experiment.DEFAULT_SEEDS[1]
+    calls = []
+
+    def fake_run_scenario(_tasks, scenario, **kwargs):
+        calls.append((scenario["id"], kwargs["seed"]))
+        return {
+            "scenario": scenario["id"],
+            "seed": kwargs["seed"],
+            "effective_time_limit_seconds": scenario_time_limit_seconds(
+                scenario,
+                base_seconds=kwargs["base_seconds"],
+                relay_or_station_bonus_seconds=kwargs["bonus_seconds"],
+            ),
+            "solution_file": (
+                f"run_solutions/{scenario['id']}__seed_{kwargs['seed']}.json"
+            ),
+        }
+
+    monkeypatch.setattr(
+        scenario_experiment,
+        "load_tasks_csv",
+        lambda _path: tasks,
+    )
+    monkeypatch.setattr(scenario_experiment, "run_scenario", fake_run_scenario)
+
+    assert scenario_experiment.main(
+        [
+            "--output-dir",
+            str(tmp_path),
+            "--worker-seed",
+            str(selected_seed),
+        ]
+    ) == 0
+    assert {scenario for scenario, _seed in calls} == {
+        scenario["id"] for scenario in SCENARIOS
+    }
+    assert {seed for _scenario, seed in calls} == {selected_seed}
+    shard = json.loads(
+        (tmp_path / "shards" / f"seed_{selected_seed}.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert shard["seed"] == selected_seed
+    assert len(shard["rows"]) == 4
+    for name in (
+        "runs.json",
+        "summary.json",
+        "manifest.json",
+        "runs.csv",
+        "summary.csv",
+        "REPORT.md",
+    ):
+        assert not (tmp_path / name).exists()
+
+
+def test_finalize_shards_does_not_solve_and_reuses_final_output_logic(
+    monkeypatch,
+    tmp_path,
+):
+    _write_complete_scenario_shards(tmp_path)
+    monkeypatch.setattr(
+        scenario_experiment,
+        "load_tasks_csv",
+        lambda _path: pytest.fail("finalize must not load task data"),
+    )
+    monkeypatch.setattr(
+        scenario_experiment,
+        "run_scenario",
+        lambda *_args, **_kwargs: pytest.fail("finalize must not solve"),
+    )
+
+    assert scenario_experiment.main(
+        ["--output-dir", str(tmp_path), "--finalize-shards"]
+    ) == 0
+    rows = json.loads((tmp_path / "runs.json").read_text(encoding="utf-8"))
+    assert len(rows) == 12
+    assert {
+        (row["seed"], row["scenario"]) for row in rows
+    } == {
+        (seed, scenario["id"])
+        for seed in scenario_experiment.DEFAULT_SEEDS
+        for scenario in SCENARIOS
+    }
+    manifest = json.loads(
+        (tmp_path / "manifest.json").read_text(encoding="utf-8")
+    )
+    assert manifest["scenario_budgets_seconds"] == {
+        "pure_direct": 240.0,
+        "direct_relay": 480.0,
+        "direct_stations": 480.0,
+        "direct_relay_stations": 720.0,
+    }
+    for name in ("summary.json", "runs.csv", "summary.csv", "REPORT.md"):
+        assert (tmp_path / name).is_file()
+    report = (tmp_path / "REPORT.md").read_text(encoding="utf-8")
+    assert "Direct阶段/s" in report
+    assert "Relay阶段/s" in report
+
+
+def test_finalize_shards_rejects_a_wrong_budget(tmp_path):
+    _write_complete_scenario_shards(tmp_path)
+    shard_path = (
+        tmp_path
+        / "shards"
+        / f"seed_{scenario_experiment.DEFAULT_SEEDS[0]}.json"
+    )
+    shard = json.loads(shard_path.read_text(encoding="utf-8"))
+    shard["rows"][0]["effective_time_limit_seconds"] = 300.0
+    shard_path.write_text(json.dumps(shard), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="预算"):
+        scenario_experiment.main(
+            ["--output-dir", str(tmp_path), "--finalize-shards"]
+        )
+
+
+def test_finalize_shards_rejects_a_missing_solution_file(tmp_path):
+    _write_complete_scenario_shards(tmp_path)
+    missing = (
+        tmp_path
+        / "run_solutions"
+        / (
+            "pure_direct__seed_"
+            f"{scenario_experiment.DEFAULT_SEEDS[0]}.json"
+        )
+    )
+    missing.unlink()
+
+    with pytest.raises(ValueError, match="解文件"):
+        scenario_experiment.main(
+            ["--output-dir", str(tmp_path), "--finalize-shards"]
+        )
+
+
+def test_finalize_shards_rejects_an_incorrect_relay_phase_split(tmp_path):
+    _write_complete_scenario_shards(tmp_path)
+    shard_path = (
+        tmp_path
+        / "shards"
+        / f"seed_{scenario_experiment.DEFAULT_SEEDS[0]}.json"
+    )
+    shard = json.loads(shard_path.read_text(encoding="utf-8"))
+    relay_row = next(
+        row for row in shard["rows"] if row["scenario"] == "direct_relay"
+    )
+    relay_row["relay_warmup_runtime_seconds"] = 300.0
+    relay_row["relay_search_runtime_seconds"] = (
+        relay_row["solver_runtime_seconds"] - 300.0
+    )
+    shard_path.write_text(json.dumps(shard), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="阶段时长"):
+        scenario_experiment.main(
+            ["--output-dir", str(tmp_path), "--finalize-shards"]
+        )
+
+
+def test_run_scenario_exposes_relay_phase_runtimes(monkeypatch, tmp_path):
+    scenario = next(
+        item for item in SCENARIOS if item["id"] == "direct_relay"
+    )
+    problem = SimpleNamespace(
+        drone_homes=None,
+        drone_count=8,
+        relay_stations=(),
+    )
+    evaluation = SimpleNamespace(
+        valid=True,
+        violations=(),
+        score=SimpleNamespace(
+            late_count=0,
+            total_lateness_min=0.0,
+            distance_km=1.0,
+        ),
+    )
+    result = SimpleNamespace(
+        routes=((),) * 8,
+        evaluation=evaluation,
+        runtime_seconds=479.0,
+        iterations=10,
+        metadata={
+            "method": "C2-Lex-ALNS-Staged",
+            "relay": {},
+            "operator_statistics": {},
+            "relay_warmup_runtime_seconds": 239.5,
+            "relay_search_runtime_seconds": 239.5,
+        },
+    )
+    monkeypatch.setattr(
+        scenario_experiment,
+        "build_scenario_problem",
+        lambda *_args, **_kwargs: (problem, None),
+    )
+    monkeypatch.setattr(
+        scenario_experiment,
+        "construct_regret_initial",
+        lambda *_args, **_kwargs: SimpleNamespace(routes=((),) * 8),
+    )
+    monkeypatch.setattr(
+        scenario_experiment,
+        "solve_relay_staged",
+        lambda *_args, **_kwargs: result,
+    )
+    monkeypatch.setattr(
+        scenario_experiment,
+        "result_payload",
+        lambda *_args, **_kwargs: {},
+    )
+    monkeypatch.setattr(
+        scenario_experiment,
+        "deployment_distribution",
+        lambda _homes: {},
+    )
+    monkeypatch.setattr(
+        scenario_experiment,
+        "deadhead_km",
+        lambda *_args, **_kwargs: 0.0,
+    )
+    monkeypatch.setattr(
+        scenario_experiment,
+        "home_assignment_rate",
+        lambda *_args, **_kwargs: 0.0,
+    )
+
+    row = scenario_experiment.run_scenario(
+        (),
+        scenario,
+        seed=scenario_experiment.DEFAULT_SEEDS[0],
+        output_dir=tmp_path,
+        input_path=scenario_experiment.DEFAULT_INPUT,
+        drones=8,
+        max_tasks=25,
+        base_seconds=240.0,
+        bonus_seconds=240.0,
+        safety_margin_seconds=0.05,
+        max_iterations=10,
+        candidate_limit=48,
+        relay_count="auto",
+        relay_location_seed=42,
+    )
+
+    assert row["relay_warmup_runtime_seconds"] == 239.5
+    assert row["relay_search_runtime_seconds"] == 239.5
+
+
+def test_benchmark_manifest_captures_the_reproducibility_contract():
+    args = benchmark_experiment._parser().parse_args([])
+
+    manifest = benchmark_experiment.build_manifest(
+        args,
+        exact_sizes=benchmark_experiment.EXACT_SIZES,
+        scale_counts=benchmark_experiment.MULTISCALE_TASK_COUNTS,
+        input_task_count=200,
+    )
+
+    assert manifest["schema_version"] == 1
+    assert manifest["formal"] is True
+    assert manifest["exact_sizes"] == [5, 8, 10, 12]
+    assert manifest["multiscale_task_counts"] == [50, 100, 150, 200]
+    assert manifest["relaxed_deadline_multiplier"] == 2.5
+    assert manifest["scale_seconds"] == 30.0
+    assert manifest["seed"] == 2026081701
+    assert manifest["input_task_count"] == 200
+    assert manifest["input_sha256"]
+    assert manifest["solver_source_sha256"]
+    assert manifest["experiment_script_sha256"]
+    assert manifest["git_commit"] is None or len(manifest["git_commit"]) == 40
+    assert isinstance(manifest["git_dirty"], (bool, type(None)))
+    assert manifest["environment"]["python_version"]
+    assert manifest["environment"]["platform"]
+    assert manifest["solver_config"]["exact_alns"]["max_iterations"] == 1_000
+    assert manifest["solver_config"]["exact_alns"]["candidate_limit"] is None
+    assert manifest["solver_config"]["multiscale_alns"]["max_iterations"] == 10_000_000
+    assert manifest["solver_config"]["multiscale_alns"]["candidate_limit"] == 48
+    assert manifest["solver_config"]["max_tasks_per_drone"] == 25
+
+
+def test_quick_benchmark_manifest_is_explicitly_nonformal():
+    args = benchmark_experiment._parser().parse_args(
+        [
+            "--quick",
+            "--seed",
+            "7",
+            "--scale-seconds",
+            "0.25",
+            "--max-iterations",
+            "99",
+            "--candidate-limit",
+            "4",
+        ]
+    )
+
+    manifest = benchmark_experiment.build_manifest(
+        args,
+        exact_sizes=benchmark_experiment.EXACT_SIZES[:2],
+        scale_counts=benchmark_experiment.MULTISCALE_TASK_COUNTS[:2],
+        input_task_count=200,
+    )
+
+    assert manifest["formal"] is False
+    assert manifest["seed"] == 7
+    assert manifest["scale_seconds"] == 0.25
+    assert manifest["exact_sizes"] == [5, 8]
+    assert manifest["multiscale_task_counts"] == [50, 100]
+    assert manifest["solver_config"]["exact_alns"]["max_iterations"] == 100
+    assert manifest["solver_config"]["multiscale_alns"]["max_iterations"] == 99
+    assert manifest["solver_config"]["multiscale_alns"]["candidate_limit"] == 4
