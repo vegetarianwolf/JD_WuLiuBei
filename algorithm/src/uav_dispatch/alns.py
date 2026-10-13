@@ -118,6 +118,14 @@ class ALNSConfig:
     relay_sample_every: int = 3
     relay_global_limit: int = 3
     relay_debug: bool = False
+    # Independent relay experiments. Route diversity reserves one candidate
+    # per feasible UAV within the existing leg beam; risk seeding spends the
+    # startup task budget on actual global deadline risk rather than task id.
+    enable_relay_route_diversity: bool = False
+    enable_relay_risk_seed: bool = False
+    # Preserve only seed moves already independently checked before the
+    # deadline; an unfinished or over-budget candidate is never adopted.
+    enable_relay_seed_checkpoint: bool = False
     # The seed pass converts strictly-better DIRECT tasks to relay right
     # after construction; the refine pass then moves relay legs between UAVs.
     enable_relay_seed: bool = True
@@ -325,6 +333,9 @@ class _RelaySearchConfig:
     leg_beam: int
     event_cap: int | None
     debug: bool
+    route_diversity: bool = False
+    risk_seed: bool = False
+    seed_checkpoint: bool = False
     sample_every: int = 4
     global_limit: int = 3
     probe_fraction: float = 0.25
@@ -337,6 +348,10 @@ class _RelaySearchConfig:
     selected_relay_options: int = 0
     refine_candidates_evaluated: int = 0
     refine_candidates_pruned: int = 0
+    seed_tasks_considered: int = 0
+    seed_improvements: int = 0
+    seed_deadline_reached: bool = False
+    seed_checkpoint_retained: bool = False
     leg_option_cache: _LegOptionCache | None = None
 
 
@@ -518,60 +533,84 @@ def _relay_seed_pass(
         return routes
     current = routes
     current_score = evaluate_solution(problem, current, _force_full=True).score
-    considered = 0
-    for task_id in direct_tasks:
-        if task_limit is not None and considered >= task_limit:
-            break
-        considered += 1
-        if deadline is not None and perf_counter() >= deadline:
-            raise _SearchDeadlineReached
-        visits = plan_index.task_visits[task_id]
-        # The task is currently served DIRECT, so remove its visits first;
-        # re-insertion plans are built against the reduced partial solution.
-        reduced = tuple(
-            tuple(visit for visit in route if visit not in visits)
-            for route in current
-        )
-        options = _all_plans_for_task(
-            problem,
-            evaluator,
-            reduced,
-            task_id,
-            candidate_limit=24,
-            option_count=6,
-            relay_cfg=relay_cfg,
-            deadline=deadline,
-            probe_relay=True,
-        )
-        if not options:
-            continue
-        candidate, score, mode = _apply_task_exact(
-            problem,
-            evaluator,
-            global_evaluator,
-            reduced,
-            options,
-            relay_cfg=relay_cfg,
-            deadline=deadline,
-            direct_exact_top_k=1,
-        )
-        if candidate is not None and mode == "RELAY" and score is not None:
-            # The insertion shortlist can omit the task's original position.
-            # Beating that shortlist does not imply beating the incumbent.
-            candidate_evaluation = evaluate_solution(
-                problem, candidate, _force_full=True
-            )
+    try:
+        if relay_cfg.risk_seed:
             if deadline is not None and perf_counter() >= deadline:
                 raise _SearchDeadlineReached
-            if (
-                not candidate_evaluation.valid
-                or candidate_evaluation.score >= current_score
-            ):
+            # Route-local clocks omit upstream relay waits. Read the one cached
+            # complete startup schedule, then keep a deterministic fixed order
+            # for this bounded pass; later strict improvements can change risk.
+            delivery_times = global_evaluator.evaluate(routes).delivery_times_min
+            direct_tasks.sort(
+                key=lambda task_id: (
+                    -_deadline_risk(
+                        delivery_times[task_id], problem.task(task_id).deadline_min
+                    ),
+                    -(delivery_times[task_id] - problem.task(task_id).deadline_min),
+                    task_id,
+                )
+            )
+        considered = 0
+        for task_id in direct_tasks:
+            if task_limit is not None and considered >= task_limit:
+                break
+            considered += 1
+            relay_cfg.seed_tasks_considered += 1
+            if deadline is not None and perf_counter() >= deadline:
+                raise _SearchDeadlineReached
+            visits = plan_index.task_visits[task_id]
+            # The task is currently served DIRECT, so remove its visits first;
+            # re-insertion plans are built against the reduced partial solution.
+            reduced = tuple(
+                tuple(visit for visit in route if visit not in visits)
+                for route in current
+            )
+            options = _all_plans_for_task(
+                problem,
+                evaluator,
+                reduced,
+                task_id,
+                candidate_limit=24,
+                option_count=6,
+                relay_cfg=relay_cfg,
+                deadline=deadline,
+                probe_relay=True,
+            )
+            if not options:
                 continue
-            current = candidate
-            current_score = candidate_evaluation.score
-            if relay_cfg.debug:
-                print(f"[relay-debug] seed task={task_id} mode=RELAY")
+            candidate, score, mode = _apply_task_exact(
+                problem,
+                evaluator,
+                global_evaluator,
+                reduced,
+                options,
+                relay_cfg=relay_cfg,
+                deadline=deadline,
+                direct_exact_top_k=1,
+            )
+            if candidate is not None and mode == "RELAY" and score is not None:
+                # The insertion shortlist can omit the task's original position.
+                # Beating that shortlist does not imply beating the incumbent.
+                candidate_evaluation = evaluate_solution(
+                    problem, candidate, _force_full=True
+                )
+                if deadline is not None and perf_counter() >= deadline:
+                    raise _SearchDeadlineReached
+                if (
+                    not candidate_evaluation.valid
+                    or candidate_evaluation.score >= current_score
+                ):
+                    continue
+                current = candidate
+                current_score = candidate_evaluation.score
+                relay_cfg.seed_improvements += 1
+                if relay_cfg.debug:
+                    print(f"[relay-debug] seed task={task_id} mode=RELAY")
+    except _SearchDeadlineReached:
+        relay_cfg.seed_deadline_reached = True
+        if not relay_cfg.seed_checkpoint:
+            raise
+        relay_cfg.seed_checkpoint_retained = current != routes
     return current
 
 
@@ -1441,6 +1480,7 @@ def _best_leg_options(
     event_cap: int | None,
     top_k: int,
     deadline: float | None,
+    route_diversity: bool = False,
     repair_cache: _RepairCache | None = None,
     leg_option_cache: _LegOptionCache | None = None,
 ) -> tuple[RouteInsertionOption, ...]:
@@ -1515,7 +1555,33 @@ def _best_leg_options(
             option.route,
         )
     )
-    return tuple(options[:top_k])
+    if not route_diversity:
+        return tuple(options[:top_k])
+    # Position alternatives from one UAV can consume the entire global
+    # beam before handoff pairing. Reserve the best option of each feasible
+    # UAV, in score order, and fill unused slots with positional alternatives.
+    # This changes candidate selection only, never the beam width or the
+    # original-task K checks inside route_leg_insertion_options.
+    heads: list[RouteInsertionOption] = []
+    rest: list[RouteInsertionOption] = []
+    seen_routes: set[int] = set()
+    for option in options:
+        if option.route_index not in seen_routes:
+            seen_routes.add(option.route_index)
+            heads.append(option)
+        else:
+            rest.append(option)
+    selected = (heads + rest)[:top_k]
+    selected.sort(
+        key=lambda option: (
+            option.delta,
+            option.route_index,
+            option.pickup_position,
+            option.delivery_position,
+            option.route,
+        )
+    )
+    return tuple(selected)
 
 
 def _handoff_surrogate(
@@ -1574,6 +1640,7 @@ def _build_relay_beam(
         event_cap=relay_cfg.event_cap,
         top_k=relay_cfg.leg_beam,
         deadline=deadline,
+        route_diversity=relay_cfg.route_diversity,
         repair_cache=repair_cache,
         leg_option_cache=relay_cfg.leg_option_cache,
     )
@@ -1588,6 +1655,7 @@ def _build_relay_beam(
         event_cap=relay_cfg.event_cap,
         top_k=relay_cfg.leg_beam,
         deadline=deadline,
+        route_diversity=relay_cfg.route_diversity,
         repair_cache=repair_cache,
         leg_option_cache=relay_cfg.leg_option_cache,
     )
@@ -2951,6 +3019,9 @@ def solve_alns(
             leg_beam=cfg.relay_leg_beam,
             event_cap=cfg.relay_event_cap,
             debug=cfg.relay_debug,
+            route_diversity=cfg.enable_relay_route_diversity,
+            risk_seed=cfg.enable_relay_risk_seed,
+            seed_checkpoint=cfg.enable_relay_seed_checkpoint,
             sample_every=cfg.relay_sample_every,
             global_limit=cfg.relay_global_limit,
             probe_fraction=cfg.relay_probe_fraction,
@@ -3405,6 +3476,19 @@ def solve_alns(
             "budget_cooling_active": budget_cooling_active,
             "final_temperature": temperature,
             "relay_enabled": bool(relay_active),
+            "enable_relay_route_diversity": cfg.enable_relay_route_diversity,
+            "relay_route_diversity_active": bool(
+                relay_active and cfg.enable_relay_route_diversity
+            ),
+            "enable_relay_risk_seed": cfg.enable_relay_risk_seed,
+            "relay_risk_seed_active": bool(
+                relay_active and cfg.enable_relay_seed and cfg.enable_relay_risk_seed
+            ),
+            "enable_relay_seed_checkpoint": cfg.enable_relay_seed_checkpoint,
+            "relay_seed_checkpoint_active": bool(
+                relay_active and cfg.enable_relay_seed
+                and cfg.enable_relay_seed_checkpoint
+            ),
             "time_limit_seconds": cfg.time_limit_seconds,
             "initial_score": (
                 initial_score.late_count,
@@ -3451,6 +3535,10 @@ def solve_alns(
                     relay_cfg.refine_candidates_evaluated
                 ),
                 "refine_candidates_pruned": relay_cfg.refine_candidates_pruned,
+                "relay_seed_tasks_considered": relay_cfg.seed_tasks_considered,
+                "relay_seed_improvements": relay_cfg.seed_improvements,
+                "relay_seed_deadline_reached": relay_cfg.seed_deadline_reached,
+                "relay_seed_checkpoint_retained": relay_cfg.seed_checkpoint_retained,
                 "relay_leg_cache_hits": (
                     relay_cfg.leg_option_cache.hits
                     if relay_cfg.leg_option_cache is not None

@@ -1,0 +1,153 @@
+{
+  "kind": "relay_trials",
+  "schema_version": 1,
+  "baseline_variant": "baseline",
+  "baseline_commit": "bca2fbfd6f9aca9818005213cf2a03a696ada0f0",
+  "input_path": "algorithm/命题1-低空经济场景下的物流无人机调度算法数据.csv",
+  "input_sha256": "386d3fbaa9009aeed947493782d657ed0b30b25d369c8187bfc9619fc7e31d25",
+  "source_snapshots": {
+    "baseline": {
+      "path": "sources/baseline.zip",
+      "sha256": "9a7814f19ebd95cfb9ac1cfac6919cac01a92deebcc9571eadaacacf0a3a86b0",
+      "config": {},
+      "source_ref": "bca2fbfd6f9aca9818005213cf2a03a696ada0f0",
+      "label": "本轮开始时 main"
+    },
+    "checkpoint": {
+      "path": "sources/candidate.zip",
+      "sha256": "3a5c70dc30556256dcc6a20cff28ca7c25a196da38653f4101d2bf445930a1ad",
+      "config": {
+        "enable_relay_seed_checkpoint": true
+      },
+      "source_ref": "working_tree",
+      "label": "保留已完成播种改善"
+    },
+    "diversity": {
+      "path": "sources/candidate.zip",
+      "sha256": "3a5c70dc30556256dcc6a20cff28ca7c25a196da38653f4101d2bf445930a1ad",
+      "config": {
+        "enable_relay_route_diversity": true
+      },
+      "source_ref": "working_tree",
+      "label": "接力候选跨机多样性"
+    },
+    "risk": {
+      "path": "sources/candidate.zip",
+      "sha256": "3a5c70dc30556256dcc6a20cff28ca7c25a196da38653f4101d2bf445930a1ad",
+      "config": {
+        "enable_relay_risk_seed": true
+      },
+      "source_ref": "working_tree",
+      "label": "全局风险优先播种"
+    }
+  },
+  "execution_sources": {
+    "run_optimization_experiments": {
+      "path": "sources/run_optimization_experiments.py",
+      "sha256": "8431df7578301b4ea875d32c6d97250698fc626696f9b79f522a2dd2a0a3e26a"
+    },
+    "run_scenario_comparison": {
+      "path": "sources/run_scenario_comparison.py",
+      "sha256": "5566709d474ac03e9e3a6118a0b947098d785281f65f2c8bcc0074b8eb34ca1c"
+    },
+    "run_relay_trials": {
+      "path": "sources/run_relay_trials.py",
+      "sha256": "e3d02e4075bbc0c80cdd7067c2ee851c07073c663a632d1fcb27f9c9b0e657d4"
+    }
+  },
+  "runner_sha256": "8431df7578301b4ea875d32c6d97250698fc626696f9b79f522a2dd2a0a3e26a",
+  "seeds": {
+    "compatibility": [
+      2026101801
+    ],
+    "screen": [
+      2026101811,
+      2026101812
+    ],
+    "medium": [
+      2026101821,
+      2026101822,
+      2026101823
+    ],
+    "reference": [
+      2026101821,
+      2026101822,
+      2026101823
+    ]
+  },
+  "protocol": {
+    "stage_cases": {
+      "compatibility": [
+        "fleet200"
+      ],
+      "screen": [
+        "fleet200__direct_relay_stations",
+        "fleet200__direct_relay"
+      ],
+      "medium": [
+        "fleet200__direct_relay_stations",
+        "fleet200__direct_relay"
+      ],
+      "reference": [
+        "fleet200"
+      ]
+    },
+    "stage_budgets_seconds": {
+      "compatibility": {
+        "fleet200": 10
+      },
+      "screen": {
+        "fleet200__direct_relay_stations": 10,
+        "fleet200__direct_relay": 10
+      },
+      "medium": {
+        "fleet200__direct_relay_stations": 30,
+        "fleet200__direct_relay": 30
+      },
+      "reference": {
+        "fleet200": 30
+      }
+    },
+    "stage_caps_seconds": {
+      "compatibility": 40,
+      "screen": 160,
+      "medium": 360,
+      "reference": 90
+    },
+    "total_experiment_seconds": 720,
+    "reserved_seconds": 30,
+    "compatibility_iterations": 100,
+    "tasks": 200,
+    "drones": 8,
+    "max_tasks_per_drone": 25,
+    "capacity": 2,
+    "speed_km_per_min": 0.9,
+    "deadline_multiplier": 1.0,
+    "relay_count": 4,
+    "relay_location_seed": 42,
+    "relay_direct_warmup_fraction": 0.8,
+    "safety_margin_seconds": 1.0,
+    "primary_case": "fleet200__direct_relay_stations",
+    "K_interpretation": "沿用论文：仅最终配送责任占每机K额度；前半程转运不占，属于原题中继扩展",
+    "comparison": "同源码版本边界、同场景、同种子、同初解和同总预算，三级词典序逐种子判胜",
+    "screen_gate": "任一有效配对获胜即可扩大；退化完整保留；DIRECT固定100轮兼容必须等价",
+    "selection": "仅验证一个候选：依次按主场景胜数、两场景总胜数、主场景逾期数减少总量、主场景次级胜数；完全并列按checkpoint/diversity/risk",
+    "default_gate": "主场景三个新种子至少两胜即可默认，披露次场景退化与长预算未知；用户授权探索门槛",
+    "continuation": "完成预定三个新种子，不换种子、不重跑择优；未晋级不进行大规模或长预算实验",
+    "time_boundary": "CSV读取前至完整核验和解JSON写出后；不含Python进程启动与模块导入",
+    "direct_reference": "只作同总预算策略参照；预部署场景起点不同，不能把差值全归因于中继",
+    "historical": "单独显示冻结旧四策略，保留其模块预算，不与本批混算改善率",
+    "user_choices": [
+      "轻量验证，3种子少量场景",
+      "主要可视化，与先前结果对比",
+      "任一配对获胜即可扩大，保留退化",
+      "三个种子多数胜即可默认并披露局限",
+      "沿用论文最终配送责任K语义"
+    ]
+  },
+  "environment": {
+    "python": "3.14.5",
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O"
+  },
+  "created_at": "2026-10-13T15:24:17Z"
+}

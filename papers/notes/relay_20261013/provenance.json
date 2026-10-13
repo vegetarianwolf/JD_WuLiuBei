@@ -1,0 +1,167 @@
+{
+  "access_date": "2026-10-13",
+  "timezone": "Asia/Shanghai",
+  "scope": "Targeted non-exhaustive relay/transshipment method lookup; three Crossref first pages, one arXiv search plus one retry, one mandated arXiv citation metadata page, one official AAAI full-text retrieval.",
+  "api_requests": [
+    {
+      "endpoint": "https://api.crossref.org/works",
+      "parameters": {
+        "query.title": "Transfer Optimization for Heterogeneous Drone Delivery and Pickup Problem",
+        "rows": 3,
+        "select": "DOI,title,author,published,container-title,abstract,URL,link"
+      },
+      "http_status": 200,
+      "output": "crossref_transfer_title.json",
+      "bytes": 5073,
+      "sha256": "369427c12ad29e21f5ba98b9f328edcd7c91ba6211c513a27720a7e76a90042c",
+      "interpretation": "One bounded fuzzy first page; total-results is the fuzzy search pool, not the count of relevant papers.",
+      "shape_checks": [
+        "status=ok; message-type=work-list; total-results=2705738; fetched=3"
+      ]
+    },
+    {
+      "endpoint": "https://api.crossref.org/works",
+      "parameters": {
+        "query.title": "An adaptive large neighborhood search for the pickup and delivery problem with transfers",
+        "rows": 5,
+        "select": "DOI,title,author,published,container-title,abstract,URL,link"
+      },
+      "http_status": 200,
+      "output": "crossref_pdptw_transfers.json",
+      "bytes": 9056,
+      "sha256": "ffdf78b2e479a0699463273d46f8bd4aa36d185f74ec71227d8b0a3fcc3c484f",
+      "interpretation": "One bounded fuzzy first page; total-results is the fuzzy search pool, not the count of relevant papers.",
+      "shape_checks": [
+        "status=ok; message-type=work-list; total-results=2529166; fetched=5"
+      ]
+    },
+    {
+      "endpoint": "https://api.crossref.org/works",
+      "parameters": {
+        "query.title": "Efficient feasibility testing for pickup and delivery problems with transfers",
+        "rows": 3,
+        "select": "DOI,title,author,published,container-title,abstract,URL,link"
+      },
+      "http_status": 200,
+      "output": "crossref_transfer_feasibility.json",
+      "bytes": 3988,
+      "sha256": "2ee69d6e01ed4fa03e612a1d2898e39aa9d4042296d89bbe586e44757be42247",
+      "interpretation": "One bounded fuzzy first page; total-results is the fuzzy search pool, not the count of relevant papers.",
+      "shape_checks": [
+        "status=ok; message-type=work-list; total-results=2354608; fetched=3"
+      ]
+    },
+    {
+      "endpoint": "https://export.arxiv.org/api/query",
+      "parameters": {
+        "search_query": "(all:drone AND (all:transfer OR all:relay) AND all:delivery)",
+        "max_results": 8,
+        "start": 0,
+        "sortBy": "relevance"
+      },
+      "http_status": 429,
+      "output": "arxiv_drone_relay.xml",
+      "bytes": 14,
+      "sha256": "467622e2f17f01d302d6c790b13078569f17d71cd83910558535019a594e07c1",
+      "interpretation": "Throttled; initial call plus one retry only. No paper records were retrieved.",
+      "shape_checks": [
+        "raw body=Rate exceeded.; bundled arxiv_atom.py exits 5"
+      ]
+    },
+    {
+      "endpoint": "https://export.arxiv.org/api/query",
+      "parameters": {
+        "search_query": "(all:drone AND (all:transfer OR all:relay) AND all:delivery)",
+        "max_results": 8,
+        "start": 0,
+        "sortBy": "relevance"
+      },
+      "http_status": 429,
+      "output": "arxiv_drone_relay_retry.xml",
+      "bytes": 14,
+      "sha256": "467622e2f17f01d302d6c790b13078569f17d71cd83910558535019a594e07c1",
+      "interpretation": "Throttled; initial call plus one retry only. No paper records were retrieved.",
+      "shape_checks": [
+        "raw body=Rate exceeded.; bundled arxiv_atom.py exits 5"
+      ]
+    },
+    {
+      "endpoint": "https://arxiv.org/abs/2609.00065",
+      "parameters": {},
+      "http_status": 200,
+      "output": "scientific_agent_skills_abs.html",
+      "bytes": 42282,
+      "sha256": "1e27e730621e53c823a855c5f814e9b95ea69755e294a646bb9aeddefe2a7228",
+      "interpretation": "Latest HTML metadata independently verified; v2 dated 2026-09-02, no journal reference or publisher DOI visible.",
+      "shape_checks": [
+        "Expected title and all 5 citation_author values found; submission history contains v1 and v2"
+      ]
+    }
+  ],
+  "full_text_retrieval": {
+    "endpoint": "https://ojs.aaai.org/index.php/AAAI/article/download/9034/8893",
+    "parameters": {},
+    "http_status": 200,
+    "bytes": 943814,
+    "sha256": "820a3c377e0fc6180cc43718fbf1efc390b96a2757b5234c597a93f5626d8480",
+    "shape_checks": [
+      "%PDF- magic",
+      "pypdf: 7 pages",
+      "Title and authors match Crossref DOI 10.1609/aaai.v28i1.9034"
+    ],
+    "retention": "Read in a temporary file, not republished in this repository.",
+    "read_pages": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "method_locator": "PDF pages 4-5; proceedings pages 2253-2254"
+  },
+  "local_sources": [
+    {
+      "path": "命题1-低空经济场景下的物流无人机调度算法.docx",
+      "bytes": 30826,
+      "sha256": "8c8017e5dd3d7dbca76ebe4af7a3d3f2e7f5e8c77241297ad6065d1bc68462e9"
+    },
+    {
+      "path": "algorithm/RELAY_ADJUSTED_240S_REPORT.md",
+      "bytes": 7129,
+      "sha256": "0c27bec52256a541dd05ac53715a8bbf3b668c5bfa6138816c9846141cea2916"
+    },
+    {
+      "path": "algorithm/RELAY_VS_DIRECT_240S_REPORT.md",
+      "bytes": 4860,
+      "sha256": "76a8954d45e187265667577ab2f513fb97119228b36f6f94e4c55e8c9c60facd"
+    },
+    {
+      "path": "papers/references/2.1无人机取送货路径优化研究-Minimizing the Total Travel Distance for the Locker-Based Drone Delivery - A Branch-and-Cut-Based Method-彭超辉-05.pdf",
+      "bytes": 897481,
+      "sha256": "dd511a6d39d156197009d472c3d4efa6dd3ab3b370bd151cd0903828422b3a8c"
+    },
+    {
+      "path": "papers/references/2.1 无人机取送货路径优化研究-Transfer Optimization for Heterogeneous Drone Delivery and Pickup Problem-郭家瑶-02.pdf",
+      "bytes": 4978042,
+      "sha256": "a180442bcdeedc6aecf4345b799c029188eece3477082ccf1a8ce3b9683f46fa"
+    }
+  ],
+  "sandbox_failures": [
+    {
+      "endpoint": "https://api.crossref.org/works",
+      "curl_exit": 6,
+      "http_status": "000",
+      "reason": "Sandbox DNS could not resolve host before escalation."
+    },
+    {
+      "endpoint": "https://export.arxiv.org/api/query",
+      "curl_exit": 6,
+      "http_status": "000",
+      "reason": "Sandbox DNS could not resolve host before escalation."
+    }
+  ],
+  "selected_paper_count": 4,
+  "coverage_limit": "No exhaustive literature claim; arXiv search yielded no records due to throttling. Metadata-only papers are not treated as full-text method evidence."
+}

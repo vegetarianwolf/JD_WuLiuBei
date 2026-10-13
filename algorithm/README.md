@@ -10,6 +10,14 @@
 
 ## 当前方法
 
+最新[中继接力 HTML 对比](results/relay_trials_20261013/batch1/index.html)
+独立尝试 `enable_relay_seed_checkpoint`、`enable_relay_route_diversity` 与
+`enable_relay_risk_seed`。三个开关默认关闭，分别保留中继播种预算耗尽前的
+已核验改善、在固定腿束宽内保留不同无人机候选、按含等待的全局风险优先播种。
+跨机候选多样性在两个代表场景的 30 秒三种子验证均为 1 胜 2 负，没有
+替换默认。全部 35 次运行通过完整结构及独立 DAG 时序复算，完整口径、逐种子
+结果与重放命令见[批次说明](results/relay_trials_20261013/batch1/README.md)。
+
 最新默认启用 `enable_adjacent_polish=True`：多机 DIRECT 搜索每 40 轮对一条候选
 路线尝试至多 49 对相邻访问交换，仅采用首个严格路线改善；完整历史最优仍须全局
 复算。单机与实际 Relay 阶段不启用，分阶段 Relay 的 DIRECT 预热可使用它。
