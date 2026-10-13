@@ -1,0 +1,256 @@
+{
+  "schema_version": 1,
+  "retrieval_contract": {
+    "scope": "targeted_followup_method_reading",
+    "access_date": "2026-10-13",
+    "timezone": "Asia/Shanghai",
+    "exhaustive": false,
+    "maximum_academic_api_calls": 5,
+    "actual_academic_api_calls": 5,
+    "full_text_focus": [
+      "SISRs",
+      "Curtois PDPTW local search"
+    ]
+  },
+  "queries": [
+    {
+      "id": "openalex_sisrs",
+      "database": "OpenAlex",
+      "endpoint": "https://api.openalex.org/works/doi:10.1287%2Ftrsc.2019.0914",
+      "parameters": {},
+      "payload": "openalex_sisrs.json",
+      "http_status": 200,
+      "status": "exact_doi_match",
+      "retrieved": 1,
+      "access_date": "2026-10-13",
+      "pages_fetched": 1,
+      "sha256": "538d9c0626bb1aecf3fc5fafae67153fe0fcfd3929128e50ec3e65cbebd10254"
+    },
+    {
+      "id": "crossref_soft_tardy",
+      "database": "Crossref",
+      "endpoint": "https://api.crossref.org/works",
+      "parameters": {
+        "query.bibliographic": "vehicle routing soft time windows minimizing number tardy customers local search",
+        "rows": 4
+      },
+      "payload": "crossref_soft_tardy.json",
+      "http_status": 200,
+      "status": "bounded_first_page_no_primary_method_selected",
+      "retrieved": 4,
+      "access_date": "2026-10-13",
+      "pages_fetched": 1,
+      "sha256": "d1f98c1476a48f9d4f8e4885482a3a0d636feade94711eda43a8148816b52854",
+      "reported_total": 77655
+    },
+    {
+      "id": "semantic_sisrs",
+      "database": "Semantic Scholar",
+      "endpoint": "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1287%2Ftrsc.2019.0914",
+      "parameters": {
+        "fields": "title,year,authors,externalIds,isOpenAccess,openAccessPdf"
+      },
+      "payload": "semantic_sisrs.json",
+      "http_status": 429,
+      "status": "rate_limited",
+      "retrieved": 0,
+      "access_date": "2026-10-13",
+      "pages_fetched": 1,
+      "sha256": "65ab993d12c5c2cc9b68e6da2bb79b326930283e520363ffcdc145f88cd5a148"
+    },
+    {
+      "id": "semantic_sisrs_retry",
+      "database": "Semantic Scholar",
+      "endpoint": "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1287%2Ftrsc.2019.0914",
+      "parameters": {
+        "fields": "title,year,authors,externalIds,isOpenAccess,openAccessPdf"
+      },
+      "payload": "semantic_sisrs_retry.json",
+      "http_status": 429,
+      "status": "single_retry_rate_limited_no_further_attempts",
+      "retrieved": 0,
+      "access_date": "2026-10-13",
+      "pages_fetched": 1,
+      "sha256": "65ab993d12c5c2cc9b68e6da2bb79b326930283e520363ffcdc145f88cd5a148"
+    },
+    {
+      "id": "crossref_ages_exact",
+      "database": "Crossref",
+      "endpoint": "https://api.crossref.org/works/10.1007%2Fs13676-017-0115-6",
+      "parameters": {},
+      "payload": "crossref_ages_exact.json",
+      "http_status": 200,
+      "status": "exact_doi_match",
+      "retrieved": 1,
+      "access_date": "2026-10-13",
+      "pages_fetched": 1,
+      "sha256": "4020c60b912bcefadbeb682374f84efbd24b473059fa81a73355215bab109dc0"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sisrs",
+      "title": "Slack Induction by String Removals for Vehicle Routing Problems",
+      "authors": [
+        "Jan Christiaens",
+        "Greet Vanden Berghe"
+      ],
+      "year": 2020,
+      "doi": "10.1287/trsc.2019.0914",
+      "url": "https://doi.org/10.1287/trsc.2019.0914",
+      "journal": "Transportation Science",
+      "evidence_level": "primary_author_technical_report_full_text_via_mirror_and_published_metadata",
+      "raw_metadata": "openalex_sisrs.json",
+      "version_read": "Author technical report dated 2018-05-07, 45 PDF pages including mirror cover; this is not the 2020 journal typeset version.",
+      "primary_text_url": "https://scispace.com/pdf/slack-induction-by-string-removals-for-vehicle-routing-14gqwirdlp.pdf",
+      "sections_read": [
+        "5.1 Rationale for SISRs",
+        "5.2 Adjacent string removal / Algorithm 2",
+        "5.3 Greedy insertion with blinks / Algorithm 3",
+        "Table 8 Pickup & Deliveries"
+      ],
+      "technical_report_pages_read": [
+        9,
+        10,
+        11,
+        12,
+        14,
+        15,
+        24
+      ],
+      "read_via": "web PDF text extraction",
+      "local_fulltext_retained": false
+    },
+    {
+      "id": "curtois_ages",
+      "title": "Large neighbourhood search with adaptive guided ejection search for the pickup and delivery problem with time windows",
+      "authors": [
+        "Timothy Curtois",
+        "Dario Landa-Silva",
+        "Yi Qu",
+        "Wasakorn Laesanklang"
+      ],
+      "year": 2018,
+      "doi": "10.1007/s13676-017-0115-6",
+      "url": "https://doi.org/10.1007/s13676-017-0115-6",
+      "journal": "EURO Journal on Transportation and Logistics",
+      "evidence_level": "publisher_primary_full_text",
+      "raw_metadata": "crossref_ages_exact.json",
+      "primary_text_url": "https://link.springer.com/article/10.1007/s13676-017-0115-6",
+      "sections_read": [
+        "3.1 Local search",
+        "3.2 Guided ejection search",
+        "3.3 Large neighbourhood search"
+      ],
+      "fulltext_verification": "publisher_ages_verification.json"
+    },
+    {
+      "id": "scientific_agent_skills",
+      "title": "Scientific Agent Skills: A Library of Procedural Knowledge for Research Agents",
+      "authors": [
+        "Timothy Kassis",
+        "Vinayak Agarwal",
+        "Yuhuan He",
+        "Darshil Patel",
+        "Aubrey M. Brueckner"
+      ],
+      "year": 2026,
+      "arxiv_id": "2609.00065",
+      "latest_version_seen": "2",
+      "latest_updated": "2026-09-02T21:50:40Z",
+      "doi": "10.48550/arXiv.2609.00065",
+      "url": "https://arxiv.org/abs/2609.00065",
+      "evidence_level": "arxiv_verified_latest_metadata",
+      "raw_metadata": "../../literature/arxiv_skill.xml",
+      "journal_doi": null,
+      "journal_ref": null,
+      "verification_reused_from": "../../literature/arxiv_skill.parsed.json",
+      "verification_sha256": "378f1909bb33a3cba1bb680177ef53449c89f1752cbb401ad0cb7f13fba53c28"
+    }
+  ],
+  "primary_text_access": [
+    {
+      "id": "sisrs_publisher",
+      "url": "https://pubsonline.informs.org/doi/full/10.1287/trsc.2019.0914",
+      "curl_http_status": 403,
+      "web_status": "redirected_to_abstract_only",
+      "full_text_obtained": false
+    },
+    {
+      "id": "sisrs_repository",
+      "url": "https://lirias.kuleuven.be/handle/123456789/640529",
+      "curl_http_status": 200,
+      "effective_url": "https://kuleuven.limo.libis.be/discovery/search?query=any,contains,LIRIAS1988666&tab=LIRIAS&search_scope=lirias_profile&vid=32KUL_KUL:Lirias&offset=0",
+      "shape_verified": "JavaScript-only page, not full text",
+      "full_text_obtained": false
+    },
+    {
+      "id": "sisrs_technical_report_mirror",
+      "url": "https://scispace.com/pdf/slack-induction-by-string-removals-for-vehicle-routing-14gqwirdlp.pdf",
+      "web_pdf_text_obtained": true,
+      "web_total_pages": 45,
+      "curl_download_http_status": 403,
+      "screenshot_status": "failed: 429 and cache miss",
+      "shape_verified": "Primary author report title/author/date in body matched; third-party cover metadata not used.",
+      "full_text_repository_copy": false
+    },
+    {
+      "id": "curtois_publisher",
+      "url": "https://link.springer.com/article/10.1007/s13676-017-0115-6",
+      "curl_http_status": 200,
+      "body_verified": true,
+      "verification": "publisher_ages_verification.json"
+    }
+  ],
+  "recommended_trials": [
+    {
+      "id": "multiroute_string_destroy",
+      "nature": "SISRs-inspired project adaptation",
+      "implemented_by_other_agent": true,
+      "source_ids": [
+        "sisrs"
+      ],
+      "source_support": [
+        "Spatially adjacent strings from distinct routes introduce overlapping slack.",
+        "Pickup/delivery variant removes the paired node even if that node is outside the selected string."
+      ],
+      "project_specific_changes": [
+        "Exactly two occupied DIRECT UAV routes.",
+        "Consecutive tasks in pickup order rather than arbitrary visit-node strings.",
+        "Balanced split of unchanged total task removal count.",
+        "Use existing ALNS repair and acceptance; no blinks, split-string procedure or fleet-minimization phase."
+      ],
+      "hypothesis": "Contiguous exchange opportunities in multiple near routes may be more useful than scattered removals under fully occupied per-UAV task slots.",
+      "warning": "Hypothesis only; source does not validate this soft-tardy objective or ten-second wall budget."
+    }
+  ],
+  "future_leads": [
+    {
+      "id": "bounded_adjacent_visit_swap",
+      "source_ids": [
+        "curtois_ages"
+      ],
+      "implemented": false,
+      "nature": "project-designed within-route neighborhood, not paper M3",
+      "proposal": "Every 40 iterations scan at most one DIRECT route, test adjacent different-task visits when intermediate load remains in bounds, and accept only the first canonical strict lex improvement.",
+      "source_support": "Feasible pickup/delivery neighborhoods and first-found-improvement for larger local moves.",
+      "distinction": "Paper M3 exchanges whole request pairs between two routes; this proposal swaps adjacent events within one route."
+    },
+    {
+      "id": "blink_repair",
+      "source_ids": [
+        "sisrs"
+      ],
+      "implemented": false,
+      "nature": "possible future adaptation requiring fixed-fleet fallback",
+      "distinction": "True blinks probabilistically skip evaluation, not perturb scores after evaluating them; the original can create a new route, whereas this project must still assign all requests within fixed M and K."
+    }
+  ],
+  "warnings": [
+    "Successful HTTP status is not assumed to imply full text; JavaScript-only and abstract-only responses explicitly rejected.",
+    "Read SISRs version is the 2018 author technical report, not the final 2020 typeset journal paper.",
+    "No direct soft-tardy-count full-text paper was established by the bounded broad query.",
+    "No solver runs or code edits were made by this literature agent.",
+    "Full publisher/report bodies are not republished in the repository."
+  ]
+}

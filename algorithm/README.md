@@ -10,6 +10,15 @@
 
 ## 当前方法
 
+最新默认启用 `enable_adjacent_polish=True`：多机 DIRECT 搜索每 40 轮对一条候选
+路线尝试至多 49 对相邻访问交换，仅采用首个严格路线改善；完整历史最优仍须全局
+复算。单机与实际 Relay 阶段不启用，分阶段 Relay 的 DIRECT 预热可使用它。
+可通过 `ALNSConfig(enable_adjacent_polish=False)` 关闭。
+[最新 HTML 对比](results/method_trials_20261013/iteration3/index.html)中 30 秒集群
+三种子全部获胜，但 10 秒初筛曾一胜一负；本次按用户探索门槛设默认，不声称分钟级
+或跨实例普遍改善。前三项候选仍默认关闭，分批记录与文献见
+[协议说明](results/method_trials_20261013/iteration3/README.md)。
+
 主算法为 `C2-Lex-ALNS`。默认算法注册表为 14 个有效算子：
 
 - 破坏算子（9）：`random`、`worst_distance`、`worst_lex`、

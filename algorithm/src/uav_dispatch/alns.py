@@ -75,6 +75,9 @@ class ALNSConfig:
     initial_temperature: float = 0.03
     minimum_temperature: float = 0.0005
     cooling_rate: float = 0.995
+    # Experimental DIRECT multi-UAV cooling over the available search budget,
+    # rather than reaching the floor after a machine-dependent iteration count.
+    enable_budget_cooling: bool = False
     # Home-aware initial construction for the station-predeployment scenario.
     enable_home_seed: bool = False
     enable_home_bias: bool = False
@@ -82,6 +85,9 @@ class ALNSConfig:
     # Experimental DIRECT repair controls. Construction stays unchanged so
     # paired searches can share the same initial solution.
     enable_lazy_repair: bool = False
+    # Solve-scoped exact DIRECT insertion-option memo. Immutable route
+    # snapshots keep reuse safe across destroy/repair iterations.
+    enable_direct_option_cache: bool = False
     enable_route_distinct_regret: bool = False
     # Fall back to position regret when fewer than k UAVs have a task slot.
     # The portfolio retains the original regret operators and separately
@@ -91,6 +97,14 @@ class ALNSConfig:
     # Independent DIRECT multi-UAV experiments; neither changes construction.
     enable_boundary_destroy: bool = False
     enable_objective_rewards: bool = False
+    # SISRs-inspired whole-task strings across two nearby DIRECT routes;
+    # this adaptation retains the existing repair and acceptance mechanisms.
+    enable_multiroute_string_destroy: bool = False
+    # One bounded first-improvement adjacent-visit pass every 40 iterations,
+    # on a deterministic round-robin DIRECT route; no descent to convergence.
+    # Promoted after the independent 30-second three-seed paired trial;
+    # only DIRECT multi-UAV search uses this bounded local refinement.
+    enable_adjacent_polish: bool = True
     relay_enabled: bool = True
     # A relay-aware search has a much larger neighbourhood than DIRECT.
     # Spend most of a fixed budget building a strong DIRECT incumbent, then
@@ -643,6 +657,132 @@ def _deadline_risk(delivered_at: float, deadline: float) -> float:
     return delivered_at / deadline
 
 
+def _multiroute_string_tasks(
+    problem: Problem,
+    routes: Routes,
+    task_ids: Sequence[int],
+    count: int,
+    rng: Random,
+) -> list[int]:
+    """Balanced contiguous pickup-task strings on nearby occupied routes.
+
+    The normal neighborhood uses two routes so a full fleet exposes task
+    slots on both UAVs. If their combined task count is too small, further
+    nearest occupied routes supply the remainder. Each route contributes
+    one contiguous substring containing its nearest task to the spatial
+    seed; both original visits are removed later by ``_remove_tasks``.
+    This is an adaptation of string removal, not the complete SISRs method.
+    """
+
+    if not task_ids or count <= 0:
+        return []
+    registry = problem.leg_registry or {}
+    if any(abs(visit) in registry for route in routes for visit in route):
+        raise ValueError("多路线成对串移除仅支持 DIRECT 路线")
+    by_route = {
+        index: tuple(visit for visit in route if visit > 0)
+        for index, route in enumerate(routes)
+        if route
+    }
+    count = min(count, sum(len(order) for order in by_route.values()))
+    if count <= 0:
+        return []
+    seed = rng.choice(task_ids)
+    gap = {
+        task_id: problem.distance(seed, task_id)
+        + problem.distance(-seed, -task_id)
+        for task_id in task_ids
+    }
+    nearest = {
+        index: seed if seed in order else min(
+            order, key=lambda task_id: (gap[task_id], task_id)
+        )
+        for index, order in by_route.items()
+    }
+    ranked_routes = sorted(
+        by_route, key=lambda index: (
+            gap[nearest[index]], nearest[index] != seed, index,
+        )
+    )
+    selected = ranked_routes[:min(2, count, len(ranked_routes))]
+    available = sum(len(by_route[index]) for index in selected)
+    for index in ranked_routes[len(selected):]:
+        if available >= count:
+            break
+        selected.append(index)
+        available += len(by_route[index])
+
+    quotas = {index: 0 for index in selected}
+    remaining = count
+    while remaining:
+        for index in selected:
+            if remaining and quotas[index] < len(by_route[index]):
+                quotas[index] += 1
+                remaining -= 1
+
+    removed = []
+    for index in selected:
+        order = by_route[index]
+        length = quotas[index]
+        anchor = order.index(nearest[index])
+        start = rng.randint(
+            max(0, anchor - length + 1), min(anchor, len(order) - length)
+        )
+        removed.extend(order[start:start + length])
+    return removed
+
+
+def _adjacent_polish_pass(
+    problem: Problem,
+    evaluator: RouteEvaluator,
+    routes: Routes,
+    route_index: int,
+    *,
+    deadline: float | None = None,
+    statistics: dict[str, int] | None = None,
+) -> Routes:
+    """Try at most 49 adjacent event swaps and keep the first exact gain.
+
+    Different-task adjacent events can be swapped without crossing either
+    task's own pickup and delivery. Only the intermediate load changes;
+    after the second event the original load is restored. Full local route
+    evaluation supplies the unchanged lexicographic objective. The caller
+    still applies the existing complete-solution incumbent check.
+    """
+
+    if deadline is not None and perf_counter() >= deadline:
+        raise _SearchDeadlineReached
+    route = routes[route_index]
+    if len(route) < 2:
+        return routes
+    registry = problem.leg_registry or {}
+    if any(abs(visit) in registry for visit in route):
+        raise ValueError("相邻访问点精化仅支持 DIRECT 路线")
+    home_node = problem.home_node(route_index)
+    original = evaluator.evaluate(route, start_node=home_node).score
+    load_before = 0
+    for position in range(min(49, len(route) - 1)):
+        if deadline is not None and perf_counter() >= deadline:
+            raise _SearchDeadlineReached
+        if statistics is not None:
+            statistics["position_checks"] += 1
+        first, second = route[position:position + 2]
+        swapped_load = load_before + (1 if second > 0 else -1)
+        feasible = abs(first) != abs(second) and 0 <= swapped_load <= problem.capacity
+        load_before += 1 if first > 0 else -1
+        if not feasible:
+            continue
+        if statistics is not None:
+            statistics["probes"] += 1
+        swapped = route[:position] + (second, first) + route[position + 2:]
+        improved = evaluator.evaluate(swapped, start_node=home_node).score < original
+        if deadline is not None and perf_counter() >= deadline:
+            raise _SearchDeadlineReached
+        if improved:
+            return routes[:route_index] + (swapped,) + routes[route_index + 1:]
+    return routes
+
+
 class _DirectPlanIndex:
     """Minimal plan-index stand-in for DIRECT-only problems.
 
@@ -759,6 +899,8 @@ def destroy_solution(
 
     if operator == "random":
         removed = rng.sample(task_ids, count)
+    elif operator == "multiroute_string":
+        removed = _multiroute_string_tasks(problem, routes, task_ids, count, rng)
     elif operator == "assignment_destroy":
         non_empty_indices = [
             route_index for route_index, route in enumerate(routes) if route
@@ -1040,6 +1182,42 @@ def _all_options_for_task(
     return tuple(options[:option_count])
 
 
+class _DirectOptionCache:
+    """Bounded solve-scoped memo for complete DIRECT insertion options.
+
+    Every entry belongs to one fixed problem and includes the route index
+    (embedded in the result), immutable route snapshot, home node, task,
+    candidate limit and requested option count. FIFO eviction changes only
+    computation cost: every miss runs the same exact insertion routine.
+    """
+
+    __slots__ = ("problem", "data", "maxsize", "hits", "misses", "evictions")
+
+    def __init__(self, problem: Problem, maxsize: int = 20_000) -> None:
+        if maxsize < 1:
+            raise ValueError("DIRECT 插入缓存上限必须为正整数")
+        self.problem = problem
+        self.data: dict[tuple, tuple[RouteInsertionOption, ...]] = {}
+        self.maxsize = maxsize
+        self.hits = 0
+        self.misses = 0
+        self.evictions = 0
+
+    def get(self, key: tuple) -> tuple[RouteInsertionOption, ...] | None:
+        cached = self.data.get(key)
+        if cached is None:
+            self.misses += 1
+        else:
+            self.hits += 1
+        return cached
+
+    def put(self, key: tuple, options: tuple[RouteInsertionOption, ...]) -> None:
+        if key not in self.data and len(self.data) >= self.maxsize:
+            self.data.pop(next(iter(self.data)))
+            self.evictions += 1
+        self.data[key] = options
+
+
 class _RepairCache:
     """Route-versioned option cache inside one relay-aware repair pass.
 
@@ -1049,12 +1227,17 @@ class _RepairCache:
     insertion.
     """
 
-    __slots__ = ("versions", "direct", "leg", "combos")
+    __slots__ = ("versions", "direct", "leg", "combos", "direct_option_cache")
 
-    def __init__(self, route_count: int) -> None:
+    def __init__(
+        self,
+        route_count: int,
+        direct_option_cache: _DirectOptionCache | None = None,
+    ) -> None:
         self.versions = [0] * route_count
+        self.direct_option_cache = direct_option_cache
         self.direct: dict[
-            tuple[int, int, int], tuple[RouteInsertionOption, ...]
+            tuple[int, int, int, int, int], tuple[RouteInsertionOption, ...]
         ] = {}
         self.leg: dict[
             tuple[int, int, int, int, bool],
@@ -1081,12 +1264,30 @@ class _RepairCache:
             route_index,
             self.versions[route_index],
             candidate_limit if candidate_limit is not None else -1,
+            option_count,
         )
         cached = self.direct.get(key)
         if cached is not None:
             return cached
         if deadline is not None and perf_counter() >= deadline:
             raise _SearchDeadlineReached
+        shared = self.direct_option_cache
+        shared_key = None
+        if shared is not None:
+            if shared.problem is not problem:
+                raise ValueError("DIRECT 插入缓存不能跨问题复用")
+            shared_key = (
+                task_id,
+                route_index,
+                routes[route_index],
+                problem.home_node(route_index),
+                candidate_limit,
+                option_count,
+            )
+            cached = shared.get(shared_key)
+            if cached is not None:
+                self.direct[key] = cached
+                return cached
         surface = evaluator.surface_cache.get(
             routes[route_index], start_node=problem.home_node(route_index)
         )
@@ -1101,6 +1302,8 @@ class _RepairCache:
             surface=surface,
         )
         self.direct[key] = cached
+        if shared is not None:
+            shared.put(shared_key, cached)
         return cached
 
     def leg_options(
@@ -2200,6 +2403,7 @@ def _repair(
     enable_lazy_repair: bool = False,
     enable_route_distinct_regret: bool = False,
     enable_regret_position_fallback: bool = False,
+    direct_option_cache: _DirectOptionCache | None = None,
 ) -> Routes:
     if (
         relay_cfg is not None
@@ -2223,7 +2427,7 @@ def _repair(
         )
     routes = tuple(tuple(route) for route in partial_routes)
     remaining = set(removed_task_ids)
-    repair_cache = _RepairCache(len(routes))
+    repair_cache = _RepairCache(len(routes), direct_option_cache)
     regret_k = 3 if strategy == "regret3" else 2
     counters = evaluator.counters
     rank_limit = (
@@ -2678,6 +2882,14 @@ def _accept_worse(
     return rng.random() < exp(-delta / max(temperature, 1e-12))
 
 
+def _budget_temperature(cfg: ALNSConfig, progress: float) -> float:
+    """Geometric schedule with the same endpoints, clamped to the budget."""
+    fraction = min(1.0, max(0.0, progress))
+    return cfg.initial_temperature * (
+        cfg.minimum_temperature / cfg.initial_temperature
+    ) ** fraction
+
+
 def _objective_reward(
     candidate: Score,
     current: Score,
@@ -2725,6 +2937,11 @@ def solve_alns(
     counters = SearchCounters()
     evaluator = RouteEvaluator(problem, counters=counters)
     relay_active = bool(problem.has_relays) and cfg.relay_enabled
+    direct_option_cache = (
+        _DirectOptionCache(problem)
+        if cfg.enable_direct_option_cache and not relay_active
+        else None
+    )
     relay_cfg = (
         _RelaySearchConfig(
             enabled=relay_active,
@@ -2843,8 +3060,15 @@ def solve_alns(
     direct_multi_active = not relay_active and len(current) > 1
     boundary_destroy_active = cfg.enable_boundary_destroy and direct_multi_active
     objective_rewards_active = cfg.enable_objective_rewards and direct_multi_active
+    multiroute_string_active = cfg.enable_multiroute_string_destroy and direct_multi_active
+    adjacent_polish_active = cfg.enable_adjacent_polish and direct_multi_active
+    adjacent_polish_passes = 0
+    adjacent_polish_improvements = 0
+    adjacent_polish_statistics = {"probes": 0, "position_checks": 0}
     destroy_operators = DESTROY_OPERATORS + (
         ("deadline_boundary",) if boundary_destroy_active else ()
+    ) + (
+        ("multiroute_string",) if multiroute_string_active else ()
     )
     destroy_weights = {name: 1.0 for name in destroy_operators}
     regret_portfolio_active = (
@@ -2875,6 +3099,11 @@ def solve_alns(
     segment_uses = {key: 0 for key in total_uses}
     segment_rewards = {key: 0.0 for key in total_uses}
     accepted_count = 0
+    budget_cooling_active = cfg.enable_budget_cooling and direct_multi_active
+    cooling_started = perf_counter() if budget_cooling_active else started
+    cooling_seconds = (
+        max(1e-12, deadline - cooling_started) if deadline is not None else None
+    )
     temperature = cfg.initial_temperature
     completed_iterations = 0
 
@@ -2962,6 +3191,7 @@ def solve_alns(
                     or (cfg.enable_route_distinct_regret and not regret_portfolio_active)
                 ),
                 enable_regret_position_fallback=cfg.enable_regret_position_fallback,
+                direct_option_cache=direct_option_cache,
             )
         except _SearchDeadlineReached:
             break
@@ -2989,6 +3219,18 @@ def solve_alns(
         timed_out = timed_out or (
             deadline is not None and perf_counter() >= deadline
         )
+        if not timed_out and adjacent_polish_active and iteration % 40 == 0:
+            route_index = (iteration // 40 - 1) % len(candidate)
+            try:
+                polished = _adjacent_polish_pass(
+                    problem, evaluator, candidate, route_index, deadline=deadline,
+                    statistics=adjacent_polish_statistics,
+                )
+            except _SearchDeadlineReached:
+                break
+            adjacent_polish_passes += 1
+            adjacent_polish_improvements += int(polished != candidate)
+            candidate = polished
         candidate_score = score_of(candidate)
         timed_out = timed_out or (
             deadline is not None and perf_counter() >= deadline
@@ -3010,6 +3252,13 @@ def solve_alns(
                 not timed_out and candidate_evaluation.valid
                 and candidate_evaluation.score < best_score
             )
+        if budget_cooling_active:
+            progress = (
+                (perf_counter() - cooling_started) / cooling_seconds
+                if cooling_seconds is not None
+                else (iteration - 1) / max(1, cfg.max_iterations - 1)
+            )
+            temperature = _budget_temperature(cfg, progress)
         accepted = False if timed_out else _accept_worse(
             candidate_score, current_score, problem, temperature, rng
         )
@@ -3096,9 +3345,10 @@ def solve_alns(
             segment_uses = {key: 0 for key in segment_uses}
             segment_rewards = {key: 0.0 for key in segment_rewards}
 
-        temperature = max(
-            cfg.minimum_temperature, temperature * cfg.cooling_rate
-        )
+        if not budget_cooling_active:
+            temperature = max(
+                cfg.minimum_temperature, temperature * cfg.cooling_rate
+            )
         completed_iterations = iteration
 
     evaluation = evaluate_solution(problem, best, _force_full=True)
@@ -3118,6 +3368,23 @@ def solve_alns(
             "enable_home_seed": cfg.enable_home_seed,
             "enable_deadline_risk": cfg.enable_deadline_risk,
             "enable_lazy_repair": cfg.enable_lazy_repair,
+            "enable_direct_option_cache": cfg.enable_direct_option_cache,
+            "direct_option_cache_active": direct_option_cache is not None,
+            "direct_option_cache_hits": (
+                direct_option_cache.hits if direct_option_cache is not None else 0
+            ),
+            "direct_option_cache_misses": (
+                direct_option_cache.misses if direct_option_cache is not None else 0
+            ),
+            "direct_option_cache_size": (
+                len(direct_option_cache.data) if direct_option_cache is not None else 0
+            ),
+            "direct_option_cache_evictions": (
+                direct_option_cache.evictions if direct_option_cache is not None else 0
+            ),
+            "direct_option_cache_maxsize": (
+                direct_option_cache.maxsize if direct_option_cache is not None else 0
+            ),
             "enable_route_distinct_regret": cfg.enable_route_distinct_regret,
             "enable_regret_position_fallback": cfg.enable_regret_position_fallback,
             "enable_regret_portfolio": cfg.enable_regret_portfolio,
@@ -3126,6 +3393,17 @@ def solve_alns(
             "boundary_destroy_active": boundary_destroy_active,
             "enable_objective_rewards": cfg.enable_objective_rewards,
             "objective_rewards_active": objective_rewards_active,
+            "enable_multiroute_string_destroy": cfg.enable_multiroute_string_destroy,
+            "multiroute_string_active": multiroute_string_active,
+            "enable_adjacent_polish": cfg.enable_adjacent_polish,
+            "adjacent_polish_active": adjacent_polish_active,
+            "adjacent_polish_passes": adjacent_polish_passes,
+            "adjacent_polish_improvements": adjacent_polish_improvements,
+            "adjacent_polish_probes": adjacent_polish_statistics["probes"],
+            "adjacent_polish_position_checks": adjacent_polish_statistics["position_checks"],
+            "enable_budget_cooling": cfg.enable_budget_cooling,
+            "budget_cooling_active": budget_cooling_active,
+            "final_temperature": temperature,
             "relay_enabled": bool(relay_active),
             "time_limit_seconds": cfg.time_limit_seconds,
             "initial_score": (
@@ -3329,8 +3607,21 @@ def solve_relay_staged(
     }
     runtime_seconds = warm_result.runtime_seconds + relay_result.runtime_seconds
     iterations = warm_result.iterations + relay_result.iterations
+    combined_polish_work = {
+        key: int(warm_result.metadata.get(key, 0))
+        + int(relay_result.metadata.get(key, 0))
+        for key in (
+            "adjacent_polish_passes",
+            "adjacent_polish_probes",
+            "adjacent_polish_position_checks",
+            "adjacent_polish_improvements",
+        )
+    }
     metadata = {
         **dict(relay_result.metadata),
+        # Work counters include both real phases; the active flag inherited
+        # above still describes the final Relay phase only.
+        **combined_polish_work,
         "method": "C2-Lex-ALNS-Staged",
         "time_limit_seconds": cfg.time_limit_seconds,
         "initial_score": warm_result.metadata.get("initial_score"),
