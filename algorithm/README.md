@@ -97,7 +97,23 @@ PYTHONPATH=algorithm/src python -m uav_dispatch solve \
 
 ## 小预算优化实验（2026-10-13）
 
-后续复测见[退化诊断与最新 HTML](results/regret_followup_20261013/index.html)及
+最新批次见[原题指标 HTML 对比](results/objective_trials_20261013/index.html)及
+[协议、逐种子结果和复现说明](results/objective_trials_20261013/README.md)。
+新增 `enable_boundary_destroy` 与 `enable_objective_rewards` 两个独立实验开关，
+只影响多机 DIRECT 搜索，均默认关闭。前者保留现有破坏算子并增加截止期边界
+邻域，后者强化减少逾期任务数的算子奖励，不改变接受准则与完整词典序评分。
+两候选均通过初筛，但 30 秒中测均 1 胜 2 负，未晋级长测。单机固定 200 轮
+配对决策全部等价，39 次实际运行全部通过独立审核。
+
+`run_objective_trials`、`audit_objective_trials` 与 `render_objective_trials_report`
+分别负责冻结源码及分阶段执行、完整路线复算、离线报告；独立追加的
+`run_compact_trials` / `audit_compact_trials` 绑定父批证据，使用相同旧基线源码
+检验 2%–5% 常规移除比例，父子批共用 2700 秒上限。用户选择确认阶段即使
+遇到退化也跑完既定四个种子；报告保留所有逐种子胜负，不能用均值抵消退化。
+追加候选中测 0 胜 3 负，未进入确认。两批共 65 次运行，累计求解 10.45 分钟，
+全部独立核验合法且预算内；默认移除比例仍为 3%–8%，本轮未替换默认算法。
+
+此前跨机 regret 复测见[退化诊断 HTML](results/regret_followup_20261013/index.html)及
 [完整协议、证据与重建命令](results/regret_followup_20261013/README.md)。新增
 `ALNSConfig.enable_regret_position_fallback` 和 `enable_regret_portfolio`：
 前者在跨机备选不足时恢复位置后悔值，后者同时保留位置与跨机算子并独立更新

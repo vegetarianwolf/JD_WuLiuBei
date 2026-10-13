@@ -24,7 +24,18 @@ data/                      数据与实验结果
 
 ## 本轮算法优化（2026-10-13）
 
-[最新离线 HTML 报告](algorithm/results/optimization_20261013/index.html)包含跨无人机
+[本轮离线 HTML 对比报告](algorithm/results/objective_trials_20261013/index.html)
+重新对照当前默认算法，测试截止期边界邻域与第一目标奖励。两候选在 30 秒
+集群中测均为 1 胜 2 负，未晋级长测，继续保持默认关闭。全部 39 次运行均经
+独立完整复算且合法、预算内；单机固定 200 轮的六组候选配对保持搜索决策一致。
+用户随后选择独立追加较小邻域实验，父子批次共用 45 分钟求解上限，
+不混合两批成绩；追加候选中测 0 胜 3 负。最终共 65 次完整运行，累计求解
+10.45 分钟，全部合法且预算内，未启动长测，默认算法及 3%–8% 移除比例保持。
+协议和完整记录见[批次说明](algorithm/results/objective_trials_20261013/README.md)。
+
+## 早前的跨机 regret 诊断（2026-10-13）
+
+[跨机 regret HTML 报告](algorithm/results/optimization_20261013/index.html)包含跨无人机
 regret 的短长测反转诊断、位置回退与自适应组合的分阶段复测；
 [完整复测证据与重建命令](algorithm/results/regret_followup_20261013/README.md)
 单独保存本轮源码、逐种子路线和独立评分记录。

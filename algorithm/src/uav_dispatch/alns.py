@@ -88,6 +88,9 @@ class ALNSConfig:
     # adapts two route-distinct operators (DIRECT multi-UAV search only).
     enable_regret_position_fallback: bool = False
     enable_regret_portfolio: bool = False
+    # Independent DIRECT multi-UAV experiments; neither changes construction.
+    enable_boundary_destroy: bool = False
+    enable_objective_rewards: bool = False
     relay_enabled: bool = True
     # A relay-aware search has a much larger neighbourhood than DIRECT.
     # Spend most of a fixed budget building a strong DIRECT incumbent, then
@@ -913,6 +916,47 @@ def destroy_solution(
                     urgency.append((deadline - delivered_at, task_id))
         urgency.sort()
         removed = _choose_ranked([item[1] for item in urgency], count, rng, 3.0)
+    elif operator == "deadline_boundary":
+        # Complement late_critical's deepest-risk removals with tasks just
+        # beyond the on-time boundary. The direct home-to-task lower bound
+        # only excludes individually impossible rescues; it is not a claim
+        # that a task can be rescued in this complete schedule.
+        def boundary_priority(task_id: int) -> tuple[float, ...]:
+            task = problem.task(task_id)
+            delivered_at = route_metrics[
+                route_by_task[task_id]
+            ].delivery_times_min[task_id]
+            lateness = delivered_at - task.deadline_min
+            earliest = (
+                min(
+                    problem.distance(
+                        None, task_id, from_node=problem.home_node(index)
+                    )
+                    for index in range(len(routes))
+                )
+                + problem.distance(task_id, -task_id)
+            ) / problem.speed_km_per_min
+            if earliest > task.deadline_min + 1e-9:
+                return (2.0, max(0.0, lateness), float(task_id))
+            if lateness > 1e-9:
+                return (0.0, lateness, float(task_id))
+            return (1.0, max(0.0, -lateness), float(task_id))
+
+        ranked = sorted(task_ids, key=boundary_priority)
+        removed = _choose_ranked(ranked, 1, rng)
+        # In the full 8 x K=25 fleet a cross-UAV reassignment needs two
+        # distinct free slots. Open the second slot before filling this
+        # boundary-focused neighborhood; the original late_critical remains.
+        other_route = [
+            task_id for task_id in ranked
+            if route_by_task[task_id] != route_by_task[removed[0]]
+        ]
+        if count > 1 and other_route:
+            removed.extend(_choose_ranked(other_route, 1, rng))
+        removed.extend(_choose_ranked(
+            [task_id for task_id in ranked if task_id not in removed],
+            count - len(removed), rng,
+        ))
     elif operator == "route_segment":
         non_empty = [route for route in routes if route]
         route = rng.choice(non_empty)
@@ -2634,6 +2678,34 @@ def _accept_worse(
     return rng.random() < exp(-delta / max(temperature, 1e-12))
 
 
+def _objective_reward(
+    candidate: Score,
+    current: Score,
+    best: Score,
+    *,
+    accepted: bool,
+    improved_best: bool,
+) -> float:
+    """Experimental reward only; acceptance and lexicographic score stay exact.
+
+    Reward first-objective progress more than polishing an unchanged number
+    of late tasks. Equal-score and accepted-worse moves remain available to
+    simulated annealing, but do not train the roulette towards easy accepts.
+    """
+
+    if not accepted:
+        return 0.0
+    if improved_best and candidate.late_count < best.late_count:
+        return 16.0
+    if candidate.late_count < current.late_count:
+        return 8.0
+    if improved_best:
+        return 2.0
+    if candidate < current:
+        return 1.0
+    return 0.0
+
+
 def solve_alns(
     problem: Problem,
     *,
@@ -2768,7 +2840,12 @@ def solve_alns(
             best_score.total_lateness_min, best_score.distance_km,
         ))
 
-    destroy_operators = DESTROY_OPERATORS
+    direct_multi_active = not relay_active and len(current) > 1
+    boundary_destroy_active = cfg.enable_boundary_destroy and direct_multi_active
+    objective_rewards_active = cfg.enable_objective_rewards and direct_multi_active
+    destroy_operators = DESTROY_OPERATORS + (
+        ("deadline_boundary",) if boundary_destroy_active else ()
+    )
     destroy_weights = {name: 1.0 for name in destroy_operators}
     regret_portfolio_active = (
         cfg.enable_regret_portfolio and not relay_active and len(current) > 1
@@ -2787,6 +2864,10 @@ def solve_alns(
             "accepted": 0,
             "current_improvements": 0,
             "best_improvements": 0,
+            "current_late_count_improvements": 0,
+            "best_late_count_improvements": 0,
+            "equal_score_accepts": 0,
+            "unchanged_route_accepts": 0,
             "total_reward": 0.0,
         }
         for key in total_uses
@@ -2932,6 +3013,20 @@ def solve_alns(
         accepted = False if timed_out else _accept_worse(
             candidate_score, current_score, problem, temperature, rng
         )
+        current_late_improved = (
+            accepted and candidate_score.late_count < current_score.late_count
+        )
+        best_late_improved = (
+            improved_best and candidate_evaluation.score.late_count < best_score.late_count
+        )
+        equal_score_accepted = accepted and candidate_score == current_score
+        unchanged_routes_accepted = accepted and candidate == current
+        objective_reward = (
+            _objective_reward(
+                candidate_score, current_score, best_score,
+                accepted=accepted, improved_best=improved_best,
+            ) if objective_rewards_active else None
+        )
         reward = 0.0
         if accepted:
             current = candidate
@@ -2953,6 +3048,8 @@ def solve_alns(
                 )
             )
             reward = 8.0
+        if objective_reward is not None:
+            reward = objective_reward
 
         destroy_key = f"destroy:{destroy_name}"
         repair_key = f"repair:{repair_name}"
@@ -2967,6 +3064,10 @@ def solve_alns(
                 accepted and improved_current
             )
             stats["best_improvements"] += int(improved_best)
+            stats["current_late_count_improvements"] += int(current_late_improved)
+            stats["best_late_count_improvements"] += int(best_late_improved)
+            stats["equal_score_accepts"] += int(equal_score_accepted)
+            stats["unchanged_route_accepts"] += int(unchanged_routes_accepted)
             stats["total_reward"] += reward
 
         if timed_out:
@@ -3021,6 +3122,10 @@ def solve_alns(
             "enable_regret_position_fallback": cfg.enable_regret_position_fallback,
             "enable_regret_portfolio": cfg.enable_regret_portfolio,
             "regret_portfolio_active": regret_portfolio_active,
+            "enable_boundary_destroy": cfg.enable_boundary_destroy,
+            "boundary_destroy_active": boundary_destroy_active,
+            "enable_objective_rewards": cfg.enable_objective_rewards,
+            "objective_rewards_active": objective_rewards_active,
             "relay_enabled": bool(relay_active),
             "time_limit_seconds": cfg.time_limit_seconds,
             "initial_score": (
@@ -3212,6 +3317,10 @@ def solve_relay_staged(
                     "accepted",
                     "current_improvements",
                     "best_improvements",
+                    "current_late_count_improvements",
+                    "best_late_count_improvements",
+                    "equal_score_accepts",
+                    "unchanged_route_accepts",
                     "total_reward",
                 )
             }

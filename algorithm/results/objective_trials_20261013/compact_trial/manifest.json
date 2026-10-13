@@ -1,0 +1,152 @@
+{
+  "schema_version": 4,
+  "kind": "compact_trials",
+  "baseline_variant": "baseline",
+  "baseline_commit": "32c2d6055d89e831f0e8b783d1cac5c2c750fb1c",
+  "input_path": "algorithm/命题1-低空经济场景下的物流无人机调度算法数据.csv",
+  "input_sha256": "386d3fbaa9009aeed947493782d657ed0b30b25d369c8187bfc9619fc7e31d25",
+  "source_snapshots": {
+    "baseline": {
+      "path": "sources/baseline.zip",
+      "sha256": "4f4670fba20f90ac72a559646bb9cf820b9310bddb983fb6cad8ba4d41a0dc38",
+      "source_ref": "32c2d6055d89e831f0e8b783d1cac5c2c750fb1c",
+      "config": {},
+      "label": "当前默认基线",
+      "role": "baseline"
+    },
+    "compact": {
+      "path": "sources/baseline.zip",
+      "sha256": "4f4670fba20f90ac72a559646bb9cf820b9310bddb983fb6cad8ba4d41a0dc38",
+      "source_ref": "32c2d6055d89e831f0e8b783d1cac5c2c750fb1c",
+      "config": {
+        "min_destroy_fraction": 0.02,
+        "max_destroy_fraction": 0.05
+      },
+      "label": "缩小常规邻域",
+      "role": "candidate"
+    }
+  },
+  "runner_sha256": "8431df7578301b4ea875d32c6d97250698fc626696f9b79f522a2dd2a0a3e26a",
+  "execution_sources": {
+    "run_optimization_experiments": {
+      "path": "sources/run_optimization_experiments.py",
+      "sha256": "8431df7578301b4ea875d32c6d97250698fc626696f9b79f522a2dd2a0a3e26a"
+    },
+    "run_scenario_comparison": {
+      "path": "sources/run_scenario_comparison.py",
+      "sha256": "5566709d474ac03e9e3a6118a0b947098d785281f65f2c8bcc0074b8eb34ca1c"
+    },
+    "run_compact_trials": {
+      "path": "sources/run_compact_trials.py",
+      "sha256": "426df8fad9c0748aa8d14a456eacf1b10ec0f5190497a3330d136e12b72d9e58"
+    }
+  },
+  "seeds": {
+    "equivalence": [
+      2026101401,
+      2026101402,
+      2026101403
+    ],
+    "screen": [
+      2026101401,
+      2026101402
+    ],
+    "medium": [
+      2026101411,
+      2026101412,
+      2026101413
+    ],
+    "confirm": [
+      2026101321,
+      2026101421,
+      2026101422,
+      2026101423
+    ]
+  },
+  "post_hoc_exploration": {
+    "reason": "父批次两候选中测失败后，用户选择追加缩小常规邻域；独立事后探索，不复用或挑选父批次基线。",
+    "parent_directory": "..",
+    "parent_experiment_seconds": 376.30645954224747,
+    "parent_execution_notes_sha256": null,
+    "parent_manifest_sha256": "74bf2b127e851a0653b517a8696a9722dd13677abca364b1204952ef59a1cf2c",
+    "parent_runs_sha256": "8feb1e1b93b7060c6dfac37cd2f56c84119ed30d1c6a0aa3e0c1e6337c20889e",
+    "parent_decisions_sha256": "394d2b1b11cd083bede6c7b1714f14067a7a0ab7874ddad56baaa2b3bc34a102"
+  },
+  "created_at": "2026-10-13T12:27:13Z",
+  "environment": {
+    "python": "3.14.5",
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O"
+  },
+  "protocol": {
+    "total_experiment_seconds": 2700,
+    "reserved_seconds": 60,
+    "shared_budget": "父批次全部完整运行、中止耗时与子批次共享45分钟；阶段开始前预留本阶段全部未运行单元预算",
+    "stage_caps_seconds": {
+      "equivalence": 60,
+      "screen": 60,
+      "medium": 210,
+      "confirm": 1920
+    },
+    "stage_cases": {
+      "equivalence": [
+        "single25"
+      ],
+      "screen": [
+        "single25",
+        "fleet200"
+      ],
+      "medium": [
+        "single25",
+        "fleet200"
+      ],
+      "confirm": [
+        "fleet200"
+      ]
+    },
+    "stage_budgets_seconds": {
+      "equivalence": {
+        "single25": 10
+      },
+      "screen": {
+        "single25": 5,
+        "fleet200": 10
+      },
+      "medium": {
+        "single25": 5,
+        "fleet200": 30
+      },
+      "confirm": {
+        "fleet200": 240
+      }
+    },
+    "single": {
+      "tasks": 25,
+      "drones": 1
+    },
+    "fleet": {
+      "tasks": 200,
+      "drones": 8
+    },
+    "max_tasks_per_drone": 25,
+    "capacity": 2,
+    "speed_km_per_min": 0.9,
+    "deadline_multiplier": 1.0,
+    "relay_count": 0,
+    "safety_margin_seconds": 1.0,
+    "time_boundary": "CSV读取前至完整核验和解JSON写出后，不含进程启动与模块导入",
+    "comparison": "子批同实例同预算同种子同初解逐对比较三级词典序；不与父批复用基线或合并均值",
+    "screen_gate": "两个集群配对至少一胜，逾期数差合计不大于0；单机无词典序退化；固定200轮单机等价",
+    "medium_gate": "三个集群配对至少两胜，每对逾期数不增加，单机无词典序退化",
+    "confirmation_gate": "四个集群配对全部词典序不退化，三个新种子至少两胜；中测亦须通过",
+    "confirmation_policy": "即使一次退化，也完成已定四种子确认；不换种子、不重跑择优",
+    "confirm_seed_roles": {
+      "2026101321": "历史反例压力复测，不是独立留出",
+      "2026101421": "新种子",
+      "2026101422": "新种子",
+      "2026101423": "新种子"
+    },
+    "single_drone": "n=25时基线3%—8%与候选2%—5%经round及最少移除2任务后均为每轮2任务；3种子固定200轮验证完整搜索等价",
+    "default_policy": "全部门槛通过才考虑默认采用；失败保留默认3%—8%",
+    "frozen_manuscript_results": "保留原始题目、官方数据、论文和父批次全部产物"
+  }
+}
