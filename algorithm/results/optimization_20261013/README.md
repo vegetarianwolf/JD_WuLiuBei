@@ -1,6 +1,9 @@
 # 2026-10-13 原题优先的小预算优化实验
 
-[打开离线 HTML 报告](index.html)。页面内嵌数据和绘图代码，可直接用浏览器
+[打开本批次原始 HTML 报告](index.initial.html)；[当前诊断与优化复测报告](index.html)
+已更新到同一入口。原始 HTML 原样归档，原 `acceptance.json` 中的 HTML
+指纹对应 `index.initial.html`；本目录原始数据、源码快照与验收记录没有重写。
+页面内嵌数据和绘图代码，可直接用浏览器
 打开，查看按时完成数／按时率、总航程、总逾期分钟、端到端耗时、配对差值
 和三级目标的收敛曲线。完整路线与审计文件从报告中的相对链接打开。
 
@@ -87,6 +90,8 @@
 ## 复算、报告重建与重放
 
 在仓库根目录运行以下命令，复算已保存的结果并重建 HTML；不会求解新实例：
+此处的重建命令会把当前入口还原成旧批次视图；需要保留更新后的入口时，
+最后执行新报告的 `render_regret_followup_report --update-previous-entry`。
 
 ```bash
 PYTHONPATH=algorithm/src python -m algorithm.experiments.audit_optimization_results \

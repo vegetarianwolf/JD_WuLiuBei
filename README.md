@@ -24,9 +24,21 @@ data/                      数据与实验结果
 
 ## 本轮算法优化（2026-10-13）
 
-[离线 HTML 实验报告](algorithm/results/optimization_20261013/index.html)记录原题
+[最新离线 HTML 报告](algorithm/results/optimization_20261013/index.html)包含跨无人机
+regret 的短长测反转诊断、位置回退与自适应组合的分阶段复测；
+[完整复测证据与重建命令](algorithm/results/regret_followup_20261013/README.md)
+单独保存本轮源码、逐种子路线和独立评分记录。
+
+旧跨机版在 65 个逾期任务处较早停滞，基线后来降至 63；并非候选遗失最优解。
+局部修复探针确认了不同无人机备选不足时 regret 全为 inf 的信息丢失，但
+单独的位置回退中测仍有 71→73 的退化。自适应组合保留位置 regret 并让跨机
+算子独立竞争权重，在独立追加中测得到 71→66、71→68、71→69，随后按门槛
+进入长测；已知反例的 240 秒配对仍为基线 62、候选 65，故停止其余新种子。
+四项研究开关均保持默认关闭。不同批次的基线、均值和胜负不混算。
+
+[首轮原始 HTML 报告](algorithm/results/optimization_20261013/index.initial.html)记录原题
 25 任务单机、200 任务／8 架集群的分阶段对照，以及三个扩展场景的兼容检查。
-完整数据、复算命令和重放说明见[本批次说明](algorithm/results/optimization_20261013/README.md)。
+完整数据、复算命令和重放说明见[首批说明](algorithm/results/optimization_20261013/README.md)。
 
 固定 200 次迭代的 6 组配对均保持路线、得分和搜索决策一致，但集群中位耗时
 只降低 5.65%，未达到预设 10% 门槛。跨无人机 regret 候选在 30 秒集群中测

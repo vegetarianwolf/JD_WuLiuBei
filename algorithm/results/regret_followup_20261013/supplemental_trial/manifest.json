@@ -1,0 +1,181 @@
+{
+  "schema_version": 2,
+  "kind": "regret_followup",
+  "baseline_variant": "baseline",
+  "baseline_commit": "6afe5f4aee12b8d8fddbcf92c45f306a31749e6f",
+  "input_path": "algorithm/命题1-低空经济场景下的物流无人机调度算法数据.csv",
+  "input_sha256": "386d3fbaa9009aeed947493782d657ed0b30b25d369c8187bfc9619fc7e31d25",
+  "source_snapshots": {
+    "baseline": {
+      "path": "sources/baseline.zip",
+      "sha256": "a934207f3823992aa94439c4e9451f5ace937f53f152922aedc05ddebac80af1",
+      "source_ref": "6afe5f4aee12b8d8fddbcf92c45f306a31749e6f",
+      "config": {},
+      "label": "默认基线",
+      "role": "baseline"
+    },
+    "old_allocation": {
+      "path": "sources/baseline.zip",
+      "sha256": "a934207f3823992aa94439c4e9451f5ace937f53f152922aedc05ddebac80af1",
+      "source_ref": "6afe5f4aee12b8d8fddbcf92c45f306a31749e6f",
+      "config": {
+        "enable_lazy_repair": true,
+        "enable_route_distinct_regret": true
+      },
+      "label": "旧跨机 regret",
+      "role": "control"
+    },
+    "fallback": {
+      "path": "sources/candidate.zip",
+      "sha256": "4f4670fba20f90ac72a559646bb9cf820b9310bddb983fb6cad8ba4d41a0dc38",
+      "source_ref": "working_tree",
+      "config": {
+        "enable_lazy_repair": true,
+        "enable_route_distinct_regret": true,
+        "enable_regret_position_fallback": true
+      },
+      "label": "位置回退候选",
+      "role": "candidate"
+    },
+    "portfolio": {
+      "path": "sources/candidate.zip",
+      "sha256": "4f4670fba20f90ac72a559646bb9cf820b9310bddb983fb6cad8ba4d41a0dc38",
+      "source_ref": "working_tree",
+      "config": {
+        "enable_lazy_repair": true,
+        "enable_route_distinct_regret": false,
+        "enable_regret_position_fallback": true,
+        "enable_regret_portfolio": true
+      },
+      "label": "自适应组合候选",
+      "role": "candidate"
+    }
+  },
+  "runner_sha256": "8431df7578301b4ea875d32c6d97250698fc626696f9b79f522a2dd2a0a3e26a",
+  "execution_sources": {
+    "run_optimization_experiments": {
+      "path": "sources/run_optimization_experiments.py",
+      "sha256": "8431df7578301b4ea875d32c6d97250698fc626696f9b79f522a2dd2a0a3e26a"
+    },
+    "run_scenario_comparison": {
+      "path": "sources/run_scenario_comparison.py",
+      "sha256": "5566709d474ac03e9e3a6118a0b947098d785281f65f2c8bcc0074b8eb34ca1c"
+    },
+    "run_regret_followup": {
+      "path": "sources/run_regret_followup.py",
+      "sha256": "03c6094fa2308f7f674fc260b2f7f9f165e2f324a905f7e1e83d9aa9a46b9466"
+    },
+    "run_regret_portfolio_validation": {
+      "path": "sources/run_regret_portfolio_validation.py",
+      "sha256": "2f85ac290977920ad5f1ace207d36b5500c69cb93e272b62b711a5d541b6e4c1"
+    }
+  },
+  "seeds": {
+    "screen": [
+      2026101341,
+      2026101342
+    ],
+    "medium": [
+      2026101351,
+      2026101352,
+      2026101353
+    ],
+    "confirm": [
+      2026101321,
+      2026101361,
+      2026101362,
+      2026101363
+    ],
+    "extensions": [
+      2026101341,
+      2026101342
+    ]
+  },
+  "created_at": "2026-10-13T10:41:57Z",
+  "environment": {
+    "python": "3.14.5",
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O"
+  },
+  "protocol": {
+    "total_experiment_seconds": 3600,
+    "stage_caps_seconds": {
+      "screen": 180,
+      "medium": 240,
+      "confirm": 1920,
+      "extensions": 240
+    },
+    "stage_cases": {
+      "screen": [
+        "single25",
+        "fleet200"
+      ],
+      "medium": [
+        "single25",
+        "fleet200"
+      ],
+      "confirm": [
+        "fleet200"
+      ],
+      "extensions": [
+        "fleet200__direct_relay",
+        "fleet200__direct_stations",
+        "fleet200__direct_relay_stations"
+      ]
+    },
+    "stage_budgets_seconds": {
+      "screen": {
+        "single25": 5,
+        "fleet200": 10
+      },
+      "medium": {
+        "single25": 5,
+        "fleet200": 30
+      },
+      "confirm": {
+        "single25": 120,
+        "fleet200": 240
+      },
+      "extensions": {
+        "fleet200": 20
+      }
+    },
+    "single": {
+      "tasks": 25,
+      "drones": 1
+    },
+    "fleet": {
+      "tasks": 200,
+      "drones": 8
+    },
+    "max_tasks_per_drone": 25,
+    "capacity": 2,
+    "speed_km_per_min": 0.9,
+    "deadline_multiplier": 1.0,
+    "relay_count": 4,
+    "relay_location_seed": 42,
+    "relay_direct_warmup_fraction": 0.8,
+    "safety_margin_seconds": 1.0,
+    "time_boundary": "CSV读取前至完整核验和解JSON写出后；不含进程启动和模块导入",
+    "comparison": "逐种子三级词典序；总逾期分钟是项目引入的次级目标",
+    "quality_gate": "初筛集群2配对不劣且至少1胜、单机无退化；中测集群至少2胜且两实例均无逾期数增加",
+    "selection": "最多两项新候选；通过初筛后按相对旧跨机版胜/负次数、相对基线胜次数选择，完全并列优先fallback；不按均值三元组判胜",
+    "promotion": "先复测已知失败seed1321，再验证3个新种子；全部4个集群长测配对词典序不退化且新种子至少2胜才考虑默认启用",
+    "confirm_seed_roles": {
+      "2026101321": "已知反例复测，不是独立留出样本",
+      "2026101361": "新种子",
+      "2026101362": "新种子",
+      "2026101363": "新种子"
+    },
+    "single_drone": "新机制不作用于单机；以固定迭代完整决策等价和5秒配对验证，不重复120秒长测",
+    "early_stop": "任一确认配对词典序退化则停止剩余长测；所有结果保留且不换种子",
+    "frozen_manuscript_results": "保留上一批及正式论文数据；新证据单独存放"
+  },
+  "post_hoc_exploration": {
+    "reason": "位置回退候选中测出现逾期数退化后，对已通过相同初筛的组合候选追加独立验证；这是事后探索，不更改原批次决定或择优复用旧基线。",
+    "parent_directory": "..",
+    "candidate": "portfolio",
+    "parent_manifest_sha256": "8d43375ac5e61c02182e559a577de1f073bc1f6d320bb39ed9879c11ed8ed39c",
+    "parent_runs_sha256": "bca92f544e2376952b44c08933ba5fe1e398d30928d59c24aca1e38a58819f53",
+    "parent_decisions_sha256": "6d802d1ccfdda6eddca9f55b9a243a83bccd22bf3c53520d23b1a41202c50b50"
+  }
+}

@@ -19,6 +19,13 @@ class SearchCounters:
     relay_global_evaluation_count: int = 0
     repair_rank_evaluation_count: int = 0
     repair_exact_evaluation_count: int = 0
+    # DIRECT route-distinct Stage A only; exact insertion is not recounted.
+    regret_distinct_round_count: int = 0
+    regret_distinct_ranking_count: int = 0
+    regret_distinct_shortage_count: int = 0
+    regret_position_fallback_count: int = 0
+    regret_position_shortage_count: int = 0
+    regret_all_infinite_round_count: int = 0
     surface_build_count: int = 0
     surface_cache_hit_count: int = 0
     surface_cache_miss_count: int = 0
@@ -35,6 +42,12 @@ class SearchCounters:
             "relay_global_evaluation_count": self.relay_global_evaluation_count,
             "repair_rank_evaluation_count": self.repair_rank_evaluation_count,
             "repair_exact_evaluation_count": self.repair_exact_evaluation_count,
+            "regret_distinct_round_count": self.regret_distinct_round_count,
+            "regret_distinct_ranking_count": self.regret_distinct_ranking_count,
+            "regret_distinct_shortage_count": self.regret_distinct_shortage_count,
+            "regret_position_fallback_count": self.regret_position_fallback_count,
+            "regret_position_shortage_count": self.regret_position_shortage_count,
+            "regret_all_infinite_round_count": self.regret_all_infinite_round_count,
             "surface_build_count": self.surface_build_count,
             "surface_cache_hit_count": self.surface_cache_hit_count,
             "surface_cache_miss_count": self.surface_cache_miss_count,

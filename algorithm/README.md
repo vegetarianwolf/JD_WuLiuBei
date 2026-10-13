@@ -10,7 +10,7 @@
 
 ## 当前方法
 
-主算法为 `C2-Lex-ALNS`。算法注册表固定为 14 个有效算子：
+主算法为 `C2-Lex-ALNS`。默认算法注册表为 14 个有效算子：
 
 - 破坏算子（9）：`random`、`worst_distance`、`worst_lex`、
   `spatial_related`、`deadline_related`、`late_critical`、
@@ -18,8 +18,10 @@
 - 修复算子（5）：`greedy`、`regret2`、`regret3`、`deadline`、`slack`。
 
 程序不包含未进入最终方法的 VND、Ejection Swap、Route Pool 或 Cluster
-Regret 分支。每次 ALNS 运行会在 `metadata.operator_statistics` 中记录所有
-14 个算子的使用次数、接受次数、当前解改进次数、全局最优改进次数和奖励。
+Regret 分支。每次 ALNS 运行会在 `metadata.operator_statistics` 中记录算子的
+使用次数、接受次数、当前解改进次数、全局最优改进次数和奖励。研究开关
+`enable_regret_portfolio=True` 仅在多机 DIRECT 搜索中增加两个独立加权的
+跨机 regret 修复算子；默认算法仍使用上述 14 个算子。
 
 固定中继站由加权 k-medoids 生成；`--relay-count auto` 可按覆盖收益自动
 选站数。`--drone-homes stations` 用需求得分、Hamilton 最大余数分配和轻量
@@ -65,6 +67,10 @@ experiments/
 ├── run_optimization_experiments.py  小预算、逐级晋级的优化对照
 ├── audit_optimization_results.py    从官方数据完整复算优化结果
 ├── render_optimization_report.py    可离线打开的交互 HTML 报告
+├── diagnose_regret_search.py         旧长测轨迹、算子与完整路线诊断
+├── run_regret_followup.py            位置回退／自适应组合的有界复测
+├── run_regret_portfolio_validation.py  独立追加组合验证，共享累计预算
+├── render_regret_followup_report.py  机制证据与分批配对的离线报告
 └── final_plot_style.py           论文结果图公共样式
 ```
 
@@ -91,6 +97,31 @@ PYTHONPATH=algorithm/src python -m uav_dispatch solve \
 
 ## 小预算优化实验（2026-10-13）
 
+后续复测见[退化诊断与最新 HTML](results/regret_followup_20261013/index.html)及
+[完整协议、证据与重建命令](results/regret_followup_20261013/README.md)。新增
+`ALNSConfig.enable_regret_position_fallback` 和 `enable_regret_portfolio`：
+前者在跨机备选不足时恢复位置后悔值，后者同时保留位置与跨机算子并独立更新
+权重。它们不改变初解；单机与实际 Relay 搜索阶段不启用组合池。分阶段 Relay
+的 DIRECT 预热可启用组合；最终 metadata 的 `regret_portfolio_active` 仅
+描述最后阶段，跨阶段使用次数以合并后的 `operator_statistics` 为准。
+
+位置回退 A 中测两胜一负，未晋级；组合 B 在独立追加中测三胜，但已知反例
+240 秒确认仍由基线 62 个逾期增至 65 个。故后续新种子长测提前停止，四个
+研究开关均保持默认 `False`，不把短测优势当作默认算法改进。
+
+计数器新增跨机排名／轮次、备选不足、位置回退、真实位置不足及全 inf 轮次，
+用于区分“没有足够无人机备选”和“没有足够插入位置”。原题满载场景下，
+前一现象可使所有待插任务同时失去 regret 区分能力。报告将该已验证机制与
+长测退化的因果推断分开，不把局部修复频率外推到所有搜索。
+
+后续专用入口 `run_regret_followup` 先冻结四个版本，执行 5／10 秒初筛和
+5／30 秒中测。只有中测通过才执行 240 秒集群确认；跨机改动不作用于单机，
+本轮以固定迭代测试与 5 秒配对验证单机，不重复单机 120 秒长测。
+`run_regret_portfolio_validation` 是明确记录的事后追加探索，仅接受主批 A
+中测失败、B 已通过初筛的情况；用新配对基线，共享总预算，不合并两批成绩。
+
+以下为首轮优化的历史记录：
+
 本轮以原题条件下的 25 任务单机和 200 任务／8 架集群为主，保留容量 2、
 每机上限 25、0.9 km/min、原点起飞及不返航语义。实验采用独立批次，
 不重跑下述论文敏感性矩阵，也不将不同源码、不同预算的历史结果混入 A/B。
@@ -102,7 +133,7 @@ PYTHONPATH=algorithm/src python -m uav_dispatch solve \
 中继精化另修复了交接等待吸收局部延迟时的
 增量误剪枝；该正确性修复保留在默认实现中，继续由全局完整评价器判优。
 
-本轮结果见[离线 HTML 报告](results/optimization_20261013/index.html)及
+首轮结果见[原始 HTML 报告](results/optimization_20261013/index.initial.html)及
 [完整批次说明](results/optimization_20261013/README.md)。固定 200 次迭代的
 6 组配对全部等价；单机、集群中位耗时分别降低 0.23%、5.65%，集群未达到
 预设的 10% 提速门槛。跨机分配候选在 30 秒集群中测获得 3 胜、单机 3 平，
@@ -114,7 +145,10 @@ PYTHONPATH=algorithm/src python -m uav_dispatch solve \
 参与配对均值或胜负，未启动的运行也不填成绩。三个扩展场景共 12 次运行、
 6 个配对均合法且在预算内；其短预算结果仅作为兼容与补充观察。
 
-复算并重建本轮报告，无需求解新实例：
+复算首轮结果，无需求解新实例。首轮 `index.html` 已升级为后续诊断报告入口；
+原 HTML 原样保存在 `index.initial.html`，原验收记录中的 HTML 指纹对应此归档。
+重建首轮页面会覆盖更新后的入口，需随后重新执行后续报告的
+`--update-previous-entry` 命令：
 
 ```bash
 PYTHONPATH=algorithm/src python -m algorithm.experiments.audit_optimization_results \

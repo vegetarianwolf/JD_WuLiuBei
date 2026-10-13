@@ -83,6 +83,11 @@ class ALNSConfig:
     # paired searches can share the same initial solution.
     enable_lazy_repair: bool = False
     enable_route_distinct_regret: bool = False
+    # Fall back to position regret when fewer than k UAVs have a task slot.
+    # The portfolio retains the original regret operators and separately
+    # adapts two route-distinct operators (DIRECT multi-UAV search only).
+    enable_regret_position_fallback: bool = False
+    enable_regret_portfolio: bool = False
     relay_enabled: bool = True
     # A relay-aware search has a much larger neighbourhood than DIRECT.
     # Spend most of a fixed budget building a strong DIRECT incumbent, then
@@ -2150,6 +2155,7 @@ def _repair(
     home_bias: bool = False,
     enable_lazy_repair: bool = False,
     enable_route_distinct_regret: bool = False,
+    enable_regret_position_fallback: bool = False,
 ) -> Routes:
     if (
         relay_cfg is not None
@@ -2206,10 +2212,26 @@ def _repair(
             )
             for route_index in range(len(routes))
         ]
+        use_distinct_options = route_distinct
+        if route_distinct:
+            counters.regret_distinct_ranking_count += 1
+            route_count = sum(bool(options) for options in direct_by_route)
+            if sum(len(options) for options in direct_by_route) < option_count:
+                counters.regret_position_shortage_count += 1
+            if route_count < option_count:
+                counters.regret_distinct_shortage_count += 1
+                if enable_regret_position_fallback:
+                    # A full fleet loses available routes as repair fills
+                    # its slots. This affects every remaining task and must
+                    # not erase the still-useful within-route alternatives.
+                    use_distinct_options = False
+                    counters.regret_position_fallback_count += 1
         merged = [
             option
             for route_options in direct_by_route
-            for option in (route_options[:1] if route_distinct else route_options)
+            for option in (
+                route_options[:1] if use_distinct_options else route_options
+            )
         ]
         if home_bias:
             # Home-proximity tiebreak: among equally-scoring insertions,
@@ -2271,6 +2293,8 @@ def _repair(
             and strategy in {"regret2", "regret3"}
             and len(routes) > 1
         )
+        if distinct_regret:
+            counters.regret_distinct_round_count += 1
         for task_id in sorted(ranking_tasks):
             options = ranked_options(
                 task_id, rank_limit, route_distinct=distinct_regret,
@@ -2278,6 +2302,8 @@ def _repair(
             if not options:
                 raise RuntimeError(f"修复阶段无法重新插入任务 {task_id}")
             per_task[task_id] = options
+        if distinct_regret and all(len(options) < regret_k for options in per_task.values()):
+            counters.regret_all_infinite_round_count += 1
         if counters is not None:
             counters.repair_rank_evaluation_count += len(ranking_tasks)
 
@@ -2744,7 +2770,12 @@ def solve_alns(
 
     destroy_operators = DESTROY_OPERATORS
     destroy_weights = {name: 1.0 for name in destroy_operators}
-    repair_operators = REPAIR_OPERATORS
+    regret_portfolio_active = (
+        cfg.enable_regret_portfolio and not relay_active and len(current) > 1
+    )
+    repair_operators = REPAIR_OPERATORS + (
+        ("route_regret2", "route_regret3") if regret_portfolio_active else ()
+    )
     repair_weights = {name: 1.0 for name in repair_operators}
     total_uses = {
         **{f"destroy:{name}": 0 for name in destroy_operators},
@@ -2828,12 +2859,14 @@ def solve_alns(
         if deadline is not None and perf_counter() >= deadline:
             break
         try:
+            route_regret_operator = repair_name in {"route_regret2", "route_regret3"}
+            repair_strategy = repair_name.removeprefix("route_") if route_regret_operator else repair_name
             candidate = _repair(
                 problem,
                 evaluator,
                 partial,
                 removed,
-                repair_name,
+                repair_strategy,
                 cfg.candidate_limit,
                 use_deadline_risk=cfg.enable_deadline_risk,
                 deadline=deadline,
@@ -2843,7 +2876,11 @@ def solve_alns(
                 repair_exact_candidate_limit=cfg.repair_exact_candidate_limit,
                 direct_exact_top_k=cfg.direct_exact_top_k,
                 enable_lazy_repair=cfg.enable_lazy_repair,
-                enable_route_distinct_regret=cfg.enable_route_distinct_regret,
+                enable_route_distinct_regret=(
+                    route_regret_operator
+                    or (cfg.enable_route_distinct_regret and not regret_portfolio_active)
+                ),
+                enable_regret_position_fallback=cfg.enable_regret_position_fallback,
             )
         except _SearchDeadlineReached:
             break
@@ -2981,6 +3018,9 @@ def solve_alns(
             "enable_deadline_risk": cfg.enable_deadline_risk,
             "enable_lazy_repair": cfg.enable_lazy_repair,
             "enable_route_distinct_regret": cfg.enable_route_distinct_regret,
+            "enable_regret_position_fallback": cfg.enable_regret_position_fallback,
+            "enable_regret_portfolio": cfg.enable_regret_portfolio,
+            "regret_portfolio_active": regret_portfolio_active,
             "relay_enabled": bool(relay_active),
             "time_limit_seconds": cfg.time_limit_seconds,
             "initial_score": (
