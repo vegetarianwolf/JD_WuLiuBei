@@ -62,6 +62,9 @@ experiments/
 ├── run_scenario_comparison.py    第6.1节四场景×三种子实验
 ├── run_sensitivity_analysis.py   第6.2节四策略单因素灵敏度
 ├── audit_sensitivity_results.py  独立完整评价器复核敏感性结果
+├── run_optimization_experiments.py  小预算、逐级晋级的优化对照
+├── audit_optimization_results.py    从官方数据完整复算优化结果
+├── render_optimization_report.py    可离线打开的交互 HTML 报告
 └── final_plot_style.py           论文结果图公共样式
 ```
 
@@ -69,7 +72,7 @@ experiments/
 
 ```bash
 python -m pip install -r requirements-dev.txt -e .
-python -m pytest -q -p no:cacheprovider algorithm/tests
+MPLBACKEND=Agg python -m pytest -q -p no:cacheprovider algorithm/tests
 ```
 
 不安装包时，从仓库根目录运行：
@@ -85,6 +88,78 @@ PYTHONPATH=algorithm/src python -m uav_dispatch solve \
 
 `--method` 还支持 `exact`、`edd`、`nearest`、`greedy`、`regret2`。
 `--disable-relay` 关闭中继；`--drone-homes origin` 让全部无人机从原点起飞。
+
+## 小预算优化实验（2026-10-13）
+
+本轮以原题条件下的 25 任务单机和 200 任务／8 架集群为主，保留容量 2、
+每机上限 25、0.9 km/min、原点起飞及不返航语义。实验采用独立批次，
+不重跑下述论文敏感性矩阵，也不将不同源码、不同预算的历史结果混入 A/B。
+
+新增两个 `ALNSConfig` 研究开关，默认值均为 `False`：`enable_lazy_repair`
+启用后让 DIRECT 的 deadline/slack 修复仅为实际可选任务计算排名；
+`enable_route_distinct_regret` 启用后让多机 DIRECT regret 的备选来自不同无人机。
+二者只影响搜索修复，初始构造保持一致；单机不启用跨机 regret。
+中继精化另修复了交接等待吸收局部延迟时的
+增量误剪枝；该正确性修复保留在默认实现中，继续由全局完整评价器判优。
+
+本轮结果见[离线 HTML 报告](results/optimization_20261013/index.html)及
+[完整批次说明](results/optimization_20261013/README.md)。固定 200 次迭代的
+6 组配对全部等价；单机、集群中位耗时分别降低 0.23%、5.65%，集群未达到
+预设的 10% 提速门槛。跨机分配候选在 30 秒集群中测获得 3 胜、单机 3 平，
+但首个 240 秒集群配对（种子 `2026101321`）出现 63→65 个逾期任务，
+按第一目标已退化，故提前停止确认并保留两项开关默认关闭。
+
+确认阶段完成两个配对，另保留种子 `2026101322` 的单机 `allocation` 完整
+结果；其 `baseline` 在终止时尚未产出完整解，因此没有得分。未配对记录不
+参与配对均值或胜负，未启动的运行也不填成绩。三个扩展场景共 12 次运行、
+6 个配对均合法且在预算内；其短预算结果仅作为兼容与补充观察。
+
+复算并重建本轮报告，无需求解新实例：
+
+```bash
+PYTHONPATH=algorithm/src python -m algorithm.experiments.audit_optimization_results \
+  --output-dir algorithm/results/optimization_20261013
+python -m algorithm.experiments.render_optimization_report \
+  --output-dir algorithm/results/optimization_20261013
+```
+
+开展新一轮优化时，先在新的空目录冻结 Git 基线和候选源码，再运行逐级门槛：
+
+```bash
+PYTHONPATH=algorithm/src python -m algorithm.experiments.run_optimization_experiments \
+  prepare --output-dir algorithm/results/optimization_new --baseline-commit 88f232c
+PYTHONPATH=algorithm/src python -m algorithm.experiments.run_optimization_experiments \
+  run --output-dir algorithm/results/optimization_new
+PYTHONPATH=algorithm/src python -m algorithm.experiments.audit_optimization_results \
+  --output-dir algorithm/results/optimization_new
+python -m algorithm.experiments.render_optimization_report \
+  --output-dir algorithm/results/optimization_new
+```
+
+运行器依次进行固定 200 轮等价计时、5／10 秒初筛、30 秒中测，只有唯一
+入围候选通过门槛后才进行单机 120 秒、集群 240 秒的三种子确认。
+三个扩展场景各做两种子、每次 20 秒的补充检查。所有求解顺序运行，
+按种子交替版本顺序；累计实验上限 3600 秒，未通过门槛即停止扩大。
+最终运行器检查配对初解和续跑源码指纹，并在确认阶段出现不能满足既定晋级
+条件的完整配对时自动早停；本次保留的原始执行脚本与最终运行器有版本区别。
+计时从 CSV 读取前至完整校验与解 JSON 写出后，不含解释器启动／模块导入；
+预处理从总预算扣除，预留 1 秒收尾，超时记录不参与有效胜负统计。
+
+每批保存源码 ZIP、原始执行脚本、输入指纹、完整配置、逐运行路线、初解指纹、计时、
+收敛轨迹、晋级记录与独立审计。报告以原始逐种子三级词典序判胜，
+同时展示按时率、总航程、总逾期和时限；总逾期分钟是本项目采用的次级目标。
+样本 SD 不是置信区间，少量种子只反映本实例的有限观测。
+
+本批次 `sources/` 保存实际执行的 runner、场景构造 helper 和两个 solver ZIP，
+manifest 绑定其哈希。重放原批次须使用独立 checkout，按归档恢复 runner、
+helper 与候选 solver 源码，写入新的空结果目录；依据 `execution_notes.json`
+保留原提前停止边界。最终运行器不会悄悄续写由其他版本脚本生成的旧批次。
+固定时限下的搜索进度会受机器负载影响，相同种子不保证逐位复现原成绩。
+
+旧论文和 `final_*` 结果仍绑定原源码指纹。当前算法变化后，旧论文生成器
+拒绝混合当前源码与旧结果属于预期审计保护；重建旧论文须使用基线
+`88f232ca66e2ed74ebeb90c4141654413c0714e3` 的独立检出及其原实验产物。
+不要修改旧 manifest 或绕过指纹检查来生成“最新”论文。
 
 ## 正式实验协议
 

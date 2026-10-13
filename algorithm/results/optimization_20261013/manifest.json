@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "kind": "exploratory_optimization",
+  "baseline_commit": "88f232ca66e2ed74ebeb90c4141654413c0714e3",
+  "baseline_variant": "baseline",
+  "input_path": "algorithm/命题1-低空经济场景下的物流无人机调度算法数据.csv",
+  "input_sha256": "386d3fbaa9009aeed947493782d657ed0b30b25d369c8187bfc9619fc7e31d25",
+  "source_snapshots": {
+    "baseline": {
+      "path": "sources/baseline.zip",
+      "sha256": "17b13ea7468127f0d5fe0a2c0803f6ca231e07500cce51c0aadb1eb67714e12c",
+      "config": {}
+    },
+    "fast": {
+      "path": "sources/candidate.zip",
+      "sha256": "a934207f3823992aa94439c4e9451f5ace937f53f152922aedc05ddebac80af1",
+      "config": {
+        "enable_lazy_repair": true,
+        "enable_route_distinct_regret": false
+      }
+    },
+    "allocation": {
+      "path": "sources/candidate.zip",
+      "sha256": "a934207f3823992aa94439c4e9451f5ace937f53f152922aedc05ddebac80af1",
+      "config": {
+        "enable_lazy_repair": true,
+        "enable_route_distinct_regret": true
+      }
+    }
+  },
+  "seeds": {
+    "screen": [
+      2026101301,
+      2026101302
+    ],
+    "medium": [
+      2026101311,
+      2026101312,
+      2026101313
+    ],
+    "confirm": [
+      2026101321,
+      2026101322,
+      2026101323
+    ],
+    "extensions": [
+      2026101301,
+      2026101302
+    ]
+  },
+  "runner_sha256": "ed555975e2dbdffb17d401d926cecf9fcbfa5f7e7370b31ca5838e179abd4edf",
+  "created_at": "2026-10-13T09:26:34Z",
+  "environment": {
+    "python": "3.14.5",
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O"
+  },
+  "protocol": {
+    "total_experiment_seconds": 3600,
+    "stage_caps_seconds": {
+      "screen": 480,
+      "medium": 360,
+      "confirm": 2160,
+      "extensions": 240
+    },
+    "single": {
+      "tasks": 25,
+      "drones": 1
+    },
+    "fleet": {
+      "tasks": 200,
+      "drones": 8
+    },
+    "max_tasks_per_drone": 25,
+    "capacity": 2,
+    "speed_km_per_min": 0.9,
+    "deadline_multiplier": 1.0,
+    "relay_count": 4,
+    "relay_location_seed": 42,
+    "relay_direct_warmup_fraction": 0.8,
+    "safety_margin_seconds": 1.0,
+    "time_boundary": "CSV读取前至完整核验和完整解JSON写出后；不含Python进程启动和模块导入",
+    "comparison": "逐种子三级词典序，完整初解相同；总逾期分钟是项目次级目标",
+    "quality_gate": "初筛集群2组均不劣且至少1胜；中测集群至少2胜，两个实例均无逾期数增加",
+    "performance_gate": "固定迭代routes/score/搜索决策完全一致；重复计时中位数至少降低10%",
+    "promotion": "质量版本确认至少2/3集群获胜且所有原题配对无词典序退化；等价版本所有确认配对无词典序退化",
+    "frozen_manuscript_results": "不修改、不重跑、不与本批次混合"
+  },
+  "execution_sources": {
+    "run_optimization_experiments": {
+      "path": "sources/run_optimization_experiments.py",
+      "sha256": "ed555975e2dbdffb17d401d926cecf9fcbfa5f7e7370b31ca5838e179abd4edf"
+    },
+    "run_scenario_comparison": {
+      "path": "sources/run_scenario_comparison.py",
+      "sha256": "5566709d474ac03e9e3a6118a0b947098d785281f65f2c8bcc0074b8eb34ca1c"
+    }
+  }
+}

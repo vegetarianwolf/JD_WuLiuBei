@@ -298,19 +298,33 @@ def test_appendix_distinguishes_raw_score_order_from_validation_tolerance():
     assert "浮点指标只在数值容差范围内判断相等" not in text
 
 
-def test_exact_matching_validator_does_not_merge_one_ulp_difference(monkeypatch):
+def test_exact_matching_validator_does_not_merge_one_ulp_difference(tmp_path):
     import math
 
     directory = manuscript.ROOT / "algorithm/results/final_benchmarks"
     payload = json.loads((directory / "results.json").read_text(encoding="utf-8"))
+    # This isolated fixture tests score equality, independently of whether
+    # the frozen historical benchmark was produced by the current solver.
+    # Update only the temporary copy; production provenance checks stay on.
+    payload["manifest"]["solver_source_sha256"] = manuscript._solver_source_sha256()
     matched = next(row for row in payload["runs"]
                    if row["method"] == "C2-Lex-ALNS" and row.get("matches_oracle") is True)
     matched["distance_km"] = math.nextafter(matched["distance_km"], math.inf)
-    original_load = manuscript._load_json
-    monkeypatch.setattr(manuscript, "_load_json", lambda path, label:
-                        deepcopy(payload) if path == directory / "results.json" else original_load(path, label))
+    (tmp_path / "results.json").write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(manuscript.ArtefactError, match="matches_oracle与三层得分不一致"):
-        manuscript._validate_benchmarks(directory)
+        manuscript._validate_benchmarks(tmp_path)
+
+
+def test_benchmark_validator_rejects_stale_solver_source_fingerprint(tmp_path):
+    directory = manuscript.ROOT / "algorithm/results/final_benchmarks"
+    payload = json.loads((directory / "results.json").read_text(encoding="utf-8"))
+    current_hash = manuscript._solver_source_sha256()
+    stale_hash = ("0" if current_hash[0] != "0" else "1") + current_hash[1:]
+    payload["manifest"]["solver_source_sha256"] = stale_hash
+    (tmp_path / "results.json").write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(manuscript.ArtefactError, match="求解器源码SHA-256与当前源码不一致"):
+        manuscript._validate_benchmarks(tmp_path)
 
 
 def test_stability_conclusion_does_not_claim_improvement_from_constant_scores(formal_evidence):

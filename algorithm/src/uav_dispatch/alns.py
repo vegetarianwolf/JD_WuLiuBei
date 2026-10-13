@@ -79,6 +79,10 @@ class ALNSConfig:
     enable_home_seed: bool = False
     enable_home_bias: bool = False
     enable_deadline_risk: bool = True
+    # Experimental DIRECT repair controls. Construction stays unchanged so
+    # paired searches can share the same initial solution.
+    enable_lazy_repair: bool = False
+    enable_route_distinct_regret: bool = False
     relay_enabled: bool = True
     # A relay-aware search has a much larger neighbourhood than DIRECT.
     # Spend most of a fixed budget building a strong DIRECT incumbent, then
@@ -340,6 +344,7 @@ def _relay_refine_pass(
     current = routes
     current_schedule = global_evaluator.evaluate(current)
     current_score = current_schedule.score
+    current_has_waiting = current_schedule.total_waiting_min > 1e-12
     # Only tasks late in the current schedule are worth refining, most-late
     # first.  Relocating a leg of an on-time task can only chase the third
     # (distance) objective, and the old id-order scan wasted most of its
@@ -391,7 +396,9 @@ def _relay_refine_pass(
             # relaxes the handoff constraint of the pickup on another drone,
             # which these local deltas cannot bound, so it is never pruned.
             source_removal_delta: Score | None = None
-            if is_out:
+            # Existing handoff waiting may absorb an insertion delay, so
+            # route-local deltas are not a global lower bound in that case.
+            if is_out and not current_has_waiting:
                 source_removed_score = evaluator.evaluate(
                     source_route_list,
                     start_node=problem.home_node(source_route),
@@ -2141,6 +2148,8 @@ def _repair(
     repair_exact_candidate_limit: int | None = None,
     direct_exact_top_k: int = 2,
     home_bias: bool = False,
+    enable_lazy_repair: bool = False,
+    enable_route_distinct_regret: bool = False,
 ) -> Routes:
     if (
         relay_cfg is not None
@@ -2178,7 +2187,12 @@ def _repair(
         else candidate_limit
     )
 
-    def ranked_options(task_id: int, candidate_limit: int | None):
+    def ranked_options(
+        task_id: int,
+        candidate_limit: int | None,
+        *,
+        route_distinct: bool = False,
+    ):
         direct_by_route = [
             repair_cache.direct_options(
                 problem,
@@ -2195,7 +2209,7 @@ def _repair(
         merged = [
             option
             for route_options in direct_by_route
-            for option in route_options
+            for option in (route_options[:1] if route_distinct else route_options)
         ]
         if home_bias:
             # Home-proximity tiebreak: among equally-scoring insertions,
@@ -2236,13 +2250,36 @@ def _repair(
             raise _SearchDeadlineReached
         option_count = regret_k if strategy.startswith("regret") else 1
         per_task: dict[int, tuple[RouteInsertionOption, ...]] = {}
-        for task_id in sorted(remaining):
-            options = ranked_options(task_id, rank_limit)
+        ranking_tasks = remaining
+        if enable_lazy_repair and strategy in {"deadline", "slack"}:
+            if strategy == "deadline":
+                ranking_key = lambda task_id: (
+                    problem.task(task_id).deadline_min, task_id,
+                )
+            else:
+                ranking_key = lambda task_id: (
+                    problem.task(task_id).deadline_min
+                    - problem.direct_completion_min(task_id), task_id,
+                )
+            # Only this static shortlist can be selected by risk_guided_min;
+            # the other tasks' insertion scores cannot affect this round.
+            ranking_tasks = sorted(remaining, key=ranking_key)[
+                :3 if use_deadline_risk else 1
+            ]
+        distinct_regret = (
+            enable_route_distinct_regret
+            and strategy in {"regret2", "regret3"}
+            and len(routes) > 1
+        )
+        for task_id in sorted(ranking_tasks):
+            options = ranked_options(
+                task_id, rank_limit, route_distinct=distinct_regret,
+            )
             if not options:
                 raise RuntimeError(f"修复阶段无法重新插入任务 {task_id}")
             per_task[task_id] = options
         if counters is not None:
-            counters.repair_rank_evaluation_count += len(remaining)
+            counters.repair_rank_evaluation_count += len(ranking_tasks)
 
         def predicted_risk(task_id: int) -> float:
             if not use_deadline_risk:
@@ -2805,6 +2842,8 @@ def solve_alns(
                 repair_rank_candidate_limit=cfg.repair_rank_candidate_limit,
                 repair_exact_candidate_limit=cfg.repair_exact_candidate_limit,
                 direct_exact_top_k=cfg.direct_exact_top_k,
+                enable_lazy_repair=cfg.enable_lazy_repair,
+                enable_route_distinct_regret=cfg.enable_route_distinct_regret,
             )
         except _SearchDeadlineReached:
             break
@@ -2940,6 +2979,8 @@ def solve_alns(
             "seed": cfg.seed,
             "enable_home_seed": cfg.enable_home_seed,
             "enable_deadline_risk": cfg.enable_deadline_risk,
+            "enable_lazy_repair": cfg.enable_lazy_repair,
+            "enable_route_distinct_regret": cfg.enable_route_distinct_regret,
             "relay_enabled": bool(relay_active),
             "time_limit_seconds": cfg.time_limit_seconds,
             "initial_score": (
