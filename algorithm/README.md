@@ -10,6 +10,14 @@
 
 ## 当前方法
 
+新[中继同预算消融 HTML 报告](results/weighted_relay_ablation_20261014/index.html)
+以当前加权算法做2×2起点／中继对照，三个新种子、四方案各240秒，共12次。
+预部署条件下按时数三次持平、航程三次均减，平均少4.59 km（0.78%），J为2胜1负；
+原点条件下J为0胜3负。它是单个官方实例、K按最终交付责任计数的论文扩展实验，
+不改变公共默认目标。报告区分同预算性能、跨机交接、同机缓存、预热增量及未经
+重新优化的结构反事实；[独立审计与复现说明](results/weighted_relay_ablation_20261014/README.md)
+和[论文用配对图](results/weighted_relay_ablation_20261014/figures/relay_paired_effects.svg)一并保存。
+
 新[加权算法继续改进 HTML 主报告](results/weighted_periodic_improvement_20261014/index.html)
 比较当前加权基线、末端完整请求互换＋惰性修复、周期互换组合。完整200任务、
 原点纯直送、单种子 `2026101461`、各实际求解一次240秒；第二阶段逐字复用同一

@@ -51,7 +51,7 @@ def export(directory):
     figures = directory / "figures"
     figures.mkdir(exist_ok=True)
     with (figures / "paired_effects.csv").open("w", newline="", encoding="utf-8") as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(effects[0]))
+        writer = csv.DictWriter(stream, fieldnames=list(effects[0]), lineterminator="\n")
         writer.writeheader()
         writer.writerows(effects)
     fig, axes = plt.subplots(2, 3, figsize=(10.4, 5.6), layout="constrained")
@@ -82,6 +82,9 @@ def export(directory):
             ax.ticklabel_format(axis="x", style="plain", useOffset=False)
     fig.suptitle("Equal 240 s budgets: relay effects within fixed home configurations", fontsize=12)
     fig.savefig(figures / "relay_paired_effects.svg", bbox_inches="tight")
+    svg_path = figures / "relay_paired_effects.svg"
+    svg_path.write_text("\n".join(line.rstrip() for line in svg_path.read_text(encoding="utf-8").splitlines()) + "\n",
+                        encoding="utf-8")
     fig.savefig(figures / "relay_paired_effects.png", dpi=240, bbox_inches="tight")
     plt.close(fig)
     record = dict(passed=True, source_manifest_sha256=sha(directory / "manifest.json"),

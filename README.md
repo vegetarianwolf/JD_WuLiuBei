@@ -24,10 +24,14 @@ data/                      数据与实验结果
 
 ## 当前加权算法的中继同预算消融（2026-10-14）
 
-[实验与原始数据说明](algorithm/results/weighted_relay_ablation_20261014/README.md)：
+[中继同预算 HTML 报告](algorithm/results/weighted_relay_ablation_20261014/index.html)
+及[论文用配对图](algorithm/results/weighted_relay_ablation_20261014/figures/relay_paired_effects.svg)：
 三个新种子、四方案各240秒，12次完整实测及独立中继DAG审计已完成，99项相关
 小型测试通过。固定起点内识别中继增量，初/中/终解和禁止中继结构反事实均保存。
-按用户要求，报告与图表暂缓生成；统计数据、源码快照和生成器已准备。
+预部署条件下三次航程均减少，平均少4.59 km（0.78%），按时数全部持平，J为
+2胜1负；原点条件下J为0胜3负。结果支持本实例预部署条件下的航程收益，不能
+证明中继普遍获益。交互报告分别呈现完整预算对照、预热增量、跨机交接和同机
+缓存；协议、原始数据与复现入口见[实验说明](algorithm/results/weighted_relay_ablation_20261014/README.md)。
 
 ## 在加权直送上继续改进算法（2026-10-14）
 
