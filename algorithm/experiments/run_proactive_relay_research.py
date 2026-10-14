@@ -46,12 +46,15 @@ METHODS = {"batch": "batch_relay_refinement", "reciprocal": "reciprocal_relay_re
            "frontier_mobile_direct": "source_frontier_mobile_repooling", "frontier_mobile_relay": "source_frontier_mobile_repooling",
            "bundle_cached_direct": "receiver_bundle_cached_mobile", "bundle_cached_relay": "receiver_bundle_cached_mobile",
            "full_credit_direct": "full_score_selected_mobile", "full_credit_relay": "full_score_selected_mobile",
-           "full_credit_pin_direct": "full_credit_pinned_repooling", "full_credit_pin_relay": "full_credit_pinned_repooling"}
-DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct", "repool_direct", "repool_polish_direct", "mobile_repool_direct", "joint_mobile_direct", "frontier_mobile_direct", "bundle_cached_direct", "full_credit_direct", "full_credit_pin_direct")
+           "full_credit_pin_direct": "full_credit_pinned_repooling", "full_credit_pin_relay": "full_credit_pinned_repooling",
+           "cold_pin_direct": "cold_weighted_pinned_repooling", "cold_pin_relay": "cold_weighted_pinned_repooling"}
+DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct", "repool_direct", "repool_polish_direct", "mobile_repool_direct", "joint_mobile_direct", "frontier_mobile_direct", "bundle_cached_direct", "full_credit_direct", "full_credit_pin_direct", "cold_pin_direct")
 REPOOL_ARMS = ("repool_direct", "repool_relay")
 PIN_REPOOL_ARMS = ("repool_polish_direct", "repool_polish_relay")
 PIN_FULL_CREDIT_PAIR = ("full_credit_pin_direct", "full_credit_pin_relay")
-ALL_PIN_ARMS = (*PIN_REPOOL_ARMS, *PIN_FULL_CREDIT_PAIR)
+COLD_PIN_PAIR = ("cold_pin_direct", "cold_pin_relay")
+FULL_CREDIT_PIN_ARMS = (*PIN_FULL_CREDIT_PAIR, *COLD_PIN_PAIR)
+ALL_PIN_ARMS = (*PIN_REPOOL_ARMS, *FULL_CREDIT_PIN_ARMS)
 MOBILE_REPOOL_PAIR = ("mobile_repool_direct", "mobile_repool_relay")
 JOINT_MOBILE_PAIR = ("joint_mobile_direct", "joint_mobile_relay")
 FRONTIER_MOBILE_PAIR = ("frontier_mobile_direct", "frontier_mobile_relay")
@@ -82,6 +85,7 @@ EXECUTION = (
     "receiver_bundle_cache.py", "receiver_bundle_cached_mobile.py",
     "full_score_repool_selector.py", "full_score_selected_mobile.py",
     "full_credit_pinned_repooling.py",
+    "cold_weighted_pinned_repooling.py",
     "directed_bundle_insertion.py",
     "run_weighted_relay_ablation.py", "run_weighted_direct_pair.py", "weighted_direct_objective.py",
     "weighted_relay_objective.py", "weighted_periodic_exchange.py", "run_scenario_comparison.py",
@@ -295,21 +299,21 @@ def prepare(args):
             "or proving a complete incumbent inferior. Actual continuous contact timing and all full adoption guards "
             "remain under the source-bound mobile model contract. DIRECT uses the same macro selector and declared "
             "finite limits, with mobile-specific ranking disabled.")
-    if set(arms) & {*FRONTIER_MOBILE_PAIR, *BUNDLE_CACHED_PAIR, *FULL_CREDIT_PAIR, *PIN_FULL_CREDIT_PAIR}:
+    if set(arms) & {*FRONTIER_MOBILE_PAIR, *BUNDLE_CACHED_PAIR, *FULL_CREDIT_PAIR, *FULL_CREDIT_PIN_ARMS}:
         manifest["protocol"] += (
             " Source-frontier variants additionally retain bounded early source-IN contact and pickup-frontier "
             "representatives with unchanged true local deltas. Exact repeated partial and receiver evaluations "
             "may be memoized under complete input identity keys with declared memory limits. "
             "Early-source selection only ranks candidates; no missing-compensation geometry bound is used "
             "to prune against the complete incumbent. All added work shares the same total deadline.")
-    if set(arms) & {*BUNDLE_CACHED_PAIR, *FULL_CREDIT_PAIR, *PIN_FULL_CREDIT_PAIR}:
+    if set(arms) & {*BUNDLE_CACHED_PAIR, *FULL_CREDIT_PAIR, *FULL_CREDIT_PIN_ARMS}:
         manifest["protocol"] += (
             " Bundle-cache variants memoize entire identical pure-C receiver candidate enumerations before "
             "their expensive generation loops, retaining exact candidate routes and order. Keys bind all "
             "actual route, function, object and ranking inputs; local deadline checks precede cache hits. "
             "The same bounded computational cache is enabled in DIRECT and relay arms, with no physical cache "
             "or model change and no added partial-incumbent pruning.")
-    if set(arms) & {*FULL_CREDIT_PAIR, *PIN_FULL_CREDIT_PAIR}:
+    if set(arms) & {*FULL_CREDIT_PAIR, *FULL_CREDIT_PIN_ARMS}:
         review = ROOT / "algorithm/results/proactive_relay_diagnostic_20261014/repooling_compensation_score_review_v1.md"
         manifest["compensation_selector_review"] = dict(path=str(review.relative_to(ROOT)), sha256=sha(review))
         manifest["protocol"] += (
@@ -319,7 +323,7 @@ def prepare(args):
             "replacing the two single-removal deltas. These values rank candidates only, without predicting "
             "complete macro benefit or pruning. Both paired selectors must complete and yield identical "
             "group records and SHA; interrupted selectors are preserved as incomplete, never called matched performance.")
-    if set(arms) & set(PIN_FULL_CREDIT_PAIR):
+    if set(arms) & set(FULL_CREDIT_PIN_ARMS):
         manifest["protocol"] += (
             " The full-credit pinned variant uses only the original four fixed cache stations and returns no "
             "new Problem or optimized rendezvous coordinate. Joint mobile lower bounds rank extra raw layout "
@@ -327,6 +331,26 @@ def prepare(args):
             "The new shared selector and source/cache construction precede the frozen weighted pin-preserving "
             "ALNS helper. Each arm chooses its own best bounded complete macros, without claiming identical "
             "chosen macro identities across arms. Raw, post-polish and all reported helper full snapshots are audited.")
+    if set(arms) & set(COLD_PIN_PAIR):
+        cold_parameters = {"polish_initial_temperature": "initial_temperature",
+                           "polish_minimum_temperature": "minimum_temperature",
+                           "polish_cooling_rate": "cooling_rate",
+                           "polish_max_iterations": "max_iterations"}
+        profiles = {}
+        for arm in set(arms) & set(COLD_PIN_PAIR):
+            signature = inspect.signature(importlib.import_module(METHODS[arm]).refine)
+            profiles[arm] = {config_name: parameters.get(arm, {}).get(name, signature.parameters[name].default)
+                             for name, config_name in cold_parameters.items()}
+        assert len({digest(profile) for profile in profiles.values()}) == 1, "Cold paired arms must share all four temperature settings"
+        note = ROOT / "algorithm/results/proactive_relay_diagnostic_20261014/batch023_weighted_temperature_diagnosis_v1.md"
+        manifest["cold_polish_profiles"] = profiles
+        manifest["temperature_diagnosis"] = dict(path=str(note.relative_to(ROOT)), sha256=sha(note))
+        manifest["protocol"] += (
+            " Cold-pin variants change only the actual worker ALNS temperature profile and iteration ceiling. "
+            "The weighted-J temperature settings are frozen identically across arms, per-iteration cooling "
+            "remains enabled with budget cooling disabled, and the same absolute and leaf deadlines still apply. "
+            "The high iteration ceiling adds no wall budget. Every reported helper configuration must match "
+            "the declared four settings; any benefit remains an exploratory hypothesis until independently checked.")
     write(output / "manifest.json", manifest)
     write(output / "runs.json", [])
     print(json.dumps({"prepared": str(output), "purpose": manifest["purpose"], "arms": arms,
@@ -353,6 +377,9 @@ def verify(output, manifest, *, current_execution=True):
     if "compensation_selector_review" in manifest:
         review = manifest["compensation_selector_review"]
         assert sha(ROOT / review["path"]) == review["sha256"], "Changed declared selector review"
+    if "temperature_diagnosis" in manifest:
+        note = manifest["temperature_diagnosis"]
+        assert sha(ROOT / note["path"]) == note["sha256"], "Changed declared temperature diagnosis"
 
 
 def worker(request):
@@ -436,7 +463,7 @@ def worker(request):
                 controls = {"relay_enabled": method == "quota_relay"}
             if method.startswith("repool_"):
                 controls = {"relay_enabled": method.endswith("_relay")}
-            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_", "full_credit_")):
+            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_", "full_credit_", "cold_pin_")):
                 controls = {"relay_enabled": method.endswith("_relay")}
             controls = {**controls, **manifest.get("method_parameters", {}).get(method, {})}
             outcome = modules[method].refine(full, routes, deadline=sub_deadline,
@@ -614,6 +641,11 @@ def audit(output):
                 pinned_macro_routes[post_name] = macro_routes
                 helper = polish_record["helper_metadata"]
                 assert helper["patches_restored"]
+                if row["arm"] in COLD_PIN_PAIR:
+                    expected_profile = manifest["cold_polish_profiles"][row["arm"]]
+                    assert metadata["cold_polish_profile"] == expected_profile
+                    assert all(helper["configuration"][name] == value for name, value in expected_profile.items())
+                    assert helper["configuration"]["enable_budget_cooling"] is False
                 helper_snapshots = [(name, helper.get(name)) for name in
                     ("input_snapshot", "first_complete_candidate", "best_constructed_candidate", "post_pin_snapshot")]
                 helper_snapshots.extend((f"full_candidate_{i}", snapshot) for i, snapshot in
@@ -718,12 +750,12 @@ def audit(output):
                             synchronous_mobile_physical_reference=physical_mobile))
     selector_comparisons = []
     for seed in sorted({row["seed"] for row in rows}):
-        for arm_pair in (REPOOL_ARMS, PIN_REPOOL_ARMS, MOBILE_REPOOL_PAIR, JOINT_MOBILE_PAIR, FRONTIER_MOBILE_PAIR, BUNDLE_CACHED_PAIR, FULL_CREDIT_PAIR, PIN_FULL_CREDIT_PAIR):
+        for arm_pair in (REPOOL_ARMS, PIN_REPOOL_ARMS, MOBILE_REPOOL_PAIR, JOINT_MOBILE_PAIR, FRONTIER_MOBILE_PAIR, BUNDLE_CACHED_PAIR, FULL_CREDIT_PAIR, PIN_FULL_CREDIT_PAIR, COLD_PIN_PAIR):
             paired = {row["arm"]: next(phase["metadata"] for phase in row["phases"] if phase["phase"] == row["arm"])
                       for row in rows if row["seed"] == seed and row["arm"] in arm_pair}
             if set(paired) == set(arm_pair):
                 direct_arm, relay_arm = arm_pair
-                if arm_pair in (FULL_CREDIT_PAIR, PIN_FULL_CREDIT_PAIR):
+                if arm_pair in (FULL_CREDIT_PAIR, PIN_FULL_CREDIT_PAIR, COLD_PIN_PAIR):
                     assert all(paired[arm]["selector_completed"] for arm in arm_pair), "Incomplete full-credit selector pair retained; no matched claim"
                     for arm in arm_pair:
                         selected = paired[arm]
@@ -731,7 +763,7 @@ def audit(output):
                         raw_stage = selected.get("raw_stage", selected)
                         assert selector["selector_completed"] and selector["patches_restored"]
                         assert selected["process_local_patches_restored"]
-                        if arm_pair == PIN_FULL_CREDIT_PAIR:
+                        if arm_pair in (PIN_FULL_CREDIT_PAIR, COLD_PIN_PAIR):
                             assert selected["pinned_alns_patches_restored"]
                             assert selected["weighted_objective_state_restored"]
                         assert selector["selected_groups"] == selected["selected_groups"]
@@ -742,11 +774,11 @@ def audit(output):
                 assert paired[direct_arm]["selected_groups"] == paired[relay_arm]["selected_groups"]
                 comparison = dict(seed=seed, same_selected_macros=True,
                     selector_sha256=paired[direct_arm]["selector_sha256"])
-                if arm_pair in (PIN_REPOOL_ARMS, PIN_FULL_CREDIT_PAIR):
+                if arm_pair in (PIN_REPOOL_ARMS, PIN_FULL_CREDIT_PAIR, COLD_PIN_PAIR):
                     comparison.update(arms=list(arm_pair), best_polish_candidates_not_necessarily_paired=True)
                 elif arm_pair in (MOBILE_REPOOL_PAIR, JOINT_MOBILE_PAIR, FRONTIER_MOBILE_PAIR, BUNDLE_CACHED_PAIR, FULL_CREDIT_PAIR):
                     comparison.update(arms=list(arm_pair), continuous_mobile_geometry_separately_declared=True)
-                if arm_pair in (FULL_CREDIT_PAIR, PIN_FULL_CREDIT_PAIR):
+                if arm_pair in (FULL_CREDIT_PAIR, PIN_FULL_CREDIT_PAIR, COLD_PIN_PAIR):
                     comparison.update(selectors_completed=True, full_removal_credit_shared_pool=True)
                 selector_comparisons.append(comparison)
     record = dict(passed=True, purpose=manifest["purpose"], source_manifest_sha256=sha(output / "manifest.json"),

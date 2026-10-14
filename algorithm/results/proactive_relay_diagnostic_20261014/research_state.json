@@ -338,6 +338,107 @@
         "max_iterations": 400
       },
       "adopted_cross_uav_count": 0
+    },
+    {
+      "batch": "batch024",
+      "purpose": "checkpoint_mechanism_diagnostic",
+      "arms": [
+        "cold_pin_direct",
+        "cold_pin_relay"
+      ],
+      "actual_seconds": 38.3016949580051,
+      "same_selected_macros": true,
+      "selectors_completed_both_arms": true,
+      "all_adopted_scores_equal_to_checkpoint": true,
+      "method_evidence": [
+        {
+          "arm": "cold_pin_direct",
+          "seconds": 19.140567458001897,
+          "raw_full_proposals": 64,
+          "solver_returned_iterations": 651,
+          "complete_valid_repairs": 1307,
+          "leafs_without_solver_summary": 1,
+          "pin_guard_rollback_candidates": 0,
+          "polish_best_improvements": 2,
+          "adopted_improvements": 0,
+          "macro_keys": [
+            [
+              0.4365169502356338,
+              59,
+              1796.717476514983,
+              584.6179076105329
+            ],
+            [
+              0.43677535219380625,
+              59,
+              1798.939930009799,
+              585.0335411615487
+            ]
+          ],
+          "post_polish_keys": [
+            [
+              0.4343800435246223,
+              59,
+              1787.5023279064046,
+              579.5882704725931
+            ],
+            [
+              0.435913964563145,
+              59,
+              1794.6548009824187,
+              583.1052330992276
+            ]
+          ],
+          "raw_scheduled_before_full_limit": 256
+        },
+        {
+          "arm": "cold_pin_relay",
+          "seconds": 19.161127500003204,
+          "raw_full_proposals": 16,
+          "solver_returned_iterations": 833,
+          "complete_valid_repairs": 828,
+          "leafs_without_solver_summary": 0,
+          "pin_guard_rollback_candidates": 5,
+          "polish_best_improvements": 1,
+          "adopted_improvements": 0,
+          "macro_keys": [
+            [
+              0.4398430390082519,
+              59,
+              1833.269755119836,
+              588.5871178890975
+            ],
+            [
+              0.44139652727137113,
+              59,
+              1866.7770474045901,
+              587.5849336125083
+            ]
+          ],
+          "post_polish_keys": [
+            [
+              0.4398127781881959,
+              59,
+              1832.9267676821241,
+              588.5528191453263
+            ],
+            [
+              0.44139652727137113,
+              59,
+              1866.7770474045901,
+              587.5849336125083
+            ]
+          ],
+          "raw_scheduled_before_full_limit": 64
+        }
+      ],
+      "actual_polish_configuration": {
+        "initial_temperature": 0.0025,
+        "minimum_temperature": 1e-05,
+        "cooling_rate": 0.97,
+        "max_iterations": 1000000
+      },
+      "adopted_cross_uav_count": 0
     }
   ],
   "rejected_before_start": "batch002",
@@ -353,13 +454,13 @@
   },
   "fair_performance_screen_started": false,
   "next_hypotheses": [
-    "short-budget weighted polish intensification with fixed T0=.0025, minimum=.00001, per-iteration cooling=.97 and max_iterations1000000 ceiling, sharing the unchanged total deadline in both arms",
-    "same source selector, full macro identities, pin guards and original full-input adoption; profile is a testable change, not a claim that the prior default is erroneous or improvement guaranteed"
+    "Relax the two DIRECT compensation pins while preserving the actual two relay tasks, source/receiver identities, existing station, shared cargo flight and final K25; matched DIRECT protects the same i/j assignments. Design/review before implementation; no claim yet.",
+    "Explore broader batch responsibility allocation rather than further temperature tuning. Any fair performance screen still requires a genuine checked relay improvement."
   ],
   "production_defaults_unchanged": true,
   "old_raw_results_unchanged": true,
-  "completed_optimizer_cells": 37,
-  "actual_diagnostic_seconds": 263.8354622949846,
+  "completed_optimizer_cells": 39,
+  "actual_diagnostic_seconds": 302.1371572529897,
   "parallel_request": "Independent review of teammate submission in Downloads; current metrics and constraints compared before attributing improvement.",
   "teammate_review": {
     "path": "papers/notes/teammate_submission_review_20261014/README.md",
@@ -378,7 +479,7 @@
     "source_batch": "batch009",
     "comparison": "240s historical DIRECT checkpoint plus extra20s mechanism diagnostic, NOT fair performance"
   },
-  "last_review": "batch023 fixed-network source/raw/post/all saved helper full snapshots passed independent audit; 800 DIRECT and 715 relay complete valid repairs, zero pin rollback, no best checkpoint improvement. Relay solver summaries report only361 iterations because the second leaf timed out after354 valid repairs. Hot T0=.03 with400-cap/.995 cooling and80% returned-loop acceptance motivates new cold short-budget profile.",
+  "last_review": "024 independent raw/post/all reported helper snapshots passed; cold actual worker profile transmitted identically. Some internal checkpoints improved but neither arm surpassed the original strong DIRECT input. Temperature alone did not solve macro penalty. Returned iteration summaries can omit work when a leaf reaches its absolute deadline. The 023/024 seeds and iteration ceilings also differ; no temperature-only causal conclusion.",
   "mathematical_partial_completion_review": {
     "path": "algorithm/results/proactive_relay_diagnostic_20261014/mobile_partial_completion_bound_v1.md",
     "status": "proven_only_under_explicit_restricted_insertions_and_metric_conditions; not implemented as pruning",
@@ -395,11 +496,16 @@
   },
   "previous_goal_turn_classification": "progress",
   "previous_goal_turn_evidence": "Implemented and independently audited early-source and exact memo mechanisms; official full200 diagnostics narrowed the next action, without a far-superiority claim.",
-  "current_goal_turn_progress": "Completed batch021 and batch022, verified exact whole-bundle memo and new full-credit selector; new macro evidence changes next action to pin-preserving native-route repair.",
+  "current_goal_turn_progress": "Completed 023 and 024, independently audited fixed-network pinned search and actual weighted temperature profile; no adopted improvement. Next structural question is whether pinning two compensation DIRECT tasks restricts beneficial quota reallocation.",
   "raw_clock_diagnosis": {
     "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch022_raw_clock_diagnosis_v1.md",
     "six_native_lateness_increases_from_source_detours": true,
     "receiver_wait_min": 0.124766,
     "arithmetic_repair_scenarios_not_achievability_or_global_bounds": true
+  },
+  "search_diagnosis": {
+    "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch024_search_diagnosis_v1.md",
+    "native_ownership_already_flexible": true,
+    "released_compensation_hypothesis_not_verified": true
   }
 }
