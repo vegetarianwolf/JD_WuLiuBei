@@ -114,6 +114,9 @@ class ALNSConfig:
     # Reserve at most 0.1 s (and at most 1% of the remaining phase budget),
     # without changing candidates, RNG draws or operator rewards in the loop.
     enable_terminal_polish: bool = True
+    # Experimental whole-task label swaps after existing terminal refinement.
+    # Shares its <=0.1 s reserve; never changes ALNS candidates or RNG draws.
+    enable_terminal_task_exchange: bool = False
     relay_enabled: bool = True
     # A relay-aware search has a much larger neighbourhood than DIRECT.
     # Spend most of a fixed budget building a strong DIRECT incumbent, then
@@ -3180,7 +3183,7 @@ def solve_alns(
     )
     if terminal_polish_active and deadline is not None:
         deadline -= terminal_reserved_seconds
-    terminal_polish_statistics: dict[str, int] = {}
+    terminal_polish_statistics: dict[str, object] = {}
     boundary_destroy_active = cfg.enable_boundary_destroy and direct_multi_active
     objective_rewards_active = cfg.enable_objective_rewards and direct_multi_active
     multiroute_string_active = cfg.enable_multiroute_string_destroy and direct_multi_active
@@ -3507,6 +3510,7 @@ def solve_alns(
             polish_deadline = min(polish_deadline, terminal_deadline)
         polished = polish_direct_incumbent(
             problem, evaluator, best, deadline=polish_deadline,
+            enable_task_exchange=cfg.enable_terminal_task_exchange,
             statistics=terminal_polish_statistics,
         )
         if polished != best:
@@ -3573,12 +3577,14 @@ def solve_alns(
             "home_reassignment_active": home_reassignment_active,
             "home_reassignment_statistics": MappingProxyType(home_reassignment_statistics),
             "enable_terminal_polish": cfg.enable_terminal_polish,
+            "enable_terminal_task_exchange": cfg.enable_terminal_task_exchange,
             "terminal_polish": MappingProxyType({
                 "active": bool(terminal_polish_active),
                 "phase": "direct" if terminal_polish_active else "inactive",
                 "reserved_seconds": terminal_reserved_seconds,
                 "elapsed_seconds": terminal_elapsed,
                 "accepted": terminal_accepted,
+                "task_exchange_active": bool(terminal_polish_active and cfg.enable_terminal_task_exchange),
                 "before_score": (terminal_before.late_count, terminal_before.total_lateness_min,
                                  terminal_before.distance_km),
                 "after_score": (best_score.late_count, best_score.total_lateness_min,

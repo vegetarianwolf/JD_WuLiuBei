@@ -10,6 +10,7 @@ from time import perf_counter
 from typing import MutableMapping, Sequence
 
 from .home_assignment import reassign_route_homes
+from .direct_task_exchange import bounded_task_exchange
 from .model import Problem
 from .route_exchange import bounded_tail_exchange
 from .search import RouteEvaluator, Routes
@@ -27,7 +28,8 @@ def polish_direct_incumbent(
     *,
     deadline: float | None = None,
     max_pairs: int = MAX_TAIL_PAIRS_PER_ROUND,
-    statistics: MutableMapping[str, int] | None = None,
+    enable_task_exchange: bool = False,
+    statistics: MutableMapping[str, object] | None = None,
 ) -> Routes:
     """Try home assignment, up to two improving tail rounds, then homes again.
 
@@ -37,7 +39,9 @@ def polish_direct_incumbent(
     recent *earlier* accepted checkpoint. The routine never waits out unused
     time and never exceeds 56 considered route pairs, even when a caller
     requests a larger ``max_pairs``. All counters are flat integers; child
-    counters have ``home_`` and ``tail_`` prefixes.
+    counters have ``home_`` and ``tail_`` prefixes. An optional final whole-task
+    exchange uses the remaining budget, retaining its independently verified
+    checkpoint. It leaves at most 2 ms for the caller's final canonical check.
     """
     original: Routes = tuple(tuple(route) for route in routes)
     if type(max_pairs) is not int or max_pairs < 0:
@@ -49,7 +53,7 @@ def polish_direct_incumbent(
 
     def count(key: str, amount: int = 1) -> None:
         if statistics is not None:
-            statistics[key] = statistics.get(key, 0) + amount
+            statistics[key] = int(statistics.get(key, 0)) + amount
 
     def expired() -> bool:
         if deadline is not None and perf_counter() >= deadline:
@@ -106,4 +110,23 @@ def polish_direct_incumbent(
                 count("tail_stagnation_stops")
                 break
     apply(reassign_route_homes, "home_")
+    if enable_task_exchange and not expired():
+        count("task_exchange_calls")
+        work: dict[str, object] = {}
+        candidate = bounded_task_exchange(
+            problem, evaluator, current,
+            deadline=None if deadline is None else deadline - 0.002,
+            statistics=work,
+        )
+        if statistics is not None:
+            for key, value in work.items():
+                if type(value) is int:
+                    count("task_exchange_" + key, value)
+                else:
+                    statistics["task_exchange_" + key] = value
+        # This primitive returns only checkpoints whose full canonical check
+        # completed before its deadline, even when a later probe expired.
+        if candidate != current:
+            current = candidate
+            count("accepted_steps")
     return current
