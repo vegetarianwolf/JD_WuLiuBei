@@ -57,7 +57,8 @@ METHODS = {"batch": "batch_relay_refinement", "reciprocal": "reciprocal_relay_re
            "split_feeder_direct": "split_feeder_refinement", "split_feeder_relay": "split_feeder_refinement",
            "native_price_direct": "split_feeder_refinement_v2", "native_price_relay": "split_feeder_refinement_v2",
            "carry_price_direct": "split_feeder_refinement_v3", "carry_price_relay": "split_feeder_refinement_v3",
-           "separated_delivery_direct": "split_feeder_refinement_v4", "separated_delivery_relay": "split_feeder_refinement_v4"}
+           "separated_delivery_direct": "split_feeder_refinement_v4", "separated_delivery_relay": "split_feeder_refinement_v4",
+           "critical_prefix_direct": "critical_prefix_refinement_v1", "critical_prefix_relay": "critical_prefix_refinement_v1"}
 DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct", "repool_direct", "repool_polish_direct", "mobile_repool_direct", "joint_mobile_direct", "frontier_mobile_direct", "bundle_cached_direct", "full_credit_direct", "full_credit_pin_direct", "cold_pin_direct", "pair_pin_direct", "six_sort_direct", "wide_six_direct", "six_pin_direct", "window_direct")
 WINDOW_PAIR = ("window_direct", "window_relay")
 DAMAGE_PAIR = ("damage_direct", "damage_relay")
@@ -70,6 +71,8 @@ CARRY_PRICE_PAIR = ("carry_price_direct", "carry_price_relay")
 DIRECT_ARMS = (*DIRECT_ARMS, "carry_price_direct")
 SEPARATED_DELIVERY_PAIR = ("separated_delivery_direct", "separated_delivery_relay")
 DIRECT_ARMS = (*DIRECT_ARMS, "separated_delivery_direct")
+CRITICAL_PREFIX_PAIR = ("critical_prefix_direct", "critical_prefix_relay")
+DIRECT_ARMS = (*DIRECT_ARMS, "critical_prefix_direct")
 SIX_SORT_PAIR = ("six_sort_direct", "six_sort_relay")
 WIDE_SIX_PAIR = ("wide_six_direct", "wide_six_relay")
 SIX_PIN_PAIR = ("six_pin_direct", "six_pin_relay")
@@ -130,6 +133,8 @@ EXECUTION = (
     "audit_split_feeder_v3.py", "audit_split_feeder_batch_v3.py",
     "split_feeder_catalogue_v4.py", "split_feeder_refinement_v4.py", "direct_flexible_pair_v1.py",
     "audit_split_feeder_v4.py", "audit_split_feeder_batch_v4.py",
+    "critical_prefix_closure_v1.py", "critical_prefix_joint_repair_v1.py", "critical_prefix_refinement_v1.py",
+    "audit_critical_prefix_joint_repair_v1.py", "audit_critical_prefix_batch_v1.py",
     "directed_bundle_insertion.py",
     "run_weighted_relay_ablation.py", "run_weighted_direct_pair.py", "weighted_direct_objective.py",
     "weighted_relay_objective.py", "weighted_periodic_exchange.py", "run_scenario_comparison.py",
@@ -637,6 +642,40 @@ def prepare(args):
             "ceilings; resources, homes, four sites, final responsibility rules, weights and "
             "scales are unchanged. This is a short historical-checkpoint mechanism pair, "
             "not fresh fair performance or a guarantee of relay superiority.")
+    if set(arms) & set(CRITICAL_PREFIX_PAIR):
+        for field, name in (
+                ("critical_prefix_design", "critical_prefix_joint_quota_repair_design_v1.md"),
+                ("critical_prefix_implementation", "critical_prefix_joint_quota_implementation_v1.md"),
+                ("separated_delivery_implementation", "receiver_separated_delivery_price_implementation_v1.md")):
+            note = ROOT / "papers/notes/proactive_relay_20261014" / name
+            manifest[field] = dict(path=str(note.relative_to(ROOT)), sha256=sha(note))
+        protocol_path = ROOT / "papers/notes/proactive_relay_20261014/critical_prefix_protocol_v1.json"
+        protocol = read(protocol_path)
+        assert arms == protocol["arms"] and args.seed == protocol["seed"]
+        assert args.budget_seconds == protocol["budget_seconds_per_arm"]
+        assert checkpoint and checkpoint["sha256"] == protocol["checkpoint_sha256"]
+        assert manifest["input_sha256"] == protocol["input_sha256"]
+        assert manifest["weights"] == protocol["weights"] and manifest["scales"] == protocol["scales"]
+        assert all(parameters[arm] == protocol["method_parameters"] for arm in arms)
+        manifest["critical_prefix_protocol"] = dict(path=str(protocol_path.relative_to(ROOT)), sha256=sha(protocol_path))
+        assert protocol["artifact_json_indent"] == 0
+        manifest["artifact_json_indent"] = 0
+        manifest["protocol"] += (
+            " Causal-prefix variants pay for the034 raw catalogue inside raw_fraction of "
+            "the same total deadline, then use actual raw complete seed channels. They "
+            "rank whole-task removal previews by separate actual arrival/delivery effects, "
+            "including zero-damage native prefixes, and open real per-aircraft quota slots. "
+            "Owner and route are chosen inside same-present-set repair states; two-task "
+            "layers finish both tasks before global weighted beam retention. Every current "
+            "partial DAG is explicitly incomplete; only full200/K25/C2 checked leaves can "
+            "improve the original input. RELAY pins only its two actual plans/roles/site "
+            "and necessary empty consecutive doubletake/positive shared flight; DIRECT "
+            "pins none and may change any of its200 tasks. Both arms pay the shared raw "
+            "initialization in this matched historical mechanism diagnostic. It is not "
+            "the strongest fresh end-to-end DIRECT comparison: a future such baseline "
+            "may devote its entire budget to its own DIRECT construction and repair. "
+            "No new resources, homes, sites, weights, scales, free historical relay seed "
+            "or result-conditioned retry.")
     write(output / "manifest.json", manifest)
     write(output / "runs.json", [])
     print(json.dumps({"prepared": str(output), "purpose": manifest["purpose"], "arms": arms,
@@ -672,7 +711,7 @@ def verify(output, manifest, *, current_execution=True):
     if "six_task_pinned_polish_design" in manifest:
         note = manifest["six_task_pinned_polish_design"]
         assert sha(ROOT / note["path"]) == note["sha256"], "Changed declared six-task pinned polish design"
-    for field in ("deadline_rescue_window_design", "fixed_h_rescue_selector_review", "relay_damage_closure_repair_design", "window_damage_repair_protocol", "split_feeder_design", "split_feeder_protocol", "exact_suffix_delay_design", "native_price_design", "native_price_protocol", "noncontiguous_in_design", "carry_price_design", "carry_price_protocol", "separated_delivery_design", "separated_delivery_implementation", "separated_delivery_protocol"):
+    for field in ("deadline_rescue_window_design", "fixed_h_rescue_selector_review", "relay_damage_closure_repair_design", "window_damage_repair_protocol", "split_feeder_design", "split_feeder_protocol", "exact_suffix_delay_design", "native_price_design", "native_price_protocol", "noncontiguous_in_design", "carry_price_design", "carry_price_protocol", "separated_delivery_design", "separated_delivery_implementation", "separated_delivery_protocol", "critical_prefix_design", "critical_prefix_implementation", "critical_prefix_protocol"):
         if field in manifest:
             note = manifest[field]
             assert sha(ROOT / note["path"]) == note["sha256"], "Changed declared fixed-window design/review"
@@ -759,7 +798,7 @@ def worker(request):
                 controls = {"relay_enabled": method == "quota_relay"}
             if method.startswith("repool_"):
                 controls = {"relay_enabled": method.endswith("_relay")}
-            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_", "full_credit_", "cold_pin_", "pair_pin_", "six_sort_", "wide_six_", "six_pin_", "window_", "damage_", "split_feeder_", "native_price_", "carry_price_", "separated_delivery_")):
+            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_", "full_credit_", "cold_pin_", "pair_pin_", "six_sort_", "wide_six_", "six_pin_", "window_", "damage_", "split_feeder_", "native_price_", "carry_price_", "separated_delivery_", "critical_prefix_")):
                 controls = {"relay_enabled": method.endswith("_relay")}
             controls = {**controls, **manifest.get("method_parameters", {}).get(method, {})}
             outcome = modules[method].refine(full, routes, deadline=sub_deadline,
@@ -839,6 +878,13 @@ def run(output):
 
 def audit(output):
     schedule = read(output / "manifest.json")["schedule"]
+    if any(row["arm"] in CRITICAL_PREFIX_PAIR for row in schedule):
+        assert all(row["arm"] in CRITICAL_PREFIX_PAIR for row in schedule), "Critical-prefix batches use their own paired audit"
+        try:
+            from .audit_critical_prefix_batch_v1 import audit as critical_prefix_audit
+        except ImportError:
+            from audit_critical_prefix_batch_v1 import audit as critical_prefix_audit
+        return critical_prefix_audit(output)
     if any(row["arm"] in SEPARATED_DELIVERY_PAIR for row in schedule):
         assert all(row["arm"] in SEPARATED_DELIVERY_PAIR for row in schedule), "Separated-delivery batches use their own paired audit"
         try:

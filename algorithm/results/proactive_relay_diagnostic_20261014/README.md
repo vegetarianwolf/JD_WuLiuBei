@@ -1038,3 +1038,60 @@ owner的联合搜索，DIRECT对应应不pin分工、允许全部200项自由。
 当前实体检查的leaf与原强解比较。DIRECT无pins，用自身真实delivery目标选prefix；
 未来fresh对照可将全部预算用于自身DIRECT构造/修复，不被迫付中继目录开销。
 该设计尚未实现/测试/运行，未来seed与预算也尚未注册，没有收益保证。
+
+## 035：因果前缀与动态配额联合修复已执行，仍未改善强解
+
+上节“设计尚未实现/运行”描述截至034。本轮实现
+[闭包与修复合同](../../../papers/notes/proactive_relay_20261014/critical_prefix_joint_quota_implementation_v1.md)，
+按[预定协议](../../../papers/notes/proactive_relay_20261014/critical_prefix_protocol_v1.json)
+冻结 seed2026101520、每臂120秒上限。两臂各在自身总时钟内重新构建034目录，
+raw占方法剩余预算35%；本次为双方共同支付raw的历史checkpoint机制诊断，
+不是最强fresh端到端DIRECT基线。未增资源、换home/四H、修改截止期或加权尺度。
+
+闭包真实删除每个eligible whole任务，分别重算两源到站、C到站和实际delivery
+方向，保留零自身损伤但影响到站的前缀。先选择真实donor释放各机q，再按当前
+因果gain安排恢复次序；donor的选择次序不等于恢复次序。DIRECT不pin任何任务；
+RELAY仅pin两条实际交接计划及必要形状，其余198项whole任务可换责和重排。
+两任务恢复层在真实q>0的owner内分支，两项都插完才按同coverage实际DAG比较。
+每owner合法PD位置仅有限几何/早取/早交前沿12→3；beam6、closure12、两轮，
+未枚举位置和候选不具备全域最优证明。partial始终不是完整J证书。
+
+ROOT60项新定向测试通过（0.79s），源码前后SHA一致且凭证先于prepare。
+86项执行源码冻结；实际DIRECT62.556776s、RELAY61.409910s，总123.966686s。
+两臂目录、两个种子及其各两轮修复均完成，无deadline中止，不追加结果相关重跑。
+DIR种子是自身最低J两条不同完整路线（含强guard）；R种子分别为最低J接力
+124/166和真实C分散交付的178/190。DIRECT第二种子修复回到原强解，未超越它；
+两条接力种子均未获得严格改善。
+
+| 完整方案 | N | L/min | D/km | J |
+|---|---:|---:|---:|---:|
+| 原强解、两臂最终输出 | 59 | 1790.632129 | 578.534685 | .434215789 |
+| 最低J接力种子及其修复后最优 | 59 | 1786.348155 | 585.952824 | .436366444 |
+| 真实C分散交付种子及修复后最优 | 59 | 1818.432139 | 583.793771 | .437467414 |
+
+原始严格批审通过：102个raw proposal引用、8个wrapper完整候选、21个helper
+快照引用（含重复alias）、296个保留partial状态、8个真实完整修复checkpoint。
+独立重建真实整单删除、q、目标时钟、父子双任务插入、owner选择、完整叶与强
+原guard的predeadline采用链。未保存的probed候选/省略PD位置不声称逐项独立重放。
+四条修复路径各实际生成432个完整proposal，但只完整检查/保存初始代表与严格
+改进checkpoint；不能把这些数量混为全部独立验证过的改善解。未作任何字段修正。
+
+[manifest](batch035/manifest.json)、[60项测试凭证](batch035/pre_run_test_receipt.json)、
+[runs](batch035/runs.json)和[严格独立审计](batch035/audit.json)保留完整原始证据。
+截至035共61个官方200任务诊断cell，实际累计700.578329秒。
+当前最强仍为025纯DIRECT，按时141单；中继远胜目标仍未达到，fresh公平多种子
+性能验证尚未开始，不能把本轮无超时/机制执行完整写成运输优势。
+
+[035归因诊断](batch035_search_diagnosis_v1.md)另独立重放4个RELAY最终层最低J代表。
+正gain的方向代表真实入选，恢复顺序也已把高影响前缀前置；并非全部正gain任务
+都在cap内。完整恢复后关键source多回原责任/原到站，C有时更晚。保留6条路线
+的q向量很快收敛，不能把早层缺donor的低partial J当完整改善。低ID外机donor
+是零目标gain排名平局的结果；其中task3自身迟到反而减少约21分钟，损失来自
+其它任务新增迟到，不能断言该donor本身坏或替换一个编号就会改善。
+
+[条件donor与完整回补设计](../../../papers/notes/proactive_relay_20261014/conditional_donor_completion_repair_design_v1.md)
+已交叉读审，尚未实现、测试或注册新种子预算。它按critical任务的目的机选择
+具体被换出任务，在同一完整两任务步骤结清回补成本；015已有同类交换可达域，
+不能称全新swap邻域。这个局部检验不替代“中继远胜”的目标：两条R的微小成功
+也仅是构件，后续需要转向保留强布局、可累积多组真R的完整状态搜索，以及
+强fresh DIRECT公平多种子检验；不能无限追加两pin有限池调参来充当最终成果。
