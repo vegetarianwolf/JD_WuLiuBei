@@ -44,16 +44,18 @@ METHODS = {"batch": "batch_relay_refinement", "reciprocal": "reciprocal_relay_re
            "mobile_repool_direct": "mobile_repooling_refinement", "mobile_repool_relay": "mobile_repooling_refinement",
            "joint_mobile_direct": "joint_mobile_repooling", "joint_mobile_relay": "joint_mobile_repooling",
            "frontier_mobile_direct": "source_frontier_mobile_repooling", "frontier_mobile_relay": "source_frontier_mobile_repooling",
-           "bundle_cached_direct": "receiver_bundle_cached_mobile", "bundle_cached_relay": "receiver_bundle_cached_mobile"}
-DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct", "repool_direct", "repool_polish_direct", "mobile_repool_direct", "joint_mobile_direct", "frontier_mobile_direct", "bundle_cached_direct")
+           "bundle_cached_direct": "receiver_bundle_cached_mobile", "bundle_cached_relay": "receiver_bundle_cached_mobile",
+           "full_credit_direct": "full_score_selected_mobile", "full_credit_relay": "full_score_selected_mobile"}
+DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct", "repool_direct", "repool_polish_direct", "mobile_repool_direct", "joint_mobile_direct", "frontier_mobile_direct", "bundle_cached_direct", "full_credit_direct")
 REPOOL_ARMS = ("repool_direct", "repool_relay")
 PIN_REPOOL_ARMS = ("repool_polish_direct", "repool_polish_relay")
 MOBILE_REPOOL_PAIR = ("mobile_repool_direct", "mobile_repool_relay")
 JOINT_MOBILE_PAIR = ("joint_mobile_direct", "joint_mobile_relay")
 FRONTIER_MOBILE_PAIR = ("frontier_mobile_direct", "frontier_mobile_relay")
 BUNDLE_CACHED_PAIR = ("bundle_cached_direct", "bundle_cached_relay")
-THREE_PARTY_MOBILE_ARMS = ("mobile_repool_relay", "joint_mobile_relay", "frontier_mobile_relay", "bundle_cached_relay")
-ALL_REPOOL_ARMS = (*REPOOL_ARMS, *PIN_REPOOL_ARMS, *MOBILE_REPOOL_PAIR, *JOINT_MOBILE_PAIR, *FRONTIER_MOBILE_PAIR, *BUNDLE_CACHED_PAIR)
+FULL_CREDIT_PAIR = ("full_credit_direct", "full_credit_relay")
+THREE_PARTY_MOBILE_ARMS = ("mobile_repool_relay", "joint_mobile_relay", "frontier_mobile_relay", "bundle_cached_relay", "full_credit_relay")
+ALL_REPOOL_ARMS = (*REPOOL_ARMS, *PIN_REPOOL_ARMS, *MOBILE_REPOOL_PAIR, *JOINT_MOBILE_PAIR, *FRONTIER_MOBILE_PAIR, *BUNDLE_CACHED_PAIR, *FULL_CREDIT_PAIR)
 ANTICIPATORY_ARMS = ("anticipatory",)
 MOBILE_ARMS = ("mobile", "mobile_v2", "mobile_v3", "delivery_relay", *ANTICIPATORY_ARMS, *THREE_PARTY_MOBILE_ARMS)
 EXECUTION = (
@@ -75,6 +77,7 @@ EXECUTION = (
     "joint_mobile_layouts.py", "joint_mobile_repooling.py",
     "source_frontier_cache.py", "source_frontier_mobile_repooling.py",
     "receiver_bundle_cache.py", "receiver_bundle_cached_mobile.py",
+    "full_score_repool_selector.py", "full_score_selected_mobile.py",
     "directed_bundle_insertion.py",
     "run_weighted_relay_ablation.py", "run_weighted_direct_pair.py", "weighted_direct_objective.py",
     "weighted_relay_objective.py", "weighted_periodic_exchange.py", "run_scenario_comparison.py",
@@ -280,7 +283,7 @@ def prepare(args):
             "proposals by the same rule, so the chosen best macro identities are not necessarily paired across arms. "
             "All proposal generation, polish, full checks and leaf guard reserves share the same total wall budget. "
             "Both original macros and all reported full polish checkpoints are independently audited with distinct shape rules.")
-    if set(arms) & {*JOINT_MOBILE_PAIR, *FRONTIER_MOBILE_PAIR, *BUNDLE_CACHED_PAIR}:
+    if set(arms) & {*JOINT_MOBILE_PAIR, *FRONTIER_MOBILE_PAIR, *BUNDLE_CACHED_PAIR, *FULL_CREDIT_PAIR}:
         manifest["protocol"] += (
             " Joint-mobile variants preserve physical best representatives for the four existing station families, "
             "and use additional beam slots for receiver-first mobile geometry and earlier contact cuts. "
@@ -288,20 +291,30 @@ def prepare(args):
             "or proving a complete incumbent inferior. Actual continuous contact timing and all full adoption guards "
             "remain under the source-bound mobile model contract. DIRECT uses the same macro selector and declared "
             "finite limits, with mobile-specific ranking disabled.")
-    if set(arms) & {*FRONTIER_MOBILE_PAIR, *BUNDLE_CACHED_PAIR}:
+    if set(arms) & {*FRONTIER_MOBILE_PAIR, *BUNDLE_CACHED_PAIR, *FULL_CREDIT_PAIR}:
         manifest["protocol"] += (
             " Source-frontier variants additionally retain bounded early source-IN contact and pickup-frontier "
             "representatives with unchanged true local deltas. Exact repeated partial and receiver evaluations "
             "may be memoized under complete input identity keys with declared memory limits. "
             "Early-source selection only ranks candidates; no missing-compensation geometry bound is used "
             "to prune against the complete incumbent. All added work shares the same total deadline.")
-    if set(arms) & set(BUNDLE_CACHED_PAIR):
+    if set(arms) & {*BUNDLE_CACHED_PAIR, *FULL_CREDIT_PAIR}:
         manifest["protocol"] += (
             " Bundle-cache variants memoize entire identical pure-C receiver candidate enumerations before "
             "their expensive generation loops, retaining exact candidate routes and order. Keys bind all "
             "actual route, function, object and ranking inputs; local deadline checks precede cache hits. "
             "The same bounded computational cache is enabled in DIRECT and relay arms, with no physical cache "
             "or model change and no added partial-incumbent pruning.")
+    if set(arms) & set(FULL_CREDIT_PAIR):
+        review = ROOT / "algorithm/results/proactive_relay_diagnostic_20261014/repooling_compensation_score_review_v1.md"
+        manifest["compensation_selector_review"] = dict(path=str(review.relative_to(ROOT)), sha256=sha(review))
+        manifest["protocol"] += (
+            " Full-credit variants change only shared macro selection: each compensation pool includes "
+            "bounded geometry and actual full C-removal N/L/D credit representatives. All distinct directed "
+            "pool pairs use two actual source insertion deltas plus one actual joint C-remove2 score delta, "
+            "replacing the two single-removal deltas. These values rank candidates only, without predicting "
+            "complete macro benefit or pruning. Both paired selectors must complete and yield identical "
+            "group records and SHA; interrupted selectors are preserved as incomplete, never called matched performance.")
     write(output / "manifest.json", manifest)
     write(output / "runs.json", [])
     print(json.dumps({"prepared": str(output), "purpose": manifest["purpose"], "arms": arms,
@@ -325,6 +338,9 @@ def verify(output, manifest, *, current_execution=True):
     if "mobile_repooling_contract" in manifest:
         contract = manifest["mobile_repooling_contract"]
         assert sha(ROOT / contract["path"]) == contract["sha256"], "Changed declared mobile model contract"
+    if "compensation_selector_review" in manifest:
+        review = manifest["compensation_selector_review"]
+        assert sha(ROOT / review["path"]) == review["sha256"], "Changed declared selector review"
 
 
 def worker(request):
@@ -408,7 +424,7 @@ def worker(request):
                 controls = {"relay_enabled": method == "quota_relay"}
             if method.startswith("repool_"):
                 controls = {"relay_enabled": method.endswith("_relay")}
-            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_")):
+            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_", "full_credit_")):
                 controls = {"relay_enabled": method.endswith("_relay")}
             controls = {**controls, **manifest.get("method_parameters", {}).get(method, {})}
             outcome = modules[method].refine(full, routes, deadline=sub_deadline,
@@ -690,19 +706,32 @@ def audit(output):
                             synchronous_mobile_physical_reference=physical_mobile))
     selector_comparisons = []
     for seed in sorted({row["seed"] for row in rows}):
-        for arm_pair in (REPOOL_ARMS, PIN_REPOOL_ARMS, MOBILE_REPOOL_PAIR, JOINT_MOBILE_PAIR, FRONTIER_MOBILE_PAIR, BUNDLE_CACHED_PAIR):
+        for arm_pair in (REPOOL_ARMS, PIN_REPOOL_ARMS, MOBILE_REPOOL_PAIR, JOINT_MOBILE_PAIR, FRONTIER_MOBILE_PAIR, BUNDLE_CACHED_PAIR, FULL_CREDIT_PAIR):
             paired = {row["arm"]: next(phase["metadata"] for phase in row["phases"] if phase["phase"] == row["arm"])
                       for row in rows if row["seed"] == seed and row["arm"] in arm_pair}
             if set(paired) == set(arm_pair):
                 direct_arm, relay_arm = arm_pair
+                if arm_pair == FULL_CREDIT_PAIR:
+                    assert all(paired[arm]["selector_completed"] for arm in arm_pair), "Incomplete full-credit selector pair retained; no matched claim"
+                    for arm in arm_pair:
+                        selected = paired[arm]
+                        selector = selected["full_score_selector_statistics"]
+                        raw_stage = selected.get("raw_stage", selected)
+                        assert selector["selector_completed"] and selector["patches_restored"]
+                        assert selected["process_local_patches_restored"]
+                        assert selector["selected_groups"] == selected["selected_groups"]
+                        assert selector["selector_sha256"] == selected["selector_sha256"]
+                        assert selector["selector_completed_at_perf_counter"] < raw_stage["deadline_perf_counter"]
                 assert paired[direct_arm]["selector_sha256"] == paired[relay_arm]["selector_sha256"]
                 assert paired[direct_arm]["selected_groups"] == paired[relay_arm]["selected_groups"]
                 comparison = dict(seed=seed, same_selected_macros=True,
                     selector_sha256=paired[direct_arm]["selector_sha256"])
                 if arm_pair == PIN_REPOOL_ARMS:
                     comparison.update(arms=list(arm_pair), best_polish_candidates_not_necessarily_paired=True)
-                elif arm_pair in (MOBILE_REPOOL_PAIR, JOINT_MOBILE_PAIR, FRONTIER_MOBILE_PAIR, BUNDLE_CACHED_PAIR):
+                elif arm_pair in (MOBILE_REPOOL_PAIR, JOINT_MOBILE_PAIR, FRONTIER_MOBILE_PAIR, BUNDLE_CACHED_PAIR, FULL_CREDIT_PAIR):
                     comparison.update(arms=list(arm_pair), continuous_mobile_geometry_separately_declared=True)
+                if arm_pair == FULL_CREDIT_PAIR:
+                    comparison.update(selectors_completed=True, full_removal_credit_shared_pool=True)
                 selector_comparisons.append(comparison)
     record = dict(passed=True, purpose=manifest["purpose"], source_manifest_sha256=sha(output / "manifest.json"),
                   source_runs_sha256=sha(output / "runs.json"), results=results)
