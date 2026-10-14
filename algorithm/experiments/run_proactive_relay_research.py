@@ -58,7 +58,8 @@ METHODS = {"batch": "batch_relay_refinement", "reciprocal": "reciprocal_relay_re
            "native_price_direct": "split_feeder_refinement_v2", "native_price_relay": "split_feeder_refinement_v2",
            "carry_price_direct": "split_feeder_refinement_v3", "carry_price_relay": "split_feeder_refinement_v3",
            "separated_delivery_direct": "split_feeder_refinement_v4", "separated_delivery_relay": "split_feeder_refinement_v4",
-           "critical_prefix_direct": "critical_prefix_refinement_v1", "critical_prefix_relay": "critical_prefix_refinement_v1"}
+           "critical_prefix_direct": "critical_prefix_refinement_v1", "critical_prefix_relay": "critical_prefix_refinement_v1",
+           "conditional_donor_direct": "conditional_donor_refinement_v1", "conditional_donor_relay": "conditional_donor_refinement_v1"}
 DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct", "repool_direct", "repool_polish_direct", "mobile_repool_direct", "joint_mobile_direct", "frontier_mobile_direct", "bundle_cached_direct", "full_credit_direct", "full_credit_pin_direct", "cold_pin_direct", "pair_pin_direct", "six_sort_direct", "wide_six_direct", "six_pin_direct", "window_direct")
 WINDOW_PAIR = ("window_direct", "window_relay")
 DAMAGE_PAIR = ("damage_direct", "damage_relay")
@@ -71,6 +72,8 @@ CARRY_PRICE_PAIR = ("carry_price_direct", "carry_price_relay")
 DIRECT_ARMS = (*DIRECT_ARMS, "carry_price_direct")
 SEPARATED_DELIVERY_PAIR = ("separated_delivery_direct", "separated_delivery_relay")
 DIRECT_ARMS = (*DIRECT_ARMS, "separated_delivery_direct")
+CONDITIONAL_DONOR_PAIR = ("conditional_donor_direct", "conditional_donor_relay")
+DIRECT_ARMS = (*DIRECT_ARMS, "conditional_donor_direct")
 CRITICAL_PREFIX_PAIR = ("critical_prefix_direct", "critical_prefix_relay")
 DIRECT_ARMS = (*DIRECT_ARMS, "critical_prefix_direct")
 SIX_SORT_PAIR = ("six_sort_direct", "six_sort_relay")
@@ -135,6 +138,8 @@ EXECUTION = (
     "audit_split_feeder_v4.py", "audit_split_feeder_batch_v4.py",
     "critical_prefix_closure_v1.py", "critical_prefix_joint_repair_v1.py", "critical_prefix_refinement_v1.py",
     "audit_critical_prefix_joint_repair_v1.py", "audit_critical_prefix_batch_v1.py",
+    "conditional_donor_catalogue_v1.py", "conditional_donor_repair_v1.py", "conditional_donor_refinement_v1.py",
+    "audit_conditional_donor_repair_v1.py", "audit_conditional_donor_batch_v1.py",
     "directed_bundle_insertion.py",
     "run_weighted_relay_ablation.py", "run_weighted_direct_pair.py", "weighted_direct_objective.py",
     "weighted_relay_objective.py", "weighted_periodic_exchange.py", "run_scenario_comparison.py",
@@ -676,6 +681,42 @@ def prepare(args):
             "may devote its entire budget to its own DIRECT construction and repair. "
             "No new resources, homes, sites, weights, scales, free historical relay seed "
             "or result-conditioned retry.")
+    if set(arms) & set(CONDITIONAL_DONOR_PAIR):
+        for field, name in (
+                ("conditional_donor_design", "conditional_donor_completion_repair_design_v1.md"),
+                ("conditional_donor_implementation", "conditional_donor_completion_implementation_v1.md"),
+                ("separated_delivery_implementation", "receiver_separated_delivery_price_implementation_v1.md")):
+            note = ROOT / "papers/notes/proactive_relay_20261014" / name
+            manifest[field] = dict(path=str(note.relative_to(ROOT)), sha256=sha(note))
+        protocol_path = ROOT / "papers/notes/proactive_relay_20261014/conditional_donor_protocol_v1.json"
+        protocol = read(protocol_path)
+        assert arms == protocol["arms"] and args.seed == protocol["seed"]
+        assert args.budget_seconds == protocol["budget_seconds_per_arm"]
+        assert checkpoint and checkpoint["sha256"] == protocol["checkpoint_sha256"]
+        assert manifest["input_sha256"] == protocol["input_sha256"]
+        assert manifest["weights"] == protocol["weights"] and manifest["scales"] == protocol["scales"]
+        assert all(parameters[arm] == protocol["method_parameters"] for arm in arms)
+        manifest["conditional_donor_protocol"] = dict(path=str(protocol_path.relative_to(ROOT)), sha256=sha(protocol_path))
+        assert protocol["artifact_json_indent"] == 0
+        manifest["artifact_json_indent"] = 0
+        manifest["protocol"] += (
+            " Conditional-donor variants pay the034 raw catalogue inside35percent of "
+            "the actual total wall, then repair actual complete seed routes. For each "
+            "whole native causal task t and different destination b they propose actual "
+            "donors d currently owned by b, including outside035 fixed closure. Both "
+            "whole tasks are restored t->b/d->a before any complete objective comparison; "
+            "first partial is physical only, no first-J pruning. Real donor recovery, "
+            "all flight/waits/current global DAG are charged inside the same wall. "
+            "RELAY pins only two actual plans and necessary positive shared-flight "
+            "shape; DIRECT pins none/all200free. Complete-state beam may explore "
+            "temporarily worse complete solutions, but only predeadline full checks "
+            "strictly beating original strong input may be adopted. This is a new "
+            "target-conditioned frontdoor in an old whole-task-swap reachability "
+            "space, not new physical relay mechanics. SharedRraw is a matched historical "
+            "checkpoint probe, not strongest fresh DIRECT. Finite proposal coverage "
+            "is not a bound/optimality proof. Only one conditional-donor probe is "
+            "declared here; local twoR success cannot replace far superiority or "
+            "future compatible multi-relay accumulation and fair fresh paired evidence.")
     write(output / "manifest.json", manifest)
     write(output / "runs.json", [])
     print(json.dumps({"prepared": str(output), "purpose": manifest["purpose"], "arms": arms,
@@ -711,7 +752,7 @@ def verify(output, manifest, *, current_execution=True):
     if "six_task_pinned_polish_design" in manifest:
         note = manifest["six_task_pinned_polish_design"]
         assert sha(ROOT / note["path"]) == note["sha256"], "Changed declared six-task pinned polish design"
-    for field in ("deadline_rescue_window_design", "fixed_h_rescue_selector_review", "relay_damage_closure_repair_design", "window_damage_repair_protocol", "split_feeder_design", "split_feeder_protocol", "exact_suffix_delay_design", "native_price_design", "native_price_protocol", "noncontiguous_in_design", "carry_price_design", "carry_price_protocol", "separated_delivery_design", "separated_delivery_implementation", "separated_delivery_protocol", "critical_prefix_design", "critical_prefix_implementation", "critical_prefix_protocol"):
+    for field in ("deadline_rescue_window_design", "fixed_h_rescue_selector_review", "relay_damage_closure_repair_design", "window_damage_repair_protocol", "split_feeder_design", "split_feeder_protocol", "exact_suffix_delay_design", "native_price_design", "native_price_protocol", "noncontiguous_in_design", "carry_price_design", "carry_price_protocol", "separated_delivery_design", "separated_delivery_implementation", "separated_delivery_protocol", "critical_prefix_design", "critical_prefix_implementation", "critical_prefix_protocol", "conditional_donor_design", "conditional_donor_implementation", "conditional_donor_protocol"):
         if field in manifest:
             note = manifest[field]
             assert sha(ROOT / note["path"]) == note["sha256"], "Changed declared fixed-window design/review"
@@ -798,7 +839,7 @@ def worker(request):
                 controls = {"relay_enabled": method == "quota_relay"}
             if method.startswith("repool_"):
                 controls = {"relay_enabled": method.endswith("_relay")}
-            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_", "full_credit_", "cold_pin_", "pair_pin_", "six_sort_", "wide_six_", "six_pin_", "window_", "damage_", "split_feeder_", "native_price_", "carry_price_", "separated_delivery_", "critical_prefix_")):
+            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_", "full_credit_", "cold_pin_", "pair_pin_", "six_sort_", "wide_six_", "six_pin_", "window_", "damage_", "split_feeder_", "native_price_", "carry_price_", "separated_delivery_", "critical_prefix_", "conditional_donor_")):
                 controls = {"relay_enabled": method.endswith("_relay")}
             controls = {**controls, **manifest.get("method_parameters", {}).get(method, {})}
             outcome = modules[method].refine(full, routes, deadline=sub_deadline,
@@ -878,6 +919,13 @@ def run(output):
 
 def audit(output):
     schedule = read(output / "manifest.json")["schedule"]
+    if any(row["arm"] in CONDITIONAL_DONOR_PAIR for row in schedule):
+        assert all(row["arm"] in CONDITIONAL_DONOR_PAIR for row in schedule), "Conditional-donor batches use their own paired audit"
+        try:
+            from .audit_conditional_donor_batch_v1 import audit as conditional_donor_audit
+        except ImportError:
+            from audit_conditional_donor_batch_v1 import audit as conditional_donor_audit
+        return conditional_donor_audit(output)
     if any(row["arm"] in CRITICAL_PREFIX_PAIR for row in schedule):
         assert all(row["arm"] in CRITICAL_PREFIX_PAIR for row in schedule), "Critical-prefix batches use their own paired audit"
         try:
