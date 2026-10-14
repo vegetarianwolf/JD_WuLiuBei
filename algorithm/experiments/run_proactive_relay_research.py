@@ -52,9 +52,12 @@ METHODS = {"batch": "batch_relay_refinement", "reciprocal": "reciprocal_relay_re
            "six_sort_direct": "six_task_sorting", "six_sort_relay": "six_task_sorting",
            "wide_six_direct": "expanded_six_task_sorting", "wide_six_relay": "expanded_six_task_sorting",
            "six_pin_direct": "six_task_with_pinned_polish", "six_pin_relay": "six_task_with_pinned_polish",
-           "window_direct": "deadline_window_repooling", "window_relay": "deadline_window_repooling"}
+           "window_direct": "deadline_window_repooling", "window_relay": "deadline_window_repooling",
+           "damage_direct": "window_damage_repair", "damage_relay": "window_damage_repair"}
 DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct", "repool_direct", "repool_polish_direct", "mobile_repool_direct", "joint_mobile_direct", "frontier_mobile_direct", "bundle_cached_direct", "full_credit_direct", "full_credit_pin_direct", "cold_pin_direct", "pair_pin_direct", "six_sort_direct", "wide_six_direct", "six_pin_direct", "window_direct")
 WINDOW_PAIR = ("window_direct", "window_relay")
+DAMAGE_PAIR = ("damage_direct", "damage_relay")
+DIRECT_ARMS = (*DIRECT_ARMS, "damage_direct")
 SIX_SORT_PAIR = ("six_sort_direct", "six_sort_relay")
 WIDE_SIX_PAIR = ("wide_six_direct", "wide_six_relay")
 SIX_PIN_PAIR = ("six_pin_direct", "six_pin_relay")
@@ -106,6 +109,8 @@ EXECUTION = (
     "expanded_six_task_sorting.py",
     "six_task_preserving_polish.py", "six_task_with_pinned_polish.py", "audit_six_task_pinned_polish.py",
     "deadline_window_costs.py", "deadline_window_repooling.py", "audit_deadline_window_repooling.py",
+    "relay_damage_closure.py", "damage_closure_repair.py", "window_damage_repair.py",
+    "audit_window_damage_repair.py", "audit_window_damage_batch.py",
     "directed_bundle_insertion.py",
     "run_weighted_relay_ablation.py", "run_weighted_direct_pair.py", "weighted_direct_objective.py",
     "weighted_relay_objective.py", "weighted_periodic_exchange.py", "run_scenario_comparison.py",
@@ -428,7 +433,7 @@ def prepare(args):
             "finite table scores are historical, never post facts. All helper and facade checkpoints require "
             "complete pre-deadline checks and strict improvement over the original input before adoption. "
             "Raw selector, actual weighted ALNS hooks and objective state must be restored after use.")
-    if set(arms) & set(WINDOW_PAIR):
+    if set(arms) & {*WINDOW_PAIR, *DAMAGE_PAIR}:
         note = ROOT / "papers/notes/proactive_relay_20261014/deadline_rescue_window_design_v1.md"
         review = ROOT / "papers/notes/proactive_relay_20261014/fixed_h_rescue_selector_review_v1.md"
         manifest["deadline_rescue_window_design"] = dict(path=str(note.relative_to(ROOT)), sha256=sha(note))
@@ -457,6 +462,35 @@ def prepare(args):
             "adoption objective, official lateness epsilon, resources or original-input guard. "
             "Every complete saved proposal receives independent true-base physical, clock and score replay. "
             "All indexing, ranking, full checks, evidence snapshots and guarded adoption share one deadline.")
+    if set(arms) & set(DAMAGE_PAIR):
+        note = ROOT / "papers/notes/proactive_relay_20261014/relay_damage_closure_repair_design_v1.md"
+        manifest["relay_damage_closure_repair_design"] = dict(path=str(note.relative_to(ROOT)), sha256=sha(note))
+        protocol_path = ROOT / "papers/notes/proactive_relay_20261014/window_damage_repair_protocol_v1.json"
+        protocol = read(protocol_path)
+        assert arms == protocol["arms"] and args.seed == protocol["seed"]
+        assert args.budget_seconds == protocol["budget_seconds_per_arm"]
+        assert checkpoint and checkpoint["sha256"] == protocol["checkpoint_sha256"]
+        assert manifest["input_sha256"] == protocol["input_sha256"]
+        assert manifest["weights"] == protocol["weights"] and manifest["scales"] == protocol["scales"]
+        assert all(parameters[arm] == protocol["method_parameters"] for arm in arms)
+        manifest["window_damage_repair_protocol"] = dict(path=str(protocol_path.relative_to(ROOT)), sha256=sha(protocol_path))
+        manifest["protocol"] += (
+            " Damage variants rebuild raw window proposals inside the same method deadline, then use "
+            "at most two own-arm complete proposals that truly rescue original-late pooled i/j tasks. "
+            "The old +.015 J exploration gate is not used; only strict complete weighted improvement "
+            "over the original strong input can be adopted. Raw provenance remains base-bound. "
+            "Post repair pins only the two real i/j plans, roles and signed subsequences, preserves "
+            "consecutive empty double OUT takes and positive shared flight, and allows ordinary "
+            "DIRECT service between OUT deliveries. Other198 tasks, including compensation, may be "
+            "reassigned using actual donor slots opened on all available aircraft within a declared "
+            "closure cap. Damage includes newly late, positive lateness growth and co-loaded partners. "
+            "Quota-aware joint repair compares equal-coverage partial states with actual global waits; "
+            "assignment and partial rankings are not complete-J certificates. Complete leaves require "
+            "current full physics, exact per-aircraft final quotas and pre-deadline checkpoints. "
+            "DIRECT receives identical closure/slot/repair freedom after its independent12 raw maps. "
+            "All clocks, owners and rescue classifications are rebuilt after repair, and raw table "
+            "scores or raw suffix windows cannot certify post snapshots. Bounded closures do not mean "
+            "all198 tasks or all positions have been exhaustively reoptimized.")
     write(output / "manifest.json", manifest)
     write(output / "runs.json", [])
     print(json.dumps({"prepared": str(output), "purpose": manifest["purpose"], "arms": arms,
@@ -492,7 +526,7 @@ def verify(output, manifest, *, current_execution=True):
     if "six_task_pinned_polish_design" in manifest:
         note = manifest["six_task_pinned_polish_design"]
         assert sha(ROOT / note["path"]) == note["sha256"], "Changed declared six-task pinned polish design"
-    for field in ("deadline_rescue_window_design", "fixed_h_rescue_selector_review"):
+    for field in ("deadline_rescue_window_design", "fixed_h_rescue_selector_review", "relay_damage_closure_repair_design", "window_damage_repair_protocol"):
         if field in manifest:
             note = manifest[field]
             assert sha(ROOT / note["path"]) == note["sha256"], "Changed declared fixed-window design/review"
@@ -579,7 +613,7 @@ def worker(request):
                 controls = {"relay_enabled": method == "quota_relay"}
             if method.startswith("repool_"):
                 controls = {"relay_enabled": method.endswith("_relay")}
-            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_", "full_credit_", "cold_pin_", "pair_pin_", "six_sort_", "wide_six_", "six_pin_", "window_")):
+            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_", "full_credit_", "cold_pin_", "pair_pin_", "six_sort_", "wide_six_", "six_pin_", "window_", "damage_")):
                 controls = {"relay_enabled": method.endswith("_relay")}
             controls = {**controls, **manifest.get("method_parameters", {}).get(method, {})}
             outcome = modules[method].refine(full, routes, deadline=sub_deadline,
@@ -658,6 +692,14 @@ def run(output):
 
 
 def audit(output):
+    schedule = read(output / "manifest.json")["schedule"]
+    if any(row["arm"] in DAMAGE_PAIR for row in schedule):
+        assert all(row["arm"] in DAMAGE_PAIR for row in schedule), "Damage batches use their own paired audit"
+        try:
+            from .audit_window_damage_batch import audit as damage_audit
+        except ImportError:
+            from audit_window_damage_batch import audit as damage_audit
+        return damage_audit(output)
     from algorithm.experiments.audit_weighted_direct_pair import load_official_csv
     from algorithm.experiments.audit_weighted_relay_ablation import audit_payload, direct_counterfactual, reference_schedule
     manifest = read(output / "manifest.json")

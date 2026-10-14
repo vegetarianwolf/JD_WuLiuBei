@@ -770,3 +770,58 @@ DIRECT具有相同修复自由与预算。有限H3/base64和中间窗位置记�
 单次仍是bounded closure，198只是可选全集，实际打开不足8机须如实报告。raw来源
 和post当前时钟分开审计，DIRECT同自由/预算，最终仍strict原输入J。此设计不是
 已实现收益或唯一剩余方法的证明。
+
+
+## 030：真实全机配额联合修复未胜强输入，发现零损伤前缀盲区
+
+截至030的最新状态更新如下；上文“尚未实现”的损伤闭包设计状态描述截至029。
+本轮已实现受损/长suffix/co-load/comp闭包、先为各机预留真实donor槽、quota assignment
+与全机前/反向环及配对、同coverage双任务beam。仅pin i/j真实计划，其他198项可
+wholeDIRECT换责；RELAY允许首件交付后穿插native，仍保持空载连续双take和正共载。
+所有当前时钟、等待、完整K25/C2与严格原输入J guard均重算。DIRECT使用自身真实
+救期种子和独立12map，获得相同修复自由及总wall。
+
+预先冻结的[协议](../../../papers/notes/proactive_relay_20261014/window_damage_repair_protocol_v1.json)
+固定seed2026101515、每臂40s上限，raw构造同预算计费，最多2个真实pooled救期种子，
+不沿用旧+.015探索门。ROOT最终88项核心小测试通过；后述v2修正另有24项定向小测试。
+这是历史025强checkpoint上的短机制诊断，未开始fresh多种子性能扩大实验。
+
+| 返回修复候选（未被采用） | N | L/min | D/km | J |
+|---|---:|---:|---:|---:|
+| 原强输入及两臂最终输出 | 59 | 1790.632129 | 578.534685 | .434215789 |
+| DIRECT最好返回post | 60 | 1832.921277 | 585.858033 | .441444051 |
+| RELAY最好返回post | 62 | 1907.541802 | 597.815798 | .454476396 |
+
+实际端到端DIRECT8.206465s、RELAY8.729937s；两臂各2seed×2round×4assignment完成
+16个完整修复叶。全部8个closure都真实打开8机，实际跨出原三机的循环/配对也完成了，
+却明显恶化J。40s是硬上限，当前有限目录提前耗尽，不能描述成持续搜索40s无果。
+RELAY最好种子由N63降为62、保住65/166真实救期，但L又增加25.494866min、D增加
+2.484839km，J仅比自己的较差raw降.000271493，仍输原强解，没有采用。
+
+**原严格遥测审计未通过，必须保留这一状态。** DIRECT同机pin的辅助共载距离把
+整条owner路线误记为共同载货距离，原030保存数据及冻结源码均未改，原audit.json
+不存在。该辅助字段不进入搜索J/采纳，RELAY形状使用真实OUT腿亦不受此问题影响。
+新`damage_closure_repair_v2.py`仅修该一处表达式，8项回归通过，未重跑官方优化器。
+
+[原严格失败记录](batch030/strict_audit_failure_v1.json)与
+[单独补充审计](batch030/supplementary_audit_v2.json)分开保存：只有DIRECT、无交接、
+同机两pin、错误值等于独立整routeD时，才在内存复制中纠正该单一辅助字段；18次
+重放涉及10个不同快照。全部raw/family/post/closure/实际beam时钟、完整叶及其它
+遥测通过独立核验。原`strict_original_telemetry_passed=false`，补充的
+`entity_physics_and_other_telemetry_passed=true`，不能简称原严格审计通过。
+
+[030精确诊断](batch030_search_diagnosis_v1.md)定位了后续可检验的结构缺口：C会合
+前13个native自身ΔL全部为0，两轮都未进入闭包；关键source166前缀也基本没动。
+实际ai/aj/c/T及107的真实后缀窗口完全未变，即使107两轮都被移除再修复。下步可
+联合释放这些瓶颈前缀与受损后缀，不能只对已受损任务扩大同一轮次；当前有限
+一元assignment及固定飞机编号大环也不代表所有有效短链/共载组合。
+
+另有[双来源、原最终owner不变的辅助接力备选设计](../../../papers/notes/proactive_relay_20261014/split_feeder_quota_neutral_design_v1.md)：
+同owner无补偿接力并非新概念（001/010/015已经试过单feeder）；尚未原子系统核验的
+具体子类是两不同feeder各IN一件到原C，finalK不变而免k补偿。它尚未实现或跑031，
+DIRECT不得被锁成同finalmap以制造优势，仍无改善或“远胜”保证。
+
+本轮[manifest](batch030/manifest.json)、[runs](batch030/runs.json)、
+[核心测试凭证](batch030/new_method_test_receipt.json)、
+[补充审计与v2测试来源](batch030/supplementary_audit_receipt_v2.json)均已归档。
+截至030共51个官方200任务诊断cell，实际累计471.471809秒；当前最强仍为025纯DIRECT，远胜目标未达成。

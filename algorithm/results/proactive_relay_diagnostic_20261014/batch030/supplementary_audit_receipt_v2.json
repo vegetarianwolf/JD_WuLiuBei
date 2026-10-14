@@ -1,0 +1,32 @@
+{
+  "recorded_at": "2026-10-14T20:12:41.006456+00:00",
+  "command": "PYTHONDONTWRITEBYTECODE=1 .venv/bin/python - <<'PY'\nfrom pathlib import Path\nfrom algorithm.experiments.audit_window_damage_batch_v2 import audit\np=Path('algorithm/results/proactive_relay_diagnostic_20261014/batch030')\naudit(p,strict_failure_path=p/'strict_audit_failure_v1.json')\nPY",
+  "strict_original_telemetry_passed": false,
+  "entity_physics_and_other_telemetry_passed": true,
+  "supplemental_audit_sha256": "242cc33d9b949e7bea9ad358393cdbe462e67093d7ddb63998ea5e215c457928",
+  "strict_failure_sha256": "91fee198f0d2943fab102cc739522fe437a769849d315839eb0a325afd7bf205",
+  "manifest_sha256": "9126b2cfa7c47bfc1f045f2b1d98894d9bfb12fe2e9d02e9a02dad820ca06db1",
+  "runs_sha256": "212c8404774d00435d10a34c19736fffe3ae36c29cba5f6ee7637f0f936dcf1b",
+  "original_executed_sources_still_match_frozen_manifest": true,
+  "no_optimizer_retry": true,
+  "v2_helper_not_the_executed_official_solver": true,
+  "files": {
+    "algorithm/experiments/damage_closure_repair_v2.py": "760428e6f69780de90f7f63fd9e8be43a1b4fa7bdf6e90b76453a629c067a147",
+    "algorithm/tests/test_damage_closure_repair_v2.py": "b2d3e96a682267149e8a01414429545f43d96769e25c52d37612a815ac62880c",
+    "algorithm/experiments/audit_window_damage_batch_v2.py": "33540e7cbe1a673d8a332ef94f6d3b2d9de93f29a4852e3b220678cf4f6eeb51",
+    "algorithm/tests/test_audit_window_damage_batch_v2.py": "fa0cc9a03c591ba77935c77d0360ee3da052e75b90308607f94f3b5dcd2de389"
+  },
+  "targeted_v2_tests": [
+    {
+      "reported_by": "relay_first_constructor_v2",
+      "command": "PYTHONPATH=algorithm/src .venv/bin/python -m pytest -q -p no:cacheprovider algorithm/tests/test_damage_closure_repair_v2.py",
+      "result": "8 passed in 0.18s"
+    },
+    {
+      "reported_by": "relay_search_diagnosis_v2",
+      "command": "PYTHONPATH=algorithm/src .venv/bin/python -m pytest -q -p no:cacheprovider algorithm/tests/test_audit_window_damage_batch_v2.py",
+      "result": "16 passed in 0.06s"
+    }
+  ],
+  "interpretation": "The original030 strict audit failed and remains failed. A separately sourced supplementary replay independently verified all saved physical plans and unchanged telemetry, permitting only the diagnosed DIRECT shared-distance auxiliary field to be corrected in memory. The original run JSON and frozen source are unchanged."
+}

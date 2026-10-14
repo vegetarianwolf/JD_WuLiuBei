@@ -1,0 +1,14 @@
+{
+  "recorded_at": "2026-10-14T20:07:49.458312+00:00",
+  "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=algorithm/src .venv/bin/python algorithm/experiments/run_proactive_relay_research.py audit --output-dir algorithm/results/proactive_relay_diagnostic_20261014/batch030",
+  "process_session_id": 35211,
+  "exit_code": 1,
+  "strict_original_telemetry_passed": false,
+  "original_audit_json_written": false,
+  "error_type": "ValueError",
+  "error": "damage post current_shared_loaded_distance_km: stored 79.05059781534175, independently expected 1.419048977308394",
+  "manifest_sha256": "9126b2cfa7c47bfc1f045f2b1d98894d9bfb12fe2e9d02e9a02dad820ca06db1",
+  "runs_sha256": "212c8404774d00435d10a34c19736fffe3ae36c29cba5f6ee7637f0f936dcf1b",
+  "source_diagnosis": "The frozen producer uses TaskPlan.leg_ids for DIRECT pins; these are empty, so the empty subset predicate counts the whole final-owner route as shared. DIRECT search scores and acceptance do not consume this auxiliary field; relay shape uses nonempty OUT leg IDs. Independent all-saved-route replay remains required.",
+  "disposition": "Retain original run/source/telemetry unchanged. A separately sourced supplemental audit may correct only this precisely diagnosed auxiliary DIRECT field in memory and must explicitly report the original strict audit failure. No optimizer retry or seed replacement."
+}
