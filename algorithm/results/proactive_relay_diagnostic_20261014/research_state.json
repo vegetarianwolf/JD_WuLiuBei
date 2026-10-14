@@ -175,6 +175,22 @@
       ],
       "proposal_margin": 0.015,
       "adopted_cross_uav_count": 0
+    },
+    {
+      "batch": "batch018",
+      "purpose": "checkpoint_mechanism_diagnostic",
+      "arms": [
+        "mobile_repool_direct",
+        "mobile_repool_relay"
+      ],
+      "all_adopted_scores_equal_to_checkpoint": true,
+      "same_selected_macros": true,
+      "actual_seconds": 3.265834250021726,
+      "raw_relay_layouts": 48,
+      "receiver_first_impossible_layouts": 28,
+      "safe_lower_bound_pruned_layouts": 20,
+      "mobile_points_examined": 0,
+      "adopted_cross_uav_count": 0
     }
   ],
   "rejected_before_start": "batch002",
@@ -190,13 +206,13 @@
   },
   "fair_performance_screen_started": false,
   "next_hypotheses": [
-    "two-source mobile repooling with a third aircraft arriving empty before both sources and taking parcels in actual source-arrival order",
-    "optimize continuous rendezvous while retaining original homes, all flight and empty/load-one waiting, zero mobile ground cache; new geometry and independent physical audit before START"
+    "joint geometry-aware layout ranking preserving original fixed-H physical best representatives and earlier receiver take cuts",
+    "same-taskset partial geometry bounds used only for ranking, then actual full physical score and independent source-responsibility guard"
   ],
   "production_defaults_unchanged": true,
   "old_raw_results_unchanged": true,
-  "completed_optimizer_cells": 25,
-  "actual_diagnostic_seconds": 173.44517683505546,
+  "completed_optimizer_cells": 27,
+  "actual_diagnostic_seconds": 176.7110110850772,
   "parallel_request": "Independent review of teammate submission in Downloads; current metrics and constraints compared before attributing improvement.",
   "teammate_review": {
     "path": "papers/notes/teammate_submission_review_20261014/README.md",
@@ -215,5 +231,5 @@
     "source_batch": "batch009",
     "comparison": "240s historical DIRECT checkpoint plus extra20s mechanism diagnostic, NOT fair performance"
   },
-  "last_review": "batch017 complete independent raw and pinned-native-reordering audits passed; real ALNS 756 DIRECT and 599 relay iterations, neither arm improves strong DIRECT input; fixed-station pin-polish alone did not bridge macro loss"
+  "last_review": "batch018 complete raw and mobile physical audits passed; 48 fixed layouts, 28 receiver-first impossible and 20 safely bounded worse than input; no new point evaluated or improvement adopted. This rejects only these fixed layouts, motivates joint cut/geometry layout search."
 }

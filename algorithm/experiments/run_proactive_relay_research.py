@@ -40,13 +40,16 @@ METHODS = {"batch": "batch_relay_refinement", "reciprocal": "reciprocal_relay_re
            "anticipatory": "anticipatory_mobile_handoff",
            "quota_direct": "quota_balanced_relay_exchange", "quota_relay": "quota_balanced_relay_exchange",
            "repool_direct": "relay_repooling_exchange", "repool_relay": "relay_repooling_exchange",
-           "repool_polish_direct": "repooling_with_pinned_polish", "repool_polish_relay": "repooling_with_pinned_polish"}
-DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct", "repool_direct", "repool_polish_direct")
+           "repool_polish_direct": "repooling_with_pinned_polish", "repool_polish_relay": "repooling_with_pinned_polish",
+           "mobile_repool_direct": "mobile_repooling_refinement", "mobile_repool_relay": "mobile_repooling_refinement"}
+DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct", "repool_direct", "repool_polish_direct", "mobile_repool_direct")
 REPOOL_ARMS = ("repool_direct", "repool_relay")
 PIN_REPOOL_ARMS = ("repool_polish_direct", "repool_polish_relay")
-ALL_REPOOL_ARMS = (*REPOOL_ARMS, *PIN_REPOOL_ARMS)
+MOBILE_REPOOL_PAIR = ("mobile_repool_direct", "mobile_repool_relay")
+THREE_PARTY_MOBILE_ARMS = ("mobile_repool_relay",)
+ALL_REPOOL_ARMS = (*REPOOL_ARMS, *PIN_REPOOL_ARMS, *MOBILE_REPOOL_PAIR)
 ANTICIPATORY_ARMS = ("anticipatory",)
-MOBILE_ARMS = ("mobile", "mobile_v2", "mobile_v3", "delivery_relay", *ANTICIPATORY_ARMS)
+MOBILE_ARMS = ("mobile", "mobile_v2", "mobile_v3", "delivery_relay", *ANTICIPATORY_ARMS, *THREE_PARTY_MOBILE_ARMS)
 EXECUTION = (
     "run_proactive_relay_research.py", "batch_relay_refinement.py", "reciprocal_relay_refinement.py",
     "relay_tail_crossover.py",
@@ -62,6 +65,7 @@ EXECUTION = (
     "quota_balanced_relay_exchange.py",
     "relay_repooling_exchange.py", "audit_repooling.py",
     "repooling_with_pinned_polish.py", "relay_preserving_polish.py", "audit_pinned_repooling.py",
+    "mobile_repooling_refinement.py", "mobile_repooling_geometry.py", "audit_mobile_repooling.py",
     "directed_bundle_insertion.py",
     "run_weighted_relay_ablation.py", "run_weighted_direct_pair.py", "weighted_direct_objective.py",
     "weighted_relay_objective.py", "weighted_periodic_exchange.py", "run_scenario_comparison.py",
@@ -220,7 +224,7 @@ def prepare(args):
         manifest["model_extension"] = "Optimized synchronous mobile rendezvous, separate from the fixed-four-site cache model"
         manifest["protocol"] = (
             "Official full 200 tasks, 8 UAVs, C2, final K25, same fixed physical homes, weights, scales and deadlines. "
-            "New rendezvous coordinates are selected during search and used once by one UAV pair. "
+            "New rendezvous coordinates are selected during search; the declared mobile profile specifies its aircraft and contact timing. "
             "Reciprocal arms exchange equal-sized onboard cargo groups only when both aircraft are present; early aircraft waits holding cargo. "
             "Every flight and synchronization wait is charged; no mobile ground cache, new vehicle or free initial relocation. "
             "This changes the prior fixed-four-site relay extension and is labelled separately. "
@@ -232,6 +236,16 @@ def prepare(args):
                 "all receiver travel and waiting are charged. This conservative branch starts from pure DIRECT "
                 "routes, preserves final owners, and allows at most one new meeting per call. "
                 "It is independently audited by the separate receiver-first physical auditor.")
+        if set(arms) & set(THREE_PARTY_MOBILE_ARMS):
+            contract = ROOT / "algorithm/results/proactive_relay_diagnostic_20261014/mobile_repooling_model_contract_v1.md"
+            manifest["mobile_repooling_contract"] = dict(path=str(contract.relative_to(ROOT)), sha256=sha(contract))
+            manifest["protocol"] += (
+                " Three-party repooling transfers one parcel from each of two different sources to a third aircraft at one "
+                "new coordinate. The recipient arrives empty before both sources, takes parcels in actual source-arrival order, "
+                "waits first empty and then holding one parcel, and carries both over a positive distance. Each contact has "
+                "drop equal to take and zero mobile cache; each source leaves after its own contact. "
+                "The original four-site cache network remains an explicitly separate valid baseline; winning trial geometry "
+                "adds only one rendezvous and its four used legs, without moving any physical home or existing site.")
     if any(arm.startswith("quota_") for arm in arms):
         manifest["protocol"] += (
             " Quota arms trade two whole delivery responsibilities between two aircraft. "
@@ -277,6 +291,9 @@ def verify(output, manifest, *, current_execution=True):
         assert sha(ROOT / manifest[field + "_path"]) == manifest[field + "_sha256"]
     if manifest["checkpoint"]:
         assert sha(ROOT / manifest["checkpoint"]["path"]) == manifest["checkpoint"]["sha256"]
+    if "mobile_repooling_contract" in manifest:
+        contract = manifest["mobile_repooling_contract"]
+        assert sha(ROOT / contract["path"]) == contract["sha256"], "Changed declared mobile model contract"
 
 
 def worker(request):
@@ -359,6 +376,8 @@ def worker(request):
             if method.startswith("quota_"):
                 controls = {"relay_enabled": method == "quota_relay"}
             if method.startswith("repool_"):
+                controls = {"relay_enabled": method.endswith("_relay")}
+            if method.startswith("mobile_repool_"):
                 controls = {"relay_enabled": method.endswith("_relay")}
             controls = {**controls, **manifest.get("method_parameters", {}).get(method, {})}
             outcome = modules[method].refine(full, routes, deadline=sub_deadline,
@@ -458,6 +477,11 @@ def audit(output):
     if any(r["arm"] in PIN_REPOOL_ARMS for r in manifest["schedule"]):
         from algorithm.experiments.audit_pinned_repooling import audit_pinned_repooling_proposal
         assert sha(EXPERIMENTS / "audit_pinned_repooling.py") == manifest["execution_sources"]["audit_pinned_repooling.py"]["sha256"]
+    if any(r["arm"] in THREE_PARTY_MOBILE_ARMS for r in manifest["schedule"]):
+        from algorithm.experiments.audit_mobile_repooling import (
+            audit_mobile_repooling_payload, audit_mobile_repooling_routes, _bind as bind_mobile_repooling)
+        from algorithm.experiments.audit_weighted_relay_ablation import _geometry
+        assert sha(EXPERIMENTS / "audit_mobile_repooling.py") == manifest["execution_sources"]["audit_mobile_repooling.py"]["sha256"]
     tasks = load_official_csv(ROOT / manifest["input_path"])
     rows = read(output / "runs.json")
     assert len(rows) == len(manifest["schedule"]) > 0, "Cannot pass an empty or incomplete research batch"
@@ -470,9 +494,12 @@ def audit(output):
         assert row["source_sha256"] == manifest["source_archive"]["sha256"]
         actual_topology = {**manifest["topology"], "relay_allowed": row["arm"] not in DIRECT_ARMS}
         if row["arm"] in MOBILE_ARMS:
-            physical_payload_audit, physical_routes_audit = (
-                (audit_anticipatory_payload, audit_anticipatory_routes)
-                if row["arm"] in ANTICIPATORY_ARMS else (audit_mobile_payload, audit_mobile_routes))
+            if row["arm"] in THREE_PARTY_MOBILE_ARMS:
+                physical_payload_audit, physical_routes_audit = audit_mobile_repooling_payload, audit_mobile_repooling_routes
+            elif row["arm"] in ANTICIPATORY_ARMS:
+                physical_payload_audit, physical_routes_audit = audit_anticipatory_payload, audit_anticipatory_routes
+            else:
+                physical_payload_audit, physical_routes_audit = audit_mobile_payload, audit_mobile_routes
         preceding_key = None
         preceding_routes_hash = manifest["initial_routes_sha256"]
         preceding_routes = manifest["initial_routes"]
@@ -507,6 +534,16 @@ def audit(output):
                          ("first_complete_candidate", "best_constructed_candidate", "input_snapshot")]
             proposals.extend((f"full_candidate_{i}", snapshot) for i, snapshot in
                              enumerate(metadata.get("full_candidate_snapshots", [])))
+            raw_stage = metadata.get("raw_stage", {})
+            raw_proposals = [(name, raw_stage.get(name)) for name in
+                             ("first_complete_candidate", "best_constructed_candidate", "input_snapshot")]
+            raw_proposals.extend((f"full_candidate_{i}", snapshot) for i, snapshot in
+                                 enumerate(raw_stage.get("full_candidate_snapshots", [])))
+            for raw_name, snapshot in raw_proposals:
+                if snapshot is not None:
+                    proposals.append((f"raw_stage__{raw_name}",
+                        {**snapshot, "topology": snapshot.get("topology", manifest["topology"]),
+                         "mobile_meetings": snapshot.get("mobile_meetings", [])}))
             pinned_macro_routes = {}
             for polish_index, polish_record in enumerate(metadata.get("polish_records", [])):
                 macro_routes = polish_record["macro_routes"]
@@ -551,7 +588,11 @@ def audit(output):
                 proposal_reference = reference_schedule(tasks, proposal["routes"], proposal_topology)
                 repooling_reference = None
                 if row["arm"] in ALL_REPOOL_ARMS and proposal.get("move") is not None:
-                    if proposal_name in pinned_macro_routes:
+                    if row["arm"] in THREE_PARTY_MOBILE_ARMS:
+                        repooling_reference = physical_routes_audit(
+                            tasks, manifest["topology"], proposal_topology, proposal["routes"],
+                            base_routes=phase_input_routes, move=proposal["move"])
+                    elif proposal_name in pinned_macro_routes:
                         repooling_reference = audit_pinned_repooling_proposal(
                             tasks, proposal_topology, phase_input_routes, pinned_macro_routes[proposal_name],
                             proposal["routes"], proposal["move"], relay_enabled=row["arm"].endswith("_relay"))
@@ -560,9 +601,14 @@ def audit(output):
                             tasks, proposal_topology, phase_input_routes, proposal["routes"], proposal["move"],
                             relay_enabled=row["arm"].endswith("_relay"))
                 if row["arm"] in MOBILE_ARMS:
-                    mobile_reference = physical_routes_audit(tasks, manifest["topology"], proposal_topology, proposal["routes"])
-                    from algorithm.experiments.audit_mobile_relay import _bind_meetings
-                    _bind_meetings(proposal["mobile_meetings"], mobile_reference["meetings"])
+                    mobile_reference = (repooling_reference if row["arm"] in THREE_PARTY_MOBILE_ARMS and repooling_reference is not None
+                        else physical_routes_audit(tasks, manifest["topology"], proposal_topology, proposal["routes"]))
+                    if row["arm"] in THREE_PARTY_MOBILE_ARMS:
+                        bind_mobile_repooling(proposal["mobile_meetings"], mobile_reference["meetings"], tasks,
+                            proposal["routes"], _geometry(tasks, proposal_topology)[2])
+                    else:
+                        from algorithm.experiments.audit_mobile_relay import _bind_meetings
+                        _bind_meetings(proposal["mobile_meetings"], mobile_reference["meetings"])
                     if row["arm"] in ANTICIPATORY_ARMS:
                         assert all(m.get("meeting_type") == "receiver_arrives_first" for m in proposal["mobile_meetings"])
                 assert all(abs(proposal_reference["score"][k]-proposal["score"][k]) < 1e-8 for k in FIELDS)
@@ -584,6 +630,9 @@ def audit(output):
                     if row["arm"] in PIN_REPOOL_ARMS:
                         audit_pinned_repooling_proposal(tasks, phase_topology, phase_input_routes,
                             accepted["macro_routes"], phase_routes, accepted, relay_enabled=row["arm"].endswith("_relay"))
+                    elif row["arm"] in THREE_PARTY_MOBILE_ARMS:
+                        physical_payload_audit(tasks, manifest["topology"], phase_topology, phase_payload,
+                            base_routes=phase_input_routes, move=accepted)
                     else:
                         audit_repooling_proposal(tasks, phase_topology, phase_input_routes, phase_routes, accepted,
                                                 relay_enabled=row["arm"].endswith("_relay"))
@@ -610,7 +659,7 @@ def audit(output):
                             synchronous_mobile_physical_reference=physical_mobile))
     selector_comparisons = []
     for seed in sorted({row["seed"] for row in rows}):
-        for arm_pair in (REPOOL_ARMS, PIN_REPOOL_ARMS):
+        for arm_pair in (REPOOL_ARMS, PIN_REPOOL_ARMS, MOBILE_REPOOL_PAIR):
             paired = {row["arm"]: next(phase["metadata"] for phase in row["phases"] if phase["phase"] == row["arm"])
                       for row in rows if row["seed"] == seed and row["arm"] in arm_pair}
             if set(paired) == set(arm_pair):
@@ -621,6 +670,8 @@ def audit(output):
                     selector_sha256=paired[direct_arm]["selector_sha256"])
                 if arm_pair == PIN_REPOOL_ARMS:
                     comparison.update(arms=list(arm_pair), best_polish_candidates_not_necessarily_paired=True)
+                elif arm_pair == MOBILE_REPOOL_PAIR:
+                    comparison.update(arms=list(arm_pair), continuous_mobile_geometry_separately_declared=True)
                 selector_comparisons.append(comparison)
     record = dict(passed=True, purpose=manifest["purpose"], source_manifest_sha256=sha(output / "manifest.json"),
                   source_runs_sha256=sha(output / "runs.json"), results=results)
