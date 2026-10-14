@@ -295,6 +295,49 @@
       "safe_lower_bound_pruned_layouts": 6,
       "mobile_points_examined": 0,
       "adopted_cross_uav_count": 0
+    },
+    {
+      "batch": "batch023",
+      "purpose": "checkpoint_mechanism_diagnostic",
+      "arms": [
+        "full_credit_pin_direct",
+        "full_credit_pin_relay"
+      ],
+      "actual_seconds": 34.81630474998383,
+      "same_selected_macros": true,
+      "selectors_completed_both_arms": true,
+      "all_adopted_scores_equal_to_checkpoint": true,
+      "method_evidence": [
+        {
+          "arm": "full_credit_pin_direct",
+          "seconds": 15.732710874988697,
+          "raw_full_proposals": 64,
+          "solver_returned_iterations": 800,
+          "complete_valid_repairs": 800,
+          "leafs_without_solver_summary": 0,
+          "pin_guard_rollback_candidates": 0,
+          "polish_best_improvements": 0,
+          "adopted_improvements": 0
+        },
+        {
+          "arm": "full_credit_pin_relay",
+          "seconds": 19.08359387499513,
+          "raw_full_proposals": 16,
+          "solver_returned_iterations": 361,
+          "complete_valid_repairs": 715,
+          "leafs_without_solver_summary": 1,
+          "pin_guard_rollback_candidates": 0,
+          "polish_best_improvements": 0,
+          "adopted_improvements": 0
+        }
+      ],
+      "actual_polish_configuration": {
+        "initial_temperature": 0.03,
+        "minimum_temperature": 0.0005,
+        "cooling_rate": 0.995,
+        "max_iterations": 400
+      },
+      "adopted_cross_uav_count": 0
     }
   ],
   "rejected_before_start": "batch002",
@@ -310,13 +353,13 @@
   },
   "fair_performance_screen_started": false,
   "next_hypotheses": [
-    "pin and polish the new full-credit N59 fixed-station relay macros, which are closer to the input than the earlier N60 macros; no new rendezvous geometry in this next variant",
-    "reuse actual frozen weighted ALNS/pin auditor for the other196 tasks; each arm own best2 complete macros, raw fraction .35, margin .015, leaf guard .03s/.05; final adoption still strict improvement over original strong input"
+    "short-budget weighted polish intensification with fixed T0=.0025, minimum=.00001, per-iteration cooling=.97 and max_iterations1000000 ceiling, sharing the unchanged total deadline in both arms",
+    "same source selector, full macro identities, pin guards and original full-input adoption; profile is a testable change, not a claim that the prior default is erroneous or improvement guaranteed"
   ],
   "production_defaults_unchanged": true,
   "old_raw_results_unchanged": true,
-  "completed_optimizer_cells": 35,
-  "actual_diagnostic_seconds": 229.01915754500078,
+  "completed_optimizer_cells": 37,
+  "actual_diagnostic_seconds": 263.8354622949846,
   "parallel_request": "Independent review of teammate submission in Downloads; current metrics and constraints compared before attributing improvement.",
   "teammate_review": {
     "path": "papers/notes/teammate_submission_review_20261014/README.md",
@@ -335,7 +378,7 @@
     "source_batch": "batch009",
     "comparison": "240s historical DIRECT checkpoint plus extra20s mechanism diagnostic, NOT fair performance"
   },
-  "last_review": "batch022 complete selectors exactly match and source-bound audit passed; actual full C-removal credits changed all eight macro choices. Best raw relay now N59/J.439843039 but worse than input J.434223725; DIRECT proposal J.436516950 also worse. No adopted gain or fair performance claim. Next repeats pin-polish on substantively different N59 closer proposals, not the earlier failed N60 macros.",
+  "last_review": "batch023 fixed-network source/raw/post/all saved helper full snapshots passed independent audit; 800 DIRECT and 715 relay complete valid repairs, zero pin rollback, no best checkpoint improvement. Relay solver summaries report only361 iterations because the second leaf timed out after354 valid repairs. Hot T0=.03 with400-cap/.995 cooling and80% returned-loop acceptance motivates new cold short-budget profile.",
   "mathematical_partial_completion_review": {
     "path": "algorithm/results/proactive_relay_diagnostic_20261014/mobile_partial_completion_bound_v1.md",
     "status": "proven_only_under_explicit_restricted_insertions_and_metric_conditions; not implemented as pruning",
@@ -352,5 +395,11 @@
   },
   "previous_goal_turn_classification": "progress",
   "previous_goal_turn_evidence": "Implemented and independently audited early-source and exact memo mechanisms; official full200 diagnostics narrowed the next action, without a far-superiority claim.",
-  "current_goal_turn_progress": "Completed batch021 and batch022, verified exact whole-bundle memo and new full-credit selector; new macro evidence changes next action to pin-preserving native-route repair."
+  "current_goal_turn_progress": "Completed batch021 and batch022, verified exact whole-bundle memo and new full-credit selector; new macro evidence changes next action to pin-preserving native-route repair.",
+  "raw_clock_diagnosis": {
+    "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch022_raw_clock_diagnosis_v1.md",
+    "six_native_lateness_increases_from_source_detours": true,
+    "receiver_wait_min": 0.124766,
+    "arithmetic_repair_scenarios_not_achievability_or_global_bounds": true
+  }
 }

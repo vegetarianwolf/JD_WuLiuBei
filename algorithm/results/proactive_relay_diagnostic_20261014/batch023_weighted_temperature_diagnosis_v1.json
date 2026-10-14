@@ -1,0 +1,524 @@
+{
+  "kind": "read_only_weighted_temperature_math_no_optimization",
+  "weights": [
+    0.5,
+    0.25,
+    0.25
+  ],
+  "scales": [
+    200,
+    4464.183540734935,
+    775.7731679286865
+  ],
+  "weighted_coefficients": {
+    "late_count": 0.0025,
+    "total_lateness_min": 5.600128169435495e-05,
+    "distance_km": 0.00032225914782216524
+  },
+  "formula": "P(accept net worse)=exp(-DeltaJ/max(T,1e-12)); DeltaJ<=0 accepted. Before kth accept T=max(Tmin,T0*alpha**(k-1)); after k completed updates T=max(Tmin,T0*alpha**k).",
+  "interpretation": "Single metric examples hold other physical components fixed. Real moves use the sum of all three signed weighted changes. Aggregate accepted counts include improvements/equalities, not only worse moves.",
+  "old_profile": {
+    "initial_temperature": 0.03,
+    "minimum_temperature": 0.0005,
+    "cooling_rate": 0.995,
+    "max_iterations": 400
+  },
+  "cold_proposed_profile": {
+    "initial_temperature": 0.0025,
+    "minimum_temperature": 1e-05,
+    "cooling_rate": 0.97,
+    "max_iterations": 1000000
+  },
+  "delta_examples": {
+    "one_extra_late_task_other_components_fixed": 0.0025,
+    "ten_extra_lateness_minutes_other_components_fixed": 0.0005600128169435495,
+    "one_extra_km_other_components_fixed": 0.00032225914782216524,
+    "ten_extra_km_other_components_fixed": 0.0032225914782216523,
+    "net_weighted_J_increase_0.01": 0.01,
+    "net_weighted_J_increase_0.02": 0.02
+  },
+  "profiles": {
+    "old": {
+      "updates_to_floor": 817,
+      "first_accept_iteration_at_floor": 818,
+      "by_completed_updates": [
+        {
+          "completed_updates": 0,
+          "temperature_after_updates": 0.03,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 0.9200444146293233,
+            "ten_extra_lateness_minutes_other_components_fixed": 0.9815060572158948,
+            "one_extra_km_other_components_fixed": 0.9893155173504529,
+            "ten_extra_km_other_components_fixed": 0.8981486265739346,
+            "net_weighted_J_increase_0.01": 0.7165313105737893,
+            "net_weighted_J_increase_0.02": 0.513417119032592
+          }
+        },
+        {
+          "completed_updates": 25,
+          "temperature_after_updates": 0.026466607288464034,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 0.9098653565932776,
+            "ten_extra_lateness_minutes_other_components_fixed": 0.9790630638628284,
+            "one_extra_km_other_components_fixed": 0.9878977626893842,
+            "ten_extra_km_other_components_fixed": 0.8853602483845654,
+            "net_weighted_J_increase_0.01": 0.6853438465995156,
+            "net_weighted_J_increase_0.02": 0.46969618807182045
+          }
+        },
+        {
+          "completed_updates": 50,
+          "temperature_after_updates": 0.023349376712059257,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 0.8984634619589109,
+            "ten_extra_lateness_minutes_other_components_fixed": 0.9763012733429886,
+            "one_extra_km_other_components_fixed": 0.986293188942577,
+            "ten_extra_km_other_components_fixed": 0.8710846087106822,
+            "net_weighted_J_increase_0.01": 0.651630916230958,
+            "net_weighted_J_increase_0.02": 0.4246228509879979
+          }
+        },
+        {
+          "completed_updates": 100,
+          "temperature_after_updates": 0.018173113094721836,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 0.8714769493622374,
+            "ten_extra_lateness_minutes_other_components_fixed": 0.9696544978183655,
+            "one_extra_km_other_components_fixed": 0.9824235566429014,
+            "ten_extra_km_other_components_fixed": 0.8375055134397503,
+            "net_weighted_J_increase_0.01": 0.5767978300765944,
+            "net_weighted_J_increase_0.02": 0.3326957367810679
+          }
+        },
+        {
+          "completed_updates": 150,
+          "temperature_after_updates": 0.014144362122650573,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 0.8379902038866405,
+            "ten_extra_lateness_minutes_other_components_fixed": 0.9611808938762438,
+            "one_extra_km_other_components_fixed": 0.977474009826436,
+            "ten_extra_km_other_components_fixed": 0.7962550269063747,
+            "net_weighted_J_increase_0.01": 0.4931235766546827,
+            "net_weighted_J_increase_0.02": 0.24317086185270673
+          }
+        },
+        {
+          "completed_updates": 181,
+          "temperature_after_updates": 0.01210873764717032,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 0.8134567820719985,
+            "ten_extra_lateness_minutes_other_components_fixed": 0.9548045167779258,
+            "one_extra_km_other_components_fixed": 0.9737372563232417,
+            "ten_extra_km_other_components_fixed": 0.766333603003828,
+            "net_weighted_J_increase_0.01": 0.4378626866404803,
+            "net_weighted_J_increase_0.02": 0.19172373235201945
+          }
+        },
+        {
+          "completed_updates": 182,
+          "temperature_after_updates": 0.012048193958934469,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 0.8126132583973339,
+            "ten_extra_lateness_minutes_other_components_fixed": 0.954582640935028,
+            "one_extra_km_other_components_fixed": 0.9736070398122458,
+            "ten_extra_km_other_components_fixed": 0.7653094123636902,
+            "net_weighted_J_increase_0.01": 0.43604932200388075,
+            "net_weighted_J_increase_0.02": 0.19013901122004406
+          }
+        },
+        {
+          "completed_updates": 200,
+          "temperature_after_updates": 0.01100873465178501,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 0.7968471482600445,
+            "ten_extra_lateness_minutes_other_components_fixed": 0.9504023455643641,
+            "one_extra_km_other_components_fixed": 0.9711512635329361,
+            "ten_extra_km_other_components_fixed": 0.7462232831720401,
+            "net_weighted_J_increase_0.01": 0.40318103086521445,
+            "net_weighted_J_increase_0.02": 0.162554943649537
+          }
+        },
+        {
+          "completed_updates": 300,
+          "temperature_after_updates": 0.006668765995222408,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 0.6873704181189284,
+            "ten_extra_lateness_minutes_other_components_fixed": 0.9194538019996387,
+            "one_extra_km_other_components_fixed": 0.9528253503930936,
+            "ten_extra_km_other_components_fixed": 0.6167839053341605,
+            "net_weighted_J_increase_0.01": 0.2232355471411894,
+            "net_weighted_J_increase_0.02": 0.04983410950742619
+          }
+        },
+        {
+          "completed_updates": 354,
+          "temperature_after_updates": 0.005087352593648248,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 0.6117603061776734,
+            "ten_extra_lateness_minutes_other_components_fixed": 0.8957629920136637,
+            "one_extra_km_other_components_fixed": 0.9386194468727413,
+            "ten_extra_km_other_components_fixed": 0.5307566929272282,
+            "net_weighted_J_increase_0.01": 0.14006356565308045,
+            "net_weighted_J_increase_0.02": 0.019617802423454782
+          }
+        },
+        {
+          "completed_updates": 361,
+          "temperature_after_updates": 0.004911943966767164,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 0.6011183387920647,
+            "ten_extra_lateness_minutes_other_components_fixed": 0.892248654556546,
+            "one_extra_km_other_components_fixed": 0.9364985996088089,
+            "ten_extra_km_other_components_fixed": 0.5188852469284373,
+            "net_weighted_J_increase_0.01": 0.1305689495471263,
+            "net_weighted_J_increase_0.02": 0.017048250585840016
+          }
+        },
+        {
+          "completed_updates": 399,
+          "temperature_after_updates": 0.004060041495256686,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 0.5402316480992554,
+            "ten_extra_lateness_minutes_other_components_fixed": 0.8711572475544866,
+            "one_extra_km_other_components_fixed": 0.9236949864278267,
+            "ten_extra_km_other_components_fixed": 0.4521534656304884,
+            "net_weighted_J_increase_0.01": 0.08517655885706617,
+            "net_weighted_J_increase_0.02": 0.007255046178731257
+          }
+        },
+        {
+          "completed_updates": 400,
+          "temperature_after_updates": 0.004039741287780402,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 0.5385626157802692,
+            "ten_extra_lateness_minutes_other_components_fixed": 0.8705536319344566,
+            "one_extra_km_other_components_fixed": 0.9233266338755993,
+            "ten_extra_km_other_components_fixed": 0.45035359313025575,
+            "net_weighted_J_increase_0.01": 0.08412882331653686,
+            "net_weighted_J_increase_0.02": 0.007077658912625075
+          }
+        }
+      ]
+    },
+    "cold_proposed": {
+      "updates_to_floor": 182,
+      "first_accept_iteration_at_floor": 183,
+      "by_completed_updates": [
+        {
+          "completed_updates": 0,
+          "temperature_after_updates": 0.0025,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 0.36787944117144233,
+            "ten_extra_lateness_minutes_other_components_fixed": 0.7993110364690874,
+            "one_extra_km_other_components_fixed": 0.8790586507423852,
+            "ten_extra_km_other_components_fixed": 0.2755361091483542,
+            "net_weighted_J_increase_0.01": 0.01831563888873418,
+            "net_weighted_J_increase_0.02": 0.00033546262790251185
+          }
+        },
+        {
+          "completed_updates": 25,
+          "temperature_after_updates": 0.0011674367631359292,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 0.11748511749922344,
+            "ten_extra_lateness_minutes_other_components_fixed": 0.6189725530841901,
+            "one_extra_km_other_components_fixed": 0.7587826414248438,
+            "ten_extra_km_other_components_fixed": 0.0632665088883208,
+            "net_weighted_J_increase_0.01": 0.0001905159857911489,
+            "net_weighted_J_increase_0.02": 3.629634084197325e-08
+          }
+        },
+        {
+          "completed_updates": 50,
+          "temperature_after_updates": 0.0005451634383685182,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 0.01019578634307529,
+            "ten_extra_lateness_minutes_other_components_fixed": 0.3579942343947744,
+            "one_extra_km_other_components_fixed": 0.55370461611469,
+            "ten_extra_km_other_components_fixed": 0.002708828072038492,
+            "net_weighted_J_increase_0.01": 1.0806446414518609e-08,
+            "net_weighted_J_increase_0.02": 1.167792841098621e-16
+          }
+        },
+        {
+          "completed_updates": 100,
+          "temperature_after_updates": 0.00011888126981351408,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 7.362988262792393e-10,
+            "ten_extra_lateness_minutes_other_components_fixed": 0.008998565819988003,
+            "one_extra_km_other_components_fixed": 0.06648594651932493,
+            "ten_extra_km_other_components_fixed": 1.6877128582400995e-12,
+            "net_weighted_J_increase_0.01": 2.939114008384724e-37,
+            "net_weighted_J_increase_0.02": 8.63839115428332e-74
+          }
+        },
+        {
+          "completed_updates": 150,
+          "temperature_after_updates": 2.5923888723660347e-05,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 1.3131446234313354e-42,
+            "ten_extra_lateness_minutes_other_components_fixed": 4.152286346365805e-10,
+            "one_extra_km_other_components_fixed": 3.992980952155226e-06,
+            "ten_extra_km_other_components_fixed": 1.0303206038070217e-54,
+            "net_weighted_J_increase_0.01": 2.973378791119626e-168,
+            "net_weighted_J_increase_0.02": 0.0
+          }
+        },
+        {
+          "completed_updates": 181,
+          "temperature_after_updates": 1.008379274364463e-05,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 2.131021483448765e-108,
+            "ten_extra_lateness_minutes_other_components_fixed": 7.604167349933123e-25,
+            "one_extra_km_other_components_fixed": 1.3205686635253022e-14,
+            "ten_extra_km_other_components_fixed": 1.6129090344528638e-139,
+            "net_weighted_J_increase_0.01": 0.0,
+            "net_weighted_J_increase_0.02": 0.0
+          }
+        },
+        {
+          "completed_updates": 182,
+          "temperature_after_updates": 1e-05,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 2.669190215541352e-109,
+            "ten_extra_lateness_minutes_other_components_fixed": 4.774769165670442e-25,
+            "one_extra_km_other_components_fixed": 1.0103295044728411e-14,
+            "ten_extra_km_other_components_fixed": 1.1082311625235658e-140,
+            "net_weighted_J_increase_0.01": 0.0,
+            "net_weighted_J_increase_0.02": 0.0
+          }
+        },
+        {
+          "completed_updates": 200,
+          "temperature_after_updates": 1e-05,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 2.669190215541352e-109,
+            "ten_extra_lateness_minutes_other_components_fixed": 4.774769165670442e-25,
+            "one_extra_km_other_components_fixed": 1.0103295044728411e-14,
+            "ten_extra_km_other_components_fixed": 1.1082311625235658e-140,
+            "net_weighted_J_increase_0.01": 0.0,
+            "net_weighted_J_increase_0.02": 0.0
+          }
+        },
+        {
+          "completed_updates": 300,
+          "temperature_after_updates": 1e-05,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 2.669190215541352e-109,
+            "ten_extra_lateness_minutes_other_components_fixed": 4.774769165670442e-25,
+            "one_extra_km_other_components_fixed": 1.0103295044728411e-14,
+            "ten_extra_km_other_components_fixed": 1.1082311625235658e-140,
+            "net_weighted_J_increase_0.01": 0.0,
+            "net_weighted_J_increase_0.02": 0.0
+          }
+        },
+        {
+          "completed_updates": 354,
+          "temperature_after_updates": 1e-05,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 2.669190215541352e-109,
+            "ten_extra_lateness_minutes_other_components_fixed": 4.774769165670442e-25,
+            "one_extra_km_other_components_fixed": 1.0103295044728411e-14,
+            "ten_extra_km_other_components_fixed": 1.1082311625235658e-140,
+            "net_weighted_J_increase_0.01": 0.0,
+            "net_weighted_J_increase_0.02": 0.0
+          }
+        },
+        {
+          "completed_updates": 361,
+          "temperature_after_updates": 1e-05,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 2.669190215541352e-109,
+            "ten_extra_lateness_minutes_other_components_fixed": 4.774769165670442e-25,
+            "one_extra_km_other_components_fixed": 1.0103295044728411e-14,
+            "ten_extra_km_other_components_fixed": 1.1082311625235658e-140,
+            "net_weighted_J_increase_0.01": 0.0,
+            "net_weighted_J_increase_0.02": 0.0
+          }
+        },
+        {
+          "completed_updates": 399,
+          "temperature_after_updates": 1e-05,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 2.669190215541352e-109,
+            "ten_extra_lateness_minutes_other_components_fixed": 4.774769165670442e-25,
+            "one_extra_km_other_components_fixed": 1.0103295044728411e-14,
+            "ten_extra_km_other_components_fixed": 1.1082311625235658e-140,
+            "net_weighted_J_increase_0.01": 0.0,
+            "net_weighted_J_increase_0.02": 0.0
+          }
+        },
+        {
+          "completed_updates": 400,
+          "temperature_after_updates": 1e-05,
+          "acceptance_probabilities_for_next_iteration": {
+            "one_extra_late_task_other_components_fixed": 2.669190215541352e-109,
+            "ten_extra_lateness_minutes_other_components_fixed": 4.774769165670442e-25,
+            "one_extra_km_other_components_fixed": 1.0103295044728411e-14,
+            "ten_extra_km_other_components_fixed": 1.1082311625235658e-140,
+            "net_weighted_J_increase_0.01": 0.0,
+            "net_weighted_J_increase_0.02": 0.0
+          }
+        }
+      ]
+    }
+  },
+  "saved_leaves": [
+    {
+      "arm": "full_credit_pin_direct",
+      "leaf_index": 0,
+      "source_path": "algorithm/results/proactive_relay_diagnostic_20261014/batch023/phase_solutions/full_credit_pin_direct__seed_2026101510__full_credit_pin_direct.json",
+      "source_sha256": "c1d0705ea221d11825ccf2152669b115f7fd83201489e7bdd9c25b19b2f8a2a7",
+      "effective_profile": {
+        "initial_temperature": 0.03,
+        "minimum_temperature": 0.0005,
+        "cooling_rate": 0.995,
+        "max_iterations": 400
+      },
+      "enable_budget_cooling": false,
+      "assigned_remaining_seconds": 8.88724466599524,
+      "complete_valid_candidates": 400,
+      "rollback_candidates": 0,
+      "iterations_reported": 400,
+      "accepted_solutions_reported": 321,
+      "reported_acceptance_fraction": 0.8025,
+      "summary_missing_due_timeout": false,
+      "skipped_reason": null,
+      "best_improved": false,
+      "initial_weighted_score": 0.4365169502356338,
+      "returned_weighted_score": 0.4365169502356338,
+      "saved_candidate_snapshots": 8,
+      "saved_snapshot_J_range": [
+        0.4386354273945121,
+        0.4602879119701392
+      ],
+      "saved_routes_different_from_initial": 8,
+      "saved_samples_are_complete_history": false
+    },
+    {
+      "arm": "full_credit_pin_direct",
+      "leaf_index": 1,
+      "source_path": "algorithm/results/proactive_relay_diagnostic_20261014/batch023/phase_solutions/full_credit_pin_direct__seed_2026101510__full_credit_pin_direct.json",
+      "source_sha256": "c1d0705ea221d11825ccf2152669b115f7fd83201489e7bdd9c25b19b2f8a2a7",
+      "effective_profile": {
+        "initial_temperature": 0.03,
+        "minimum_temperature": 0.0005,
+        "cooling_rate": 0.995,
+        "max_iterations": 400
+      },
+      "enable_budget_cooling": false,
+      "assigned_remaining_seconds": 10.40767262497684,
+      "complete_valid_candidates": 400,
+      "rollback_candidates": 0,
+      "iterations_reported": 400,
+      "accepted_solutions_reported": 323,
+      "reported_acceptance_fraction": 0.8075,
+      "summary_missing_due_timeout": false,
+      "skipped_reason": null,
+      "best_improved": false,
+      "initial_weighted_score": 0.43677535219380625,
+      "returned_weighted_score": 0.43677535219380625,
+      "saved_candidate_snapshots": 8,
+      "saved_snapshot_J_range": [
+        0.4519424600289658,
+        0.5015659388510286
+      ],
+      "saved_routes_different_from_initial": 8,
+      "saved_samples_are_complete_history": false
+    },
+    {
+      "arm": "full_credit_pin_relay",
+      "leaf_index": 0,
+      "source_path": "algorithm/results/proactive_relay_diagnostic_20261014/batch023/phase_solutions/full_credit_pin_relay__seed_2026101510__full_credit_pin_relay.json",
+      "source_sha256": "37b506756dad2a2a672c0d3d9371e73fff43fd7ea7f754f42e1444e7b1dd0aaf",
+      "effective_profile": {
+        "initial_temperature": 0.03,
+        "minimum_temperature": 0.0005,
+        "cooling_rate": 0.995,
+        "max_iterations": 400
+      },
+      "enable_budget_cooling": false,
+      "assigned_remaining_seconds": 6.101722374965902,
+      "complete_valid_candidates": 361,
+      "rollback_candidates": 0,
+      "iterations_reported": 361,
+      "accepted_solutions_reported": 291,
+      "reported_acceptance_fraction": 0.8060941828254847,
+      "summary_missing_due_timeout": false,
+      "skipped_reason": null,
+      "best_improved": false,
+      "initial_weighted_score": 0.4398430390082519,
+      "returned_weighted_score": 0.4398430390082519,
+      "saved_candidate_snapshots": 8,
+      "saved_snapshot_J_range": [
+        0.45008485643460305,
+        0.4756556221879174
+      ],
+      "saved_routes_different_from_initial": 8,
+      "saved_samples_are_complete_history": false
+    },
+    {
+      "arm": "full_credit_pin_relay",
+      "leaf_index": 1,
+      "source_path": "algorithm/results/proactive_relay_diagnostic_20261014/batch023/phase_solutions/full_credit_pin_relay__seed_2026101510__full_credit_pin_relay.json",
+      "source_sha256": "37b506756dad2a2a672c0d3d9371e73fff43fd7ea7f754f42e1444e7b1dd0aaf",
+      "effective_profile": {
+        "initial_temperature": 0.03,
+        "minimum_temperature": 0.0005,
+        "cooling_rate": 0.995,
+        "max_iterations": 400
+      },
+      "enable_budget_cooling": false,
+      "assigned_remaining_seconds": 6.126674291968811,
+      "complete_valid_candidates": 354,
+      "rollback_candidates": 0,
+      "iterations_reported": null,
+      "accepted_solutions_reported": null,
+      "reported_acceptance_fraction": null,
+      "summary_missing_due_timeout": true,
+      "skipped_reason": "search_reached_absolute_deadline",
+      "best_improved": false,
+      "initial_weighted_score": 0.44139652727137113,
+      "returned_weighted_score": 0.44139652727137113,
+      "saved_candidate_snapshots": 8,
+      "saved_snapshot_J_range": [
+        0.4566498824305327,
+        0.4824077891312816
+      ],
+      "saved_routes_different_from_initial": 8,
+      "saved_samples_are_complete_history": false
+    }
+  ],
+  "frozen_source_evidence": {
+    "archive_path": "algorithm/results/proactive_relay_diagnostic_20261014/batch023/sources/weighted_solver.zip",
+    "archive_sha256": "a26ed82a86bd0e2d95ce33ac1b8554d31e16a779d80377abb24152a05799fca5",
+    "acceptance_first_branch": "if _weighted_adapter.active:\n    return _weighted_adapter.accept(candidate, current, temperature, rng)",
+    "helper_path": "algorithm/results/proactive_relay_diagnostic_20261014/batch023/sources/relay_preserving_polish.py",
+    "helper_sha256": "93cf701efd7b1567a3de651037eca2276ab156117b954833fd56a112f771fa57",
+    "helper_replaced_config_fields": [
+      "seed",
+      "time_limit_seconds",
+      "relay_enabled",
+      "enable_relay_seed",
+      "enable_relay_refine",
+      "enable_relay_budget_rebalance",
+      "enable_terminal_polish",
+      "enable_terminal_task_exchange",
+      "enable_tail_exchange",
+      "enable_home_reassignment",
+      "enable_adjacent_polish",
+      "enable_home_seed",
+      "enable_home_bias",
+      "enable_boundary_destroy",
+      "enable_multiroute_string_destroy",
+      "enable_objective_rewards",
+      "enable_budget_cooling",
+      "enable_regret_portfolio",
+      "relay_large_destroy_interval"
+    ],
+    "four_profile_fields_unchanged_by_helper": true,
+    "helper_budget_cooling_explicitly_false": true,
+    "real_module_globals_preflight": "solve_alns and _repair globals must be actual module dict",
+    "active_weighted_coefficients_preflight": true
+  }
+}
