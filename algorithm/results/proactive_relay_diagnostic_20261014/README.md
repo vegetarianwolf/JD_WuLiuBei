@@ -707,3 +707,66 @@ J.441032688862/L1887.425762/D590.625366，均输原输入J；这些没有进入�
 入池。主DIRECT对照须独立开放四任务A1/B1/C2的12种最终分配，不强迫去H或沿用
 中继finalmap；同map仅作消融。预声明安全余量的失败仅排安全channel，官方EPS
 准时性另由真实完整评分判定。此处仅设计，尚未实现或测试，不构成性能证据。
+
+
+## batch029：固定H前置联合救期窗口与12分配强DIRECT
+
+新实现先从全部59原迟到anchor、异原owner伙伴、所有合格C和原4H建立联合时间窗，
+绕开旧D近邻3/receiver affinity2前门。每task/H预表含真实weighted、最早和截止期
+临界中间IN选项；正式四任务补偿后重新生成source drop。C按实际两源到货时间，
+遍历全部空载gap×两D顺序并计全部native等待；DIRECT按12种A1/B1/C2分配，pair
+遍历全部空gap×六合法PD块。最早/latest-safe/几何窗口只是有限目录代表，未作全J下界。
+
+初始base64索引仍省略Cnative时钟损失，之后用真实C27预览的全部native N/L/D加
+补偿信用作有限候选排名；预览明确quota失衡、不是全局可行解。真J/N/pooled救回
+各保代表，pooled i/j与k补偿收益分别存证；最终采用始终严格胜原固定J，不修改目标。
+source3/pos8、base64、family16、comp pool6+6及limit3、table3/full3、sigma0均事前冻结。
+receiver/direct gap默认4仅legacy hint，全gap实际评分及计数另有明确字段。
+
+ROOT事前96项新tiny在0.19秒通过，覆盖真实九任务中继获救胜完整12mapDIRECT、
+旧双D3前门漏真伙伴、临界中间source、补偿后B重算、真实native preview代价、
+pooled/comp归因、官方EPS/安全sigma和严格deadline采用。旧028的1096份提案/引用
+（含60post）在内存重审与原audit完全一致，未写任何旧结果。
+
+同025强输入、固定seed2026101514、每臂40秒总上限，实际DIRECT7.452963秒、RELAY
+7.229876秒。两臂都完整完成800个source表、211440个joint基础组、1246878个source
+组合、2882350个时窗索引，选16个相同family且SHA一致。16组恰集中原H3，不能把
+“生成时遍历四H”误写成最终四H均有full提案。DIRECT192个责任分配全部完成，
+两臂各48个完整快照及first/best/input引用全重放；32份共享目录也独立核验了真实
+source preview、C原空gap/实际起点/预览等待和显式quota overflow。全部审计通过。
+
+| 保存方案 | Nlate | L/min | D/km | J | pooled救回 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 原025强输入/两臂最终解 | 59 | 1790.632129 | 578.534685 | .434215788788 | 0 |
+| RELAY最佳weighted提案（未采用） | 59 | 1857.785030 | 591.900052 | .442283549214 | 0 |
+| RELAY最佳双件获救提案（未采用） | 63 | 1882.046935 | 595.330959 | .454747888090 | 2 |
+
+48个RELAY保存提案中10个救回两件i/j、6个救回一件，补偿获救0；DIRECT也有10/6
+同类提案，不能把救回次数归为中继独有。最佳双件中继救回65/166却新增6个native
+迟到[50,94,98,107,136,152]；总体N反而+4。16个family的DIRECT最佳weighted提案
+均优于对应RELAY，当前采用仍为纯DIRECT，远胜目标未达到。
+
+[manifest](batch029/manifest.json)、[runs](batch029/runs.json)、[audit](batch029/audit.json)、
+[96项测试凭证](batch029/new_method_test_receipt.json)。这是同历史checkpoint追加预算
+的单种子机制诊断，原输入包含历史累计搜索，仍不是fresh同预算算法性能证明。
+
+下步针对真实救期宏的受损native及共载/长suffix/补偿闭包联合重构，不能只修6个
+新late，也不能重复uniform greedy重建或继续机械扩大旧池；新种子通道须避免旧
++.015门把所有真pooled提案排除。此方向尚未实现/运行，最终仍须fullJ严格改善，
+DIRECT具有相同修复自由与预算。有限H3/base64和中间窗位置记录0遗漏都不证明全域
+已穷尽，不据失败宣称不存在更好的窗口或接力方案。
+
+截至029共49个完整200任务诊断cell，实际累计454.535407秒，新公平性能扩大实验
+尚未开始。
+
+[029精确归因诊断](batch029_search_diagnosis_v1.md)确认：所有16组预览的救期数量均在
+至少一个完整候选中保住，失败不只是补偿推迟源端到站；最佳双救宏真实源drop为
+18.184/28.468min，C抵H33.370min且无等货，却让长suffix累计native L多142.873min。
+仅对六个新增迟到件做零成本计分复原仍J.438351，不能当成可达路线或全局下界。
+
+[接力损伤闭包与配额联合修复设计](../../../papers/notes/proactive_relay_20261014/relay_damage_closure_repair_design_v1.md)
+已交叉审阅冻结，尚未实现/测试/运行。它要求真实pooled独立种子通道、受损与共载/
+长suffix任务、全机真实donor责任槽及quota联合分支，不能只把旧regret改名重跑；
+单次仍是bounded closure，198只是可选全集，实际打开不足8机须如实报告。raw来源
+和post当前时钟分开审计，DIRECT同自由/预算，最终仍strict原输入J。此设计不是
+已实现收益或唯一剩余方法的证明。

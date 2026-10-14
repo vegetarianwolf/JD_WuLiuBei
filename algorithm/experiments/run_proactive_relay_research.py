@@ -51,8 +51,10 @@ METHODS = {"batch": "batch_relay_refinement", "reciprocal": "reciprocal_relay_re
            "pair_pin_direct": "pair_pinned_repooling", "pair_pin_relay": "pair_pinned_repooling",
            "six_sort_direct": "six_task_sorting", "six_sort_relay": "six_task_sorting",
            "wide_six_direct": "expanded_six_task_sorting", "wide_six_relay": "expanded_six_task_sorting",
-           "six_pin_direct": "six_task_with_pinned_polish", "six_pin_relay": "six_task_with_pinned_polish"}
-DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct", "repool_direct", "repool_polish_direct", "mobile_repool_direct", "joint_mobile_direct", "frontier_mobile_direct", "bundle_cached_direct", "full_credit_direct", "full_credit_pin_direct", "cold_pin_direct", "pair_pin_direct", "six_sort_direct", "wide_six_direct", "six_pin_direct")
+           "six_pin_direct": "six_task_with_pinned_polish", "six_pin_relay": "six_task_with_pinned_polish",
+           "window_direct": "deadline_window_repooling", "window_relay": "deadline_window_repooling"}
+DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct", "repool_direct", "repool_polish_direct", "mobile_repool_direct", "joint_mobile_direct", "frontier_mobile_direct", "bundle_cached_direct", "full_credit_direct", "full_credit_pin_direct", "cold_pin_direct", "pair_pin_direct", "six_sort_direct", "wide_six_direct", "six_pin_direct", "window_direct")
+WINDOW_PAIR = ("window_direct", "window_relay")
 SIX_SORT_PAIR = ("six_sort_direct", "six_sort_relay")
 WIDE_SIX_PAIR = ("wide_six_direct", "wide_six_relay")
 SIX_PIN_PAIR = ("six_pin_direct", "six_pin_relay")
@@ -103,6 +105,7 @@ EXECUTION = (
     "six_task_route_costs.py", "six_task_sorting.py", "audit_six_task_sorting.py",
     "expanded_six_task_sorting.py",
     "six_task_preserving_polish.py", "six_task_with_pinned_polish.py", "audit_six_task_pinned_polish.py",
+    "deadline_window_costs.py", "deadline_window_repooling.py", "audit_deadline_window_repooling.py",
     "directed_bundle_insertion.py",
     "run_weighted_relay_ablation.py", "run_weighted_direct_pair.py", "weighted_direct_objective.py",
     "weighted_relay_objective.py", "weighted_periodic_exchange.py", "run_scenario_comparison.py",
@@ -425,6 +428,35 @@ def prepare(args):
             "finite table scores are historical, never post facts. All helper and facade checkpoints require "
             "complete pre-deadline checks and strict improvement over the original input before adoption. "
             "Raw selector, actual weighted ALNS hooks and objective state must be restored after use.")
+    if set(arms) & set(WINDOW_PAIR):
+        note = ROOT / "papers/notes/proactive_relay_20261014/deadline_rescue_window_design_v1.md"
+        review = ROOT / "papers/notes/proactive_relay_20261014/fixed_h_rescue_selector_review_v1.md"
+        manifest["deadline_rescue_window_design"] = dict(path=str(note.relative_to(ROOT)), sha256=sha(note))
+        manifest["fixed_h_rescue_selector_review"] = dict(path=str(review.relative_to(ROOT)), sha256=sha(review))
+        manifest["protocol"] += (
+            " Fixed-window variants generate shared station/source/receiver deadline opportunities before "
+            "the former destination-nearest-three and receiver-affinity cutoffs. Source-IN availability "
+            "and physical receiver empty-gap arrival enter the same conditional second-take window. "
+            "Finite source catalogues retain true weighted, earliest and deadline-critical IN options; "
+            "joint latest-drop bounds are rebuilt after real compensation insertion. All receiver empty "
+            "gaps and both delivery orders are physically timed before weighted/N/pooled-rescue retention, "
+            "and DIRECT pair tables time all empty gaps and six legal blocks. Requested legacy gap hints "
+            "are not pre-scoring gap cutoffs. Initial index proxies are bounded ranking devices; later "
+            "preview ranking counts all actual native delays, and pooled versus compensation rescues "
+            "are recorded separately. "
+            "Preview routes, missing-compensation windows and any temporary local quota overflow are "
+            "explicitly incomplete ranking evidence, never global feasible solutions or complete-J bounds. "
+            "After four tasks are removed and compensation is restored, all affected routes, windows, "
+            "waiting and native delivery scores are rebuilt and fully checked. Relay retains two true "
+            "single-hop transfers at one existing station and a positive double-loaded receiver flight. "
+            "Other196 original tasks preserve owners and signed subsequences in this raw variant. "
+            "DIRECT independently allocates the same four selected requests among the three aircraft "
+            "with1/1/2 final responsibilities through all12 assignments; it neither visits H nor inherits "
+            "relay-selected final owners or conditional window restrictions. Both selectors must finish "
+            "with identical family records/SHA. Candidate rescue channels do not change the weighted "
+            "adoption objective, official lateness epsilon, resources or original-input guard. "
+            "Every complete saved proposal receives independent true-base physical, clock and score replay. "
+            "All indexing, ranking, full checks, evidence snapshots and guarded adoption share one deadline.")
     write(output / "manifest.json", manifest)
     write(output / "runs.json", [])
     print(json.dumps({"prepared": str(output), "purpose": manifest["purpose"], "arms": arms,
@@ -460,6 +492,10 @@ def verify(output, manifest, *, current_execution=True):
     if "six_task_pinned_polish_design" in manifest:
         note = manifest["six_task_pinned_polish_design"]
         assert sha(ROOT / note["path"]) == note["sha256"], "Changed declared six-task pinned polish design"
+    for field in ("deadline_rescue_window_design", "fixed_h_rescue_selector_review"):
+        if field in manifest:
+            note = manifest[field]
+            assert sha(ROOT / note["path"]) == note["sha256"], "Changed declared fixed-window design/review"
 
 
 def worker(request):
@@ -543,7 +579,7 @@ def worker(request):
                 controls = {"relay_enabled": method == "quota_relay"}
             if method.startswith("repool_"):
                 controls = {"relay_enabled": method.endswith("_relay")}
-            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_", "full_credit_", "cold_pin_", "pair_pin_", "six_sort_", "wide_six_", "six_pin_")):
+            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_", "full_credit_", "cold_pin_", "pair_pin_", "six_sort_", "wide_six_", "six_pin_", "window_")):
                 controls = {"relay_enabled": method.endswith("_relay")}
             controls = {**controls, **manifest.get("method_parameters", {}).get(method, {})}
             outcome = modules[method].refine(full, routes, deadline=sub_deadline,
@@ -652,6 +688,10 @@ def audit(output):
     if any(r["arm"] in SIX_PIN_PAIR for r in manifest["schedule"]):
         from algorithm.experiments.audit_six_task_pinned_polish import audit_six_task_pinned_polish_proposal
         assert sha(EXPERIMENTS / "audit_six_task_pinned_polish.py") == manifest["execution_sources"]["audit_six_task_pinned_polish.py"]["sha256"]
+    if any(r["arm"] in WINDOW_PAIR for r in manifest["schedule"]):
+        from algorithm.experiments.audit_deadline_window_repooling import (
+            audit_deadline_window_repooling_proposal, audit_deadline_window_family)
+        assert sha(EXPERIMENTS / "audit_deadline_window_repooling.py") == manifest["execution_sources"]["audit_deadline_window_repooling.py"]["sha256"]
     if any(r["arm"] in THREE_PARTY_MOBILE_ARMS for r in manifest["schedule"]):
         from algorithm.experiments.audit_mobile_repooling import (
             audit_mobile_repooling_payload, audit_mobile_repooling_routes, _bind as bind_mobile_repooling)
@@ -679,6 +719,7 @@ def audit(output):
         preceding_routes_hash = manifest["initial_routes_sha256"]
         preceding_routes = manifest["initial_routes"]
         proposal_references = []
+        window_family_references = []
         for phase in row["phases"]:
             assert sha(output / phase["solution_path"]) == phase["solution_sha256"]
             phase_payload = read(output / phase["solution_path"])
@@ -797,7 +838,14 @@ def audit(output):
                 repooling_reference = None
                 sorting_reference = None
                 six_post_reference = None
-                if row["arm"] in SIX_PIN_PAIR and proposal_name in pinned_macro_routes:
+                window_reference = None
+                if row["arm"] in WINDOW_PAIR and proposal.get("move") is not None:
+                    assert proposal["move"]["family"] in metadata["selected_families"]
+                    window_reference = audit_deadline_window_repooling_proposal(
+                        tasks, proposal_topology, phase_input_routes, proposal["routes"], proposal["move"],
+                        relay_enabled=row["arm"].endswith("_relay"), telemetry=proposal,
+                        weights=manifest["weights"], scales=manifest["scales"])
+                elif row["arm"] in SIX_PIN_PAIR and proposal_name in pinned_macro_routes:
                     original_move = pinned_original_moves[proposal_name]
                     assert original_move["family"] in metadata["selected_families"]
                     six_post_reference = audit_six_task_pinned_polish_proposal(
@@ -885,7 +933,42 @@ def audit(output):
                     routes_sha256=digest(proposal["routes"]), reference=reference_evidence,
                     **({"repooling_physical_reference": repooling_reference} if repooling_reference is not None else {}),
                     **({"six_task_sorting_physical_reference": sorting_evidence} if sorting_evidence is not None else {}),
-                    **({"six_task_pinned_polish_physical_reference": post_evidence} if post_evidence is not None else {})))
+                    **({"six_task_pinned_polish_physical_reference": post_evidence} if post_evidence is not None else {}),
+                    **({"deadline_window_physical_reference": window_reference} if window_reference is not None else {})))
+            if row["arm"] in WINDOW_PAIR and phase["phase"] == row["arm"]:
+                assert digest(metadata["selected_families"]) == metadata["selector_sha256"]
+                assert metadata["accepted_improvements"] == len(metadata["accepted_moves"])
+                assert metadata["families_examined"] == len(metadata["family_records"])
+                assert [r["family"] for r in metadata["family_records"]] == metadata["selected_families"][:metadata["families_examined"]]
+                config = metadata["configuration"]
+                assert config["receiver_all_empty_gaps_scored"] and config["direct_pair_all_empty_gaps_scored"]
+                assert config["direct_final_map_count"] == 12 and config["polish_enabled"] is False
+                for family in metadata["selected_families"]:
+                    family_reference = audit_deadline_window_family(tasks, phase_topology, phase_input_routes, family)
+                    assert family_reference["passed"] and family_reference["complete_solution"] is False
+                    window_family_references.append(dict(family=family, reference=family_reference))
+                if row["arm"] == "window_direct":
+                    for record in metadata["family_records"]:
+                        ids = record["family"]["task_ids"]
+                        expected_maps = [[[t], [q], [k for k in ids if k not in (t, q)]]
+                                         for t in ids for q in ids if t != q]
+                        considered, completed = record["direct_maps_considered"], record["direct_maps_completed"]
+                        assert considered == expected_maps[:len(considered)]
+                        assert completed == considered[:len(completed)]
+                        assert len(considered) <= 12 and len(completed) <= len(considered)
+                        if record["direct_map_enumeration_completed"]:
+                            assert completed == expected_maps
+                            assert record["complete_table_enumeration_completed"]
+                for accepted in metadata["accepted_moves"]:
+                    assert accepted["full_verified_at_perf_counter"] <= accepted["accepted_at_perf_counter"] < metadata["deadline_perf_counter"]
+                    assert accepted["full_snapshot"]["move"]["family"] in metadata["selected_families"]
+                if phase_routes != phase_input_routes:
+                    accepted = metadata["accepted_moves"][-1]
+                    assert accepted["full_snapshot"]["routes"] == phase_routes
+                    audit_deadline_window_repooling_proposal(
+                        tasks, phase_topology, phase_input_routes, phase_routes, accepted["full_snapshot"]["move"],
+                        relay_enabled=row["arm"].endswith("_relay"), telemetry=accepted["full_snapshot"],
+                        weights=manifest["weights"], scales=manifest["scales"])
             if row["arm"] in ALL_SIX_ARMS and phase["phase"] == row["arm"]:
                 assert digest(metadata["selected_families"]) == metadata["selector_sha256"]
                 for accepted in metadata["accepted_moves"]:
@@ -944,9 +1027,25 @@ def audit(output):
             assert reference["relay_statistics"]["relay_task_count"] == 0
         results.append(dict(run_id=row["run_id"], passed=True, reference=reference, fixed_structure_direct=cf,
                             non_adopted_or_constructed_proposals=proposal_references,
-                            synchronous_mobile_physical_reference=physical_mobile))
+                            synchronous_mobile_physical_reference=physical_mobile,
+                            **({"deadline_window_family_references": window_family_references}
+                               if row["arm"] in WINDOW_PAIR else {})))
     selector_comparisons = []
     for seed in sorted({row["seed"] for row in rows}):
+        window_paired = {row["arm"]: next(p["metadata"] for p in row["phases"] if p["phase"] == row["arm"])
+                         for row in rows if row["seed"] == seed and row["arm"] in WINDOW_PAIR}
+        if set(window_paired) == set(WINDOW_PAIR):
+            for selected in window_paired.values():
+                assert selected["selector_completed"]
+                assert selected["selector_completed_at_perf_counter"] < selected["deadline_perf_counter"]
+                assert digest(selected["selected_families"]) == selected["selector_sha256"]
+            first, second = (window_paired[arm] for arm in WINDOW_PAIR)
+            assert first["selected_families"] == second["selected_families"]
+            assert first["selector_sha256"] == second["selector_sha256"]
+            selector_comparisons.append(dict(seed=seed, arms=list(WINDOW_PAIR), selectors_completed=True,
+                same_selected_families=True, selector_sha256=first["selector_sha256"],
+                direct_allocation_independent=True, direct_balanced_assignment_space=12,
+                same_total_budget_not_same_candidate_count=True, conditional_windows_not_global_bounds=True))
         for six_pair in (SIX_SORT_PAIR, WIDE_SIX_PAIR, SIX_PIN_PAIR):
             six_paired = {row["arm"]: next(p["metadata"] for p in row["phases"] if p["phase"] == row["arm"])
                           for row in rows if row["seed"] == seed and row["arm"] in six_pair}
