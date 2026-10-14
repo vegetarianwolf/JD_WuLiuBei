@@ -1,0 +1,20 @@
+--- frozen/uav_dispatch/alns.py
++++ final/uav_dispatch/alns.py
+@@ -493,6 +493,8 @@
+                     counts_toward_k=is_out,
+                     event_cap=relay_cfg.event_cap,
+                 )
++                if deadline is not None and perf_counter() >= deadline:
++                    raise _SearchDeadlineReached
+                 for option in options:
+                     if target_index == other_route:
+                         other_leg = in_leg if is_out else out_leg
+@@ -528,6 +530,8 @@
+                     )
+                     relay_cfg.global_evaluation_count += 1
+                     relay_cfg.refine_candidates_evaluated += 1
++                    if deadline is not None and perf_counter() >= deadline:
++                        raise _SearchDeadlineReached
+                     if schedule.feasible and schedule.score < current_score:
+                         return candidate_routes
+     return current

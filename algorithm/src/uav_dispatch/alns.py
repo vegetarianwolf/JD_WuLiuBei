@@ -105,6 +105,10 @@ class ALNSConfig:
     # Promoted after the independent 30-second three-seed paired trial;
     # only DIRECT multi-UAV search uses this bounded local refinement.
     enable_adjacent_polish: bool = True
+    # Experimental composite DIRECT moves preserve whole pickup/delivery
+    # strings and per-UAV task counts instead of sequentially repairing them.
+    enable_tail_exchange: bool = False
+    enable_home_reassignment: bool = False
     relay_enabled: bool = True
     # A relay-aware search has a much larger neighbourhood than DIRECT.
     # Spend most of a fixed budget building a strong DIRECT incumbent, then
@@ -123,6 +127,8 @@ class ALNSConfig:
     # startup task budget on actual global deadline risk rather than task id.
     enable_relay_route_diversity: bool = False
     enable_relay_risk_seed: bool = False
+    # Include on-time handoffs whose route suffixes can still be late.
+    enable_relay_downstream_refine: bool = False
     # Preserve only seed moves already independently checked before the
     # deadline; an unfinished or over-budget candidate is never adopted.
     enable_relay_seed_checkpoint: bool = False
@@ -336,6 +342,7 @@ class _RelaySearchConfig:
     route_diversity: bool = False
     risk_seed: bool = False
     seed_checkpoint: bool = False
+    downstream_refine: bool = False
     sample_every: int = 4
     global_limit: int = 3
     probe_fraction: float = 0.25
@@ -382,11 +389,9 @@ def _relay_refine_pass(
     current_schedule = global_evaluator.evaluate(current)
     current_score = current_schedule.score
     current_has_waiting = current_schedule.total_waiting_min > 1e-12
-    # Only tasks late in the current schedule are worth refining, most-late
-    # first.  Relocating a leg of an on-time task can only chase the third
-    # (distance) objective, and the old id-order scan wasted most of its
-    # global evaluations on tasks whose schedule was already fine.  The
-    # task_limit cap still bounds the number of considered tasks.
+    # The historical late-only shortlist is retained unless the downstream
+    # experiment is enabled. An on-time relay can delay later deliveries on
+    # either route, so its own deadline alone does not bound its global value.
     delivery_times = current_schedule.delivery_times_min
     late_tasks = [
         task_id
@@ -402,6 +407,30 @@ def _relay_refine_pass(
         ),
         reverse=True,
     )
+    if relay_cfg.downstream_refine:
+        def downstream_priority(task_id: int) -> tuple[int, float, float, int]:
+            affected = {task_id}
+            plan = plan_index.task_plans[task_id]
+            for route_index, leg_id in (
+                (plan_index.inbound_route_by_task[task_id], plan.leg_ids[0]),
+                (plan_index.outbound_route_by_task[task_id], plan.leg_ids[1]),
+            ):
+                route = current[route_index]
+                start = route.index(leg_id)
+                for visit in route[start:]:
+                    if visit >= 0:
+                        continue
+                    leg = (problem.leg_registry or {}).get(-visit)
+                    if leg is None:
+                        affected.add(-visit)
+                    elif leg.kind == "RELAY_OUT":
+                        affected.add(leg.task_id)
+            lateness = [max(0.0, delivery_times[t] - problem.task(t).deadline_min)
+                        for t in affected]
+            return (sum(value > 1e-9 for value in lateness), sum(lateness),
+                    delivery_times[task_id] - problem.task(task_id).deadline_min,
+                    -task_id)
+        late_tasks = sorted(relay_tasks, key=downstream_priority, reverse=True)
     considered = 0
     for task_id in late_tasks:
         if task_limit is not None and considered >= task_limit:
@@ -464,6 +493,8 @@ def _relay_refine_pass(
                     counts_toward_k=is_out,
                     event_cap=relay_cfg.event_cap,
                 )
+                if deadline is not None and perf_counter() >= deadline:
+                    raise _SearchDeadlineReached
                 for option in options:
                     if target_index == other_route:
                         other_leg = in_leg if is_out else out_leg
@@ -499,6 +530,8 @@ def _relay_refine_pass(
                     )
                     relay_cfg.global_evaluation_count += 1
                     relay_cfg.refine_candidates_evaluated += 1
+                    if deadline is not None and perf_counter() >= deadline:
+                        raise _SearchDeadlineReached
                     if schedule.feasible and schedule.score < current_score:
                         return candidate_routes
     return current
@@ -3022,6 +3055,7 @@ def solve_alns(
             route_diversity=cfg.enable_relay_route_diversity,
             risk_seed=cfg.enable_relay_risk_seed,
             seed_checkpoint=cfg.enable_relay_seed_checkpoint,
+            downstream_refine=cfg.enable_relay_downstream_refine,
             sample_every=cfg.relay_sample_every,
             global_limit=cfg.relay_global_limit,
             probe_fraction=cfg.relay_probe_fraction,
@@ -3136,6 +3170,13 @@ def solve_alns(
     adjacent_polish_passes = 0
     adjacent_polish_improvements = 0
     adjacent_polish_statistics = {"probes": 0, "position_checks": 0}
+    tail_exchange_active = cfg.enable_tail_exchange and direct_multi_active
+    home_reassignment_active = (
+        cfg.enable_home_reassignment and direct_multi_active
+        and len({problem.home_node(i) for i in range(len(current))}) > 1
+    )
+    tail_exchange_statistics: dict[str, int] = {}
+    home_reassignment_statistics: dict[str, int] = {}
     destroy_operators = DESTROY_OPERATORS + (
         ("deadline_boundary",) if boundary_destroy_active else ()
     ) + (
@@ -3302,6 +3343,19 @@ def solve_alns(
             adjacent_polish_passes += 1
             adjacent_polish_improvements += int(polished != candidate)
             candidate = polished
+        if tail_exchange_active and iteration % 20 == 0:
+            from .route_exchange import bounded_tail_exchange
+            candidate = bounded_tail_exchange(
+                problem, evaluator, candidate, deadline=deadline,
+                pair_offset=4 * (iteration // 20 - 1), max_pairs=4,
+                statistics=tail_exchange_statistics,
+            )
+        if home_reassignment_active and iteration % 40 == 0:
+            from .home_assignment import reassign_route_homes
+            candidate = reassign_route_homes(
+                problem, evaluator, candidate, deadline=deadline,
+                statistics=home_reassignment_statistics,
+            )
         candidate_score = score_of(candidate)
         timed_out = timed_out or (
             deadline is not None and perf_counter() >= deadline
@@ -3467,6 +3521,12 @@ def solve_alns(
             "enable_multiroute_string_destroy": cfg.enable_multiroute_string_destroy,
             "multiroute_string_active": multiroute_string_active,
             "enable_adjacent_polish": cfg.enable_adjacent_polish,
+            "enable_tail_exchange": cfg.enable_tail_exchange,
+            "tail_exchange_active": tail_exchange_active,
+            "tail_exchange_statistics": MappingProxyType(tail_exchange_statistics),
+            "enable_home_reassignment": cfg.enable_home_reassignment,
+            "home_reassignment_active": home_reassignment_active,
+            "home_reassignment_statistics": MappingProxyType(home_reassignment_statistics),
             "adjacent_polish_active": adjacent_polish_active,
             "adjacent_polish_passes": adjacent_polish_passes,
             "adjacent_polish_improvements": adjacent_polish_improvements,
@@ -3481,6 +3541,7 @@ def solve_alns(
                 relay_active and cfg.enable_relay_route_diversity
             ),
             "enable_relay_risk_seed": cfg.enable_relay_risk_seed,
+            "enable_relay_downstream_refine": cfg.enable_relay_downstream_refine,
             "relay_risk_seed_active": bool(
                 relay_active and cfg.enable_relay_seed and cfg.enable_relay_risk_seed
             ),
@@ -3710,6 +3771,15 @@ def solve_relay_staged(
         # Work counters include both real phases; the active flag inherited
         # above still describes the final Relay phase only.
         **combined_polish_work,
+        **{
+            name: MappingProxyType({
+                key: int(warm_result.metadata.get(name, {}).get(key, 0))
+                + int(relay_result.metadata.get(name, {}).get(key, 0))
+                for key in (warm_result.metadata.get(name, {}).keys()
+                            | relay_result.metadata.get(name, {}).keys())
+            })
+            for name in ("tail_exchange_statistics", "home_reassignment_statistics")
+        },
         "method": "C2-Lex-ALNS-Staged",
         "time_limit_seconds": cfg.time_limit_seconds,
         "initial_score": warm_result.metadata.get("initial_score"),

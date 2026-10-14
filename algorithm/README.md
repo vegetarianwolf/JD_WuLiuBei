@@ -10,6 +10,17 @@
 
 ## 当前方法
 
+最新[全局调整与下游接力 HTML 对比](results/global_relay_trials_20261014/index.html)
+保留现有 ALNS，增加三个默认关闭的研究开关：`enable_tail_exchange` 在多机 DIRECT
+中每 20 轮尝试有界的零载荷等任务数尾段交换；`enable_home_reassignment` 每 40 轮
+为既有路线在固定起点槽位间求最优匹配；`enable_relay_downstream_refine` 在中继
+精化时考虑后续受影响任务，允许改进自身已按时的接力任务。前两项也可作用于 Relay
+的 DIRECT 预热；实际接力阶段仍采用完整交接调度评分，所有候选须通过规范校验。
+官方完整规模、四策略、三个种子的 20 秒配对初筛中，全局候选 5 胜 7 负，追加
+下游接力的消融 2 胜 4 负。未过门槛，不启用新默认或扩大测试。33 次运行全部通过
+独立审计，测后另补中继精化两处截止时间检查。协议、限制和使用命令见
+[本批说明](results/global_relay_trials_20261014/README.md)。
+
 新增独立完整求解器 `Joint-Relay-VNS`，CLI 使用 `--method joint-relay`。
 它在同一搜索状态中联合调整两任务的分机、直送/中继、站点与访问次序，
 不调用 ALNS 搜索或分阶段 DIRECT 预热；其他邻域负责单任务模式修改及访问

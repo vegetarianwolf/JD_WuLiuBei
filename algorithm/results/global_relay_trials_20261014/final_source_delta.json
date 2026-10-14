@@ -1,0 +1,16 @@
+{
+  "measured_source_archive": "sources/candidate.zip",
+  "measured_alns_sha256": "3f88a5b4dd6f01488a623c5892915566c7efe77e5ae7f1a21cef8353c56c1789",
+  "final_alns_path": "algorithm/src/uav_dispatch/alns.py",
+  "final_alns_sha256": "ceb8af733d6a3b5ad080ef09766221b33620d86ca5f3db18de0f839992293806",
+  "patch": "post_measurement_deadline_fix.patch",
+  "patch_sha256": "5446bd351b6fdde355428d3407b0c14a949e06f88086f8c3b61044f813a94021",
+  "change": "Only adds deadline checks after relay-leg insertion enumeration and global delta evaluation in _relay_refine_pass. Overdue candidates raise the existing deadline exception and cannot become the startup incumbent. No strategy/parameter or default-promotion changes.",
+  "quality_measurement": "All 33 completed runs use the frozen archives. The final deadline guard was regression-tested, not re-benchmarked; no performance gain is attributed to it.",
+  "default_flags": {
+    "enable_tail_exchange": false,
+    "enable_home_reassignment": false,
+    "enable_relay_downstream_refine": false
+  },
+  "regression_test_result": "29 passed, test_relay_downstream.py test_relay_incumbent.py test_global_move_integration.py"
+}

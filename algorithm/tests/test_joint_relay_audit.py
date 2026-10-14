@@ -156,8 +156,30 @@ def test_aborted_work_is_counted_and_cells_cannot_be_retried(tmp_path):
         audit._budget(tmp_path, [{**attempt, "end_to_end_seconds": 1.}])
 
 
-def test_source_snapshots_bind_baseline_and_allow_only_isolated_solver_integration(tmp_path):
+@pytest.fixture
+def historical_joint_snapshots(monkeypatch):
+    """Test the historical protocol against its own frozen solver generation."""
     protocol = audit._protocol()
+    archived = protocol.ROOT / "algorithm/results/joint_relay_trials_20261014/batch1"
+    original = protocol.base.read_json(archived / "manifest.json")
+    assert original["baseline_commit"] == protocol.BASELINE_COMMIT
+
+    def snapshot(path, commit=None):
+        assert commit in (None, protocol.BASELINE_COMMIT)
+        source = original["source_snapshots"]["baseline" if commit else "joint"]
+        frozen = archived / source["path"]
+        assert protocol.base.sha256(frozen) == source["sha256"]
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(frozen.read_bytes())
+
+    # Later solver modules must not be silently allowed by this old audit.
+    # Replace only test input construction, retaining every audit assertion.
+    monkeypatch.setattr(protocol, "_snapshot", snapshot)
+    return protocol
+
+
+def test_source_snapshots_bind_baseline_and_allow_only_isolated_solver_integration(tmp_path, historical_joint_snapshots):
+    protocol = historical_joint_snapshots
     directory = tmp_path / "batch"
     manifest = protocol.prepare(directory)
     audit._manifest(manifest)

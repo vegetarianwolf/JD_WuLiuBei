@@ -141,8 +141,30 @@ def test_decision_audit_rejects_missing_reference_and_changed_selection(tmp_path
         audit._decision_audit(tmp_path, rows)
 
 
-def test_audit_rejects_changed_frozen_manifest_and_baseline_archive(tmp_path):
+@pytest.fixture
+def historical_relay_snapshots(monkeypatch):
+    """Keep historical audit input independent of new checkout modules."""
     protocol = audit._protocol()
+    archived = protocol.ROOT / "algorithm/results/relay_trials_20261013/batch1"
+    original = protocol.base.read_json(archived / "manifest.json")
+    assert original["baseline_commit"] == protocol.BASELINE_COMMIT
+
+    def snapshot(path, commit=None):
+        assert commit in (None, protocol.BASELINE_COMMIT)
+        source = original["source_snapshots"]["baseline" if commit else "checkpoint"]
+        frozen = archived / source["path"]
+        assert protocol.base.sha256(frozen) == source["sha256"]
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(frozen.read_bytes())
+
+    # The old helper enumerates live files even for a historical Git ref.
+    # Supply its original immutable archives instead of weakening the audit.
+    monkeypatch.setattr(protocol.base, "_snapshot", snapshot)
+    return protocol
+
+
+def test_audit_rejects_changed_frozen_manifest_and_baseline_archive(tmp_path, historical_relay_snapshots):
+    protocol = historical_relay_snapshots
     directory = tmp_path / "batch"
     manifest = protocol.prepare(directory)
     audit._manifest(manifest)

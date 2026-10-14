@@ -1,0 +1,377 @@
+{
+  "schema_version": 1,
+  "retrieval_scope": "targeted, bounded; non-exhaustive",
+  "access_date": "2026-10-14",
+  "timezone": "Asia/Shanghai",
+  "skill_path": "/Users/vegetarianwolf/.agent-skills/src/scientific-agent-skills/skills/paper-lookup/SKILL.md",
+  "references_read": [
+    "references/arxiv.md",
+    "references/crossref.md",
+    "references/openalex.md"
+  ],
+  "tools": [
+    "curl via exec_command",
+    "bundled scripts/arxiv_atom.py",
+    "bundled scripts/openalex_abstract.py",
+    "web search/open for primary publisher and arXiv pages"
+  ],
+  "terminal_http_attempts": 14,
+  "requests": [
+    {
+      "id": "01",
+      "database": "Crossref",
+      "endpoint": "https://api.crossref.org/works",
+      "parameters": {
+        "query.bibliographic": "A hybrid algorithm for a class of vehicle routing problems Subramanian Uchoa Ochi",
+        "rows": 3
+      },
+      "access_date": "2026-10-14",
+      "timezone": "Asia/Shanghai",
+      "http_status": 0,
+      "curl_exit_code": 6,
+      "note": "Sandbox DNS lookup failed; identical bounded request repeated with network escalation."
+    },
+    {
+      "id": "02",
+      "database": "Crossref",
+      "endpoint": "https://api.crossref.org/works",
+      "parameters": {
+        "query.bibliographic": "A hybrid algorithm for a class of vehicle routing problems Subramanian Uchoa Ochi",
+        "rows": 3
+      },
+      "access_date": "2026-10-14",
+      "timezone": "Asia/Shanghai",
+      "http_status": 200,
+      "curl_exit_code": 0,
+      "raw_file": "raw/crossref_route_pool.json",
+      "bytes": 74630,
+      "sha256": "45f1c4392946315e7caf08d12ebcaf5bfefc6761f62a4467a1a925f366692881",
+      "shape_check": {
+        "status": "ok",
+        "message_type": "work-list",
+        "total_results": 3232605,
+        "returned": 3,
+        "exhaustive": false,
+        "pages": 1
+      }
+    },
+    {
+      "id": "03",
+      "database": "arXiv",
+      "endpoint": "https://export.arxiv.org/api/query",
+      "parameters": {
+        "search_query": "(ti:drone OR ti:drone-assisted) AND (abs:relay OR abs:pickup)",
+        "start": 0,
+        "max_results": 6,
+        "sortBy": "relevance"
+      },
+      "access_date": "2026-10-14",
+      "timezone": "Asia/Shanghai",
+      "http_status": 200,
+      "curl_exit_code": 0,
+      "raw_file": "raw/arxiv_drone_query.xml",
+      "bytes": 14746,
+      "sha256": "d596192b5f8b12af55f07ec3060ad0b7e15fd23613bae0cdda6069898133ef94",
+      "note": "Bundled arxiv_atom.py exit 0; executed query matches requested. 16 total, first 6 returned. All 6 excluded as communication/data relay, not physical package logistics."
+    },
+    {
+      "id": "04",
+      "database": "OpenAlex",
+      "endpoint": "https://api.openalex.org/works",
+      "parameters": {
+        "search": "drone delivery relay transshipment asynchronous",
+        "per_page": 5
+      },
+      "access_date": "2026-10-14",
+      "timezone": "Asia/Shanghai",
+      "http_status": 200,
+      "curl_exit_code": 0,
+      "raw_file": "raw/openalex_relay_search.json",
+      "bytes": 50314,
+      "sha256": "706e19e0ddd1644ac2d29f55f58a80d426ab2ff9fa5ea2f0b477589bad364cb9",
+      "note": "meta.count=3, returned 3; no directly suitable paper. Bundled openalex_abstract.py produced 3 abstracts.",
+      "shape_check": {
+        "meta_count": 3,
+        "returned": 3,
+        "pages": 1
+      }
+    },
+    {
+      "id": "05",
+      "database": "Crossref",
+      "endpoint": "https://api.crossref.org/works",
+      "parameters": {
+        "query.bibliographic": "An adaptive large neighborhood search heuristic for the pickup and delivery problem with time windows Ropke Pisinger",
+        "rows": 3
+      },
+      "access_date": "2026-10-14",
+      "timezone": "Asia/Shanghai",
+      "http_status": 200,
+      "curl_exit_code": 0,
+      "raw_file": "raw/crossref_alns.json",
+      "bytes": 32819,
+      "sha256": "feadd8bf7acb22c434626178dbb405f5592ec758684e1feac0f09e8035d65b4e",
+      "shape_check": {
+        "status": "ok",
+        "message_type": "work-list",
+        "total_results": 116853,
+        "returned": 3,
+        "exhaustive": false,
+        "pages": 1
+      }
+    },
+    {
+      "id": "06",
+      "database": "arXiv",
+      "endpoint": "https://export.arxiv.org/api/query",
+      "parameters": {
+        "id_list": "2609.00065"
+      },
+      "access_date": "2026-10-14",
+      "timezone": "Asia/Shanghai",
+      "http_status": 0,
+      "curl_exit_code": 28,
+      "note": "30-second timeout, 0 bytes. Official abstract page used as fallback; not parsed as zero results."
+    },
+    {
+      "id": "07",
+      "database": "Crossref",
+      "endpoint": "https://api.crossref.org/works",
+      "parameters": {
+        "query.bibliographic": "drone relay delivery pickup drones package transfers",
+        "rows": 5
+      },
+      "access_date": "2026-10-14",
+      "timezone": "Asia/Shanghai",
+      "http_status": 200,
+      "curl_exit_code": 0,
+      "raw_file": "raw/crossref_drone_relay.json",
+      "bytes": 78350,
+      "sha256": "3ac01d9f3f6eb91d6acc93d677911284f2459d48e4c1fb9baaeda55072617bf8",
+      "note": "Metadata and abstracts only. A 2026 drone-ADV transshipment preprint is a related lead but excluded from implementation evidence because of heterogeneous fleet, depot returns and time-dependent no-fly zones.",
+      "shape_check": {
+        "status": "ok",
+        "message_type": "work-list",
+        "total_results": 591882,
+        "returned": 5,
+        "exhaustive": false,
+        "pages": 1
+      }
+    },
+    {
+      "id": "08",
+      "database": "OpenAlex",
+      "endpoint": "https://api.openalex.org/works/doi:10.1016%2Fj.cor.2013.01.013",
+      "parameters": {},
+      "access_date": "2026-10-14",
+      "timezone": "Asia/Shanghai",
+      "http_status": 200,
+      "curl_exit_code": 0,
+      "raw_file": "raw/openalex_route_pool.json",
+      "bytes": 19334,
+      "sha256": "2184fe683e8afbebf780ca678a67beb5bf471a05bf8f37144bee1b7dda33b95e",
+      "note": "Matched exact DOI/title. No abstract_inverted_index in full response. OA location is not proof of readable full text; publisher PDF later returned 403.",
+      "shape_check": {
+        "exact_doi_match": true,
+        "abstract_present": false
+      }
+    },
+    {
+      "id": "09",
+      "database": "Elsevier publisher",
+      "endpoint": "https://www.sciencedirect.com/science/article/pii/S030505481300021X/pdf",
+      "parameters": {},
+      "access_date": "2026-10-14",
+      "timezone": "Asia/Shanghai",
+      "http_status": 403,
+      "curl_exit_code": 0,
+      "raw_file": "raw/route_pool_download.body",
+      "bytes": 832805,
+      "sha256": "e4238e86930b1d7b3732bef4e29055e83af77f537f3b81683e1017c869bc4977",
+      "note": "Response is an HTML access-denied body, not a PDF; no full text read."
+    },
+    {
+      "id": "10",
+      "database": "arXiv",
+      "endpoint": "https://arxiv.org/abs/2609.00065",
+      "parameters": {},
+      "access_date": "2026-10-14",
+      "timezone": "Asia/Shanghai",
+      "http_status": 200,
+      "curl_exit_code": 0,
+      "raw_file": "raw/arxiv_skill.html",
+      "bytes": 42282,
+      "sha256": "1e27e730621e53c823a855c5f814e9b95ea69755e294a646bb9aeddefe2a7228",
+      "note": "Official citation metadata and submission history checked; title, five authors, 2026, v2 verified. No journal reference or publisher DOI listed. Used versionless public link."
+    },
+    {
+      "id": "11",
+      "database": "Crossref",
+      "endpoint": "https://api.crossref.org/works",
+      "parameters": {
+        "query.bibliographic": "Hybrid genetic search for the CVRP Open-source implementation and SWAP* neighborhood Vidal",
+        "rows": 3
+      },
+      "access_date": "2026-10-14",
+      "timezone": "Asia/Shanghai",
+      "http_status": 200,
+      "curl_exit_code": 0,
+      "raw_file": "raw/crossref_swapstar.json",
+      "bytes": 23741,
+      "sha256": "051a7f60b50388c951a4ce960ccaeeddbdb5cbb8f01eb055f5d7201795eb4c21",
+      "shape_check": {
+        "status": "ok",
+        "message_type": "work-list",
+        "total_results": 104354,
+        "returned": 3,
+        "exhaustive": false,
+        "pages": 1
+      }
+    },
+    {
+      "id": "12",
+      "database": "arXiv",
+      "endpoint": "https://export.arxiv.org/api/query",
+      "parameters": {
+        "id_list": "2012.10384"
+      },
+      "access_date": "2026-10-14",
+      "timezone": "Asia/Shanghai",
+      "http_status": 0,
+      "curl_exit_code": 28,
+      "note": "30-second timeout, 0 bytes. Official HTML full text was accessible and used instead."
+    },
+    {
+      "id": "13",
+      "database": "Crossref",
+      "endpoint": "https://api.crossref.org/works",
+      "parameters": {
+        "query.bibliographic": "An Adaptive Large Neighborhood Search for the Pickup and Delivery Problem with Transfers Masson Lehuede Peton",
+        "rows": 2
+      },
+      "access_date": "2026-10-14",
+      "timezone": "Asia/Shanghai",
+      "http_status": 200,
+      "curl_exit_code": 0,
+      "raw_file": "raw/crossref_transfer.json",
+      "bytes": 21299,
+      "sha256": "d1639486676236881a0a64b0e53be5c47f2e079105d752d4837dfb737149d575",
+      "shape_check": {
+        "status": "ok",
+        "message_type": "work-list",
+        "total_results": 38371,
+        "returned": 2,
+        "exhaustive": false,
+        "pages": 1
+      }
+    },
+    {
+      "id": "14",
+      "database": "arXiv",
+      "endpoint": "https://arxiv.org/html/2012.10384",
+      "parameters": {},
+      "access_date": "2026-10-14",
+      "timezone": "Asia/Shanghai",
+      "http_status": 200,
+      "curl_exit_code": 0,
+      "note": "Full text read; content fingerprint in full_text_evidence; body not redistributed."
+    }
+  ],
+  "web_followups": [
+    {
+      "queries": [
+        "\"A hybrid algorithm for a class of vehicle routing problems\" \"set partitioning\"",
+        "site.arxiv.org \"Hybrid genetic search for the CVRP\""
+      ],
+      "purpose": "Resolve missing abstract/full-text path after API metadata lookup",
+      "accepted_primary_urls": [
+        "https://www.sciencedirect.com/science/article/pii/S030505481300021X",
+        "https://arxiv.org/abs/2012.10384"
+      ],
+      "note": "Only publisher abstract and original research paper used; secondary indexes not used as evidence."
+    },
+    {
+      "open_urls": [
+        "https://www.sciencedirect.com/science/article/pii/S030505481300021X",
+        "https://arxiv.org/html/2012.10384"
+      ],
+      "results": [
+        "Publisher open failed 403; publisher search result exposed abstract. Evidence remains abstract-only.",
+        "Official arXiv HTML fully accessible; sections 3-5 read."
+      ]
+    }
+  ],
+  "full_text_evidence": [
+    {
+      "url": "https://arxiv.org/html/2012.10384",
+      "http_status": 200,
+      "bytes": 810244,
+      "sha256": "4ef9dd7e5381d5ae749ac6f499c0d39d4e58d4a45a87cd2e24084d1e79f5df2b",
+      "sections_read": [
+        "3 The SWAP* Neighborhood",
+        "4 Open-Source Implementation",
+        "5 Experimental Analyses"
+      ],
+      "retention": "Full text inspected; not redistributed in repository. Fingerprint retained."
+    }
+  ],
+  "reused_evidence": [
+    {
+      "path": "papers/notes/relay_20261013/provenance.json",
+      "sha256": "cf185bb3a61ea596475506f3544e761c0d00732b1ffad0675eff4cef96b8a191",
+      "paper_doi": "10.1609/aaai.v28i1.9034",
+      "status": "Previous 2026-10-13 official PDF reading notes reused; no new full-text fetch."
+    }
+  ],
+  "selected_papers": [
+    {
+      "doi": "10.1287/trsc.1050.0135",
+      "title": "An Adaptive Large Neighborhood Search Heuristic for the Pickup and Delivery Problem with Time Windows",
+      "evidence": "Crossref metadata + abstract; no full text"
+    },
+    {
+      "doi": "10.1016/j.cor.2013.01.013",
+      "title": "A hybrid algorithm for a class of vehicle routing problems",
+      "evidence": "Crossref/OpenAlex metadata + publisher abstract shown by primary-source search result; full PDF access failed 403"
+    },
+    {
+      "doi": "10.1016/j.cor.2021.105643",
+      "arxiv_id": "2012.10384",
+      "title": "Hybrid genetic search for the CVRP: Open-source implementation and SWAP* neighborhood",
+      "evidence": "Crossref publication metadata + original arXiv HTML full text sections 3-5"
+    },
+    {
+      "doi": "10.1287/trsc.1120.0432",
+      "title": "An Adaptive Large Neighborhood Search for the Pickup and Delivery Problem with Transfers",
+      "evidence": "Crossref metadata + abstract; no full text"
+    },
+    {
+      "doi": "10.1609/aaai.v28i1.9034",
+      "title": "Scheduling for Transfers in Pickup and Delivery Problems with Very Large Neighborhood Search",
+      "evidence": "Prior official full-text reading reused with provenance hash"
+    }
+  ],
+  "skill_citation_verification": {
+    "title": "Scientific Agent Skills: A Library of Procedural Knowledge for Research Agents",
+    "authors": [
+      "Timothy Kassis",
+      "Vinayak Agarwal",
+      "Yuhuan He",
+      "Darshil Patel",
+      "Aubrey M. Brueckner"
+    ],
+    "year": 2026,
+    "latest_version_seen": "v2",
+    "latest_revision": "2026-09-02",
+    "published_version_found": false,
+    "url": "https://arxiv.org/abs/2609.00065",
+    "evidence_file": "raw/arxiv_skill.html"
+  },
+  "limitations": [
+    "Not an exhaustive literature review; first pages only. Crossref fuzzy total-results is not a relevant-paper count.",
+    "Initial arXiv physical-relay query returned communication/data-relay false positives, all excluded. OpenAlex relay query returned no directly suitable study; this does not imply absence of relevant literature.",
+    "Two arXiv identifier API timeouts and publisher 403 are retained as failures. Metadata/OA flags are never treated as full text.",
+    "No API keys used; requests small and serialized per API.",
+    "No external-study performance gain is projected to the competition instance."
+  ]
+}
