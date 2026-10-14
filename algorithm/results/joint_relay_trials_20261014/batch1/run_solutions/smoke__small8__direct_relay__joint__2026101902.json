@@ -1,0 +1,626 @@
+{
+  "source": "algorithm/命题1-低空经济场景下的物流无人机调度算法数据.csv",
+  "problem": {
+    "task_count": 8,
+    "drone_count": 2,
+    "max_tasks_per_drone": 4,
+    "capacity": 2,
+    "speed_km_per_min": 0.9,
+    "depot_km": [
+      0.0,
+      0.0
+    ],
+    "drone_homes": [
+      "origin",
+      "origin"
+    ],
+    "deployment": {
+      "distribution": {
+        "depot": 2
+      },
+      "homes": [
+        "origin",
+        "origin"
+      ]
+    },
+    "open_routes": true,
+    "service_time_min": 0.0,
+    "objective_order": [
+      "late_count",
+      "total_lateness_min",
+      "distance_km"
+    ]
+  },
+  "valid": true,
+  "violations": [],
+  "score": {
+    "late_count": 0,
+    "total_lateness_min": 0.0,
+    "distance_km": 40.094524907333636
+  },
+  "on_time_rate": 1.0,
+  "max_lateness_min": 0.0,
+  "max_route_distance_km": 21.86216289467694,
+  "max_route_completion_min": 32.4109108586532,
+  "runtime_seconds": 0.07408229203429073,
+  "iterations": 80,
+  "iterations_per_second": 1079.8801954314551,
+  "relay": {
+    "relay_count": 2,
+    "relay_candidate_coverage": 1.0,
+    "relay_coordinates": [
+      [
+        1,
+        3.985,
+        5.140000000000001
+      ],
+      [
+        2,
+        4.574999999999999,
+        3.31
+      ]
+    ],
+    "direct_task_count": 6,
+    "relay_task_count": 2,
+    "relay_share": 0.25,
+    "cross_uav_handoff_count": 2,
+    "same_uav_relay_count": 0,
+    "total_relay_waiting_time": 8.119618753456606,
+    "average_relay_waiting_time": 4.059809376728303,
+    "max_relay_waiting_time": 8.119618753456606,
+    "relay_usage_per_station": [
+      {
+        "station_id": 1,
+        "x": 3.985,
+        "y": 5.140000000000001,
+        "drop_count": 0,
+        "pickup_count": 0,
+        "task_count": 0,
+        "average_wait": 0.0
+      },
+      {
+        "station_id": 2,
+        "x": 4.574999999999999,
+        "y": 3.31,
+        "drop_count": 2,
+        "pickup_count": 2,
+        "task_count": 2,
+        "average_wait": 4.059809376728303
+      }
+    ],
+    "per_drone": [
+      {
+        "drone_id": 1,
+        "original_task_count": 4,
+        "transport_leg_count": 5,
+        "relay_drop_count": 1,
+        "relay_pickup_count": 1,
+        "distance_km": 18.2323620126567
+      },
+      {
+        "drone_id": 2,
+        "original_task_count": 4,
+        "transport_leg_count": 5,
+        "relay_drop_count": 1,
+        "relay_pickup_count": 1,
+        "distance_km": 21.86216289467694
+      }
+    ]
+  },
+  "task_plans": {
+    "1": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "2": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "3": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "4": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "5": {
+      "mode": "RELAY",
+      "relay_id": 2,
+      "leg_ids": [
+        25,
+        26
+      ]
+    },
+    "6": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "7": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "8": {
+      "mode": "RELAY",
+      "relay_id": 2,
+      "leg_ids": [
+        39,
+        40
+      ]
+    }
+  },
+  "metadata": {
+    "method": "Joint-Relay-VNS",
+    "seed": 2026101902,
+    "relay_enabled": true,
+    "time_limit_seconds": 3.9979165000258945,
+    "initial_score": [
+      0,
+      0.0,
+      50.56319770662065
+    ],
+    "best_trajectory": [
+      [
+        0,
+        6.008404307067394e-05,
+        0,
+        0.0,
+        50.56319770662065
+      ],
+      [
+        1,
+        0.0007953339954838157,
+        0,
+        0.0,
+        44.71701803792195
+      ],
+      [
+        24,
+        0.02084529201965779,
+        0,
+        0.0,
+        40.57288122090245
+      ],
+      [
+        41,
+        0.03885650000302121,
+        0,
+        0.0,
+        40.094524907333636
+      ]
+    ],
+    "best_update_count": 3,
+    "time_to_best_seconds": 0.03885650000302121,
+    "accepted_solutions": 12,
+    "iterations_per_second": 1079.8801954314551,
+    "operator_uses": {
+      "joint_pair": 31,
+      "single_plan": 25,
+      "adjacent_order": 24
+    },
+    "operator_statistics": {},
+    "operator_weights": {},
+    "profiling": {
+      "route_full_evaluation_count": 0,
+      "route_delta_evaluation_count": 27583,
+      "route_materialization_count": 5062,
+      "relay_beam_build_count": 0,
+      "relay_beam_cache_hit_count": 0,
+      "relay_leg_cache_hit_count": 0,
+      "relay_plans_for_task_count": 0,
+      "relay_global_evaluation_count": 0,
+      "repair_rank_evaluation_count": 0,
+      "repair_exact_evaluation_count": 0,
+      "regret_distinct_round_count": 0,
+      "regret_distinct_ranking_count": 0,
+      "regret_distinct_shortage_count": 0,
+      "regret_position_fallback_count": 0,
+      "regret_position_shortage_count": 0,
+      "regret_all_infinite_round_count": 0,
+      "surface_build_count": 200,
+      "surface_cache_hit_count": 3150,
+      "surface_cache_miss_count": 200,
+      "plan_generations": 335,
+      "generated_plans": 3970,
+      "global_evaluations": 4242,
+      "full_evaluations": 167,
+      "joint_pair_probes": 31,
+      "single_plan_probes": 25,
+      "adjacent_probes": 192,
+      "rejected_cycles": 285,
+      "rejected_invalid": 38,
+      "accepted_improvements": 7,
+      "accepted_perturbations": 5,
+      "deadline_reached": false
+    },
+    "joint_search": {
+      "plan_generations": 335,
+      "generated_plans": 3970,
+      "global_evaluations": 4242,
+      "full_evaluations": 167,
+      "joint_pair_probes": 31,
+      "single_plan_probes": 25,
+      "adjacent_probes": 192,
+      "rejected_cycles": 285,
+      "rejected_invalid": 38,
+      "accepted_improvements": 7,
+      "accepted_perturbations": 5,
+      "deadline_reached": false
+    },
+    "relay": {
+      "relay_count": 2,
+      "relay_candidate_coverage": 1.0,
+      "relay_coordinates": [
+        [
+          1,
+          3.985,
+          5.140000000000001
+        ],
+        [
+          2,
+          4.574999999999999,
+          3.31
+        ]
+      ],
+      "direct_task_count": 6,
+      "relay_task_count": 2,
+      "relay_share": 0.25,
+      "cross_uav_handoff_count": 2,
+      "same_uav_relay_count": 0,
+      "total_relay_waiting_time": 8.119618753456606,
+      "average_relay_waiting_time": 4.059809376728303,
+      "max_relay_waiting_time": 8.119618753456606,
+      "relay_usage_per_station": [
+        {
+          "station_id": 1,
+          "x": 3.985,
+          "y": 5.140000000000001,
+          "drop_count": 0,
+          "pickup_count": 0,
+          "task_count": 0,
+          "average_wait": 0.0
+        },
+        {
+          "station_id": 2,
+          "x": 4.574999999999999,
+          "y": 3.31,
+          "drop_count": 2,
+          "pickup_count": 2,
+          "task_count": 2,
+          "average_wait": 4.059809376728303
+        }
+      ],
+      "per_drone": [
+        {
+          "drone_id": 1,
+          "original_task_count": 4,
+          "transport_leg_count": 5,
+          "relay_drop_count": 1,
+          "relay_pickup_count": 1,
+          "distance_km": 18.2323620126567
+        },
+        {
+          "drone_id": 2,
+          "original_task_count": 4,
+          "transport_leg_count": 5,
+          "relay_drop_count": 1,
+          "relay_pickup_count": 1,
+          "distance_km": 21.86216289467694
+        }
+      ]
+    },
+    "direct_warmup": false
+  },
+  "delivery_times_min": {
+    "1": 29.30892025921349,
+    "2": 10.524239021284231,
+    "3": 32.4109108586532,
+    "4": 7.5577180094624286,
+    "5": 17.79096285827246,
+    "6": 20.258180014063,
+    "7": 23.003945463352512,
+    "8": 20.309468056357808
+  },
+  "routes": [
+    {
+      "drone_id": 1,
+      "task_count": 4,
+      "transport_leg_count": 5,
+      "relay_drop_count": 1,
+      "relay_pickup_count": 1,
+      "distance_km": 18.2323620126567,
+      "completion_time_min": 20.258180014063,
+      "late_count": 0,
+      "total_lateness_min": 0.0,
+      "on_time_task_count": 4,
+      "on_time_rate": 1.0,
+      "encoded_visits": [
+        2,
+        4,
+        -4,
+        -2,
+        39,
+        6,
+        -39,
+        26,
+        -26,
+        -6
+      ],
+      "visits": [
+        {
+          "task_id": 2,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.09,
+            1.41
+          ],
+          "arrival_time_min": 2.801278367786243
+        },
+        {
+          "task_id": 4,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.28,
+            3.13
+          ],
+          "arrival_time_min": 4.724014329962775
+        },
+        {
+          "task_id": 4,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.67,
+            4.02
+          ],
+          "arrival_time_min": 7.5577180094624286
+        },
+        {
+          "task_id": 2,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.06,
+            5.21
+          ],
+          "arrival_time_min": 10.524239021284231
+        },
+        {
+          "task_id": 8,
+          "leg_id": 39,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": 2,
+          "location_km": [
+            6.66,
+            3.13
+          ],
+          "arrival_time_min": 12.87769720703956
+        },
+        {
+          "task_id": 6,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.5,
+            2.4
+          ],
+          "arrival_time_min": 13.70806229110771
+        },
+        {
+          "task_id": 8,
+          "leg_id": 39,
+          "action": "relay_drop",
+          "kind": "RELAY_DROP",
+          "relay_id": 2,
+          "location_km": [
+            4.574999999999999,
+            3.31
+          ],
+          "arrival_time_min": 16.073900695991842
+        },
+        {
+          "task_id": 5,
+          "leg_id": 26,
+          "action": "relay_pickup",
+          "kind": "RELAY_PICKUP",
+          "relay_id": 2,
+          "location_km": [
+            4.574999999999999,
+            3.31
+          ],
+          "arrival_time_min": 16.073900695991842
+        },
+        {
+          "task_id": 5,
+          "leg_id": 26,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": 2,
+          "location_km": [
+            3.05,
+            3.56
+          ],
+          "arrival_time_min": 17.79096285827246
+        },
+        {
+          "task_id": 6,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.6,
+            5.15
+          ],
+          "arrival_time_min": 20.258180014063
+        }
+      ]
+    },
+    {
+      "drone_id": 2,
+      "task_count": 4,
+      "transport_leg_count": 5,
+      "relay_drop_count": 1,
+      "relay_pickup_count": 1,
+      "distance_km": 21.86216289467694,
+      "completion_time_min": 32.4109108586532,
+      "late_count": 0,
+      "total_lateness_min": 0.0,
+      "on_time_task_count": 4,
+      "on_time_rate": 1.0,
+      "encoded_visits": [
+        25,
+        7,
+        -25,
+        40,
+        -40,
+        3,
+        -7,
+        1,
+        -1,
+        -3
+      ],
+      "visits": [
+        {
+          "task_id": 5,
+          "leg_id": 25,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": 2,
+          "location_km": [
+            5.28,
+            1.98
+          ],
+          "arrival_time_min": 6.26560274656619
+        },
+        {
+          "task_id": 7,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.25,
+            2.19
+          ],
+          "arrival_time_min": 6.501305006961705
+        },
+        {
+          "task_id": 5,
+          "leg_id": 25,
+          "action": "relay_drop",
+          "kind": "RELAY_DROP",
+          "relay_id": 2,
+          "location_km": [
+            4.574999999999999,
+            3.31
+          ],
+          "arrival_time_min": 7.954281942535235
+        },
+        {
+          "task_id": 8,
+          "leg_id": 40,
+          "action": "relay_pickup",
+          "kind": "RELAY_PICKUP",
+          "relay_id": 2,
+          "location_km": [
+            4.574999999999999,
+            3.31
+          ],
+          "arrival_time_min": 16.073900695991842
+        },
+        {
+          "task_id": 8,
+          "leg_id": 40,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": 2,
+          "location_km": [
+            1.68,
+            5.79
+          ],
+          "arrival_time_min": 20.309468056357808
+        },
+        {
+          "task_id": 3,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.14,
+            7.79
+          ],
+          "arrival_time_min": 22.611265528973128
+        },
+        {
+          "task_id": 7,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.46,
+            7.64
+          ],
+          "arrival_time_min": 23.003945463352512
+        },
+        {
+          "task_id": 1,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.62,
+            7.66
+          ],
+          "arrival_time_min": 25.404048341805954
+        },
+        {
+          "task_id": 1,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.12,
+            5.19
+          ],
+          "arrival_time_min": 29.30892025921349
+        },
+        {
+          "task_id": 3,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.83,
+            2.49
+          ],
+          "arrival_time_min": 32.4109108586532
+        }
+      ]
+    }
+  ]
+}

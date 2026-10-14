@@ -1,0 +1,119 @@
+{
+  "kind": "joint_relay_extension",
+  "schema_version": 1,
+  "baseline_variant": "baseline",
+  "baseline_commit": "ac625e5a38ec2b92f239df2d5ca1017cbeb3ad9b",
+  "input_path": "algorithm/命题1-低空经济场景下的物流无人机调度算法数据.csv",
+  "input_sha256": "386d3fbaa9009aeed947493782d657ed0b30b25d369c8187bfc9619fc7e31d25",
+  "source_snapshots": {
+    "baseline": {
+      "path": "sources/baseline.zip",
+      "sha256": "5c7295b1812c20d97a22f3396bb5811b0129e7769432fe4e03773ff0e6b0c57c",
+      "config": {
+        "solver": "alns"
+      },
+      "source_ref": "ac625e5a38ec2b92f239df2d5ca1017cbeb3ad9b",
+      "label": "当前 main 分阶段 ALNS"
+    },
+    "joint": {
+      "path": "sources/joint.zip",
+      "sha256": "359d3e9c8d5e370978aebe9e441feafb4d54698155af67a8b2915c9f4277de1a",
+      "config": {
+        "solver": "joint"
+      },
+      "source_ref": "working_tree",
+      "label": "全程联合接力 VNS"
+    }
+  },
+  "execution_sources": {
+    "run_joint_relay_trials": {
+      "path": "sources/run_joint_relay_trials.py",
+      "sha256": "f8dafb61299a800c1575a5158b4b8eb8c9531398ff792409c98af8c61d409282"
+    },
+    "run_scenario_comparison": {
+      "path": "sources/run_scenario_comparison.py",
+      "sha256": "5566709d474ac03e9e3a6118a0b947098d785281f65f2c8bcc0074b8eb34ca1c"
+    },
+    "run_optimization_experiments": {
+      "path": "sources/run_optimization_experiments.py",
+      "sha256": "8431df7578301b4ea875d32c6d97250698fc626696f9b79f522a2dd2a0a3e26a"
+    },
+    "run_joint_relay_extension": {
+      "path": "sources/run_joint_relay_extension.py",
+      "sha256": "03c9349c85112fa764860186bff34082c6d2057f731b13380ed51d4914627660"
+    }
+  },
+  "seeds": {
+    "medium": [
+      2026101931,
+      2026101932
+    ]
+  },
+  "protocol": {
+    "stage_cases": {
+      "medium": [
+        "fleet200__direct_relay_stations"
+      ]
+    },
+    "stage_budgets_seconds": {
+      "medium": {
+        "fleet200__direct_relay_stations": 30
+      }
+    },
+    "stage_caps_seconds": {
+      "medium": 120
+    },
+    "total_experiment_seconds": 540,
+    "reserved_seconds": 30,
+    "smoke_iterations": 80,
+    "primary_case": "fleet200__direct_relay_stations",
+    "fleet": {
+      "tasks": 200,
+      "drones": 8,
+      "K": 25,
+      "stations": 4
+    },
+    "small": {
+      "tasks": 8,
+      "drones": 2,
+      "K": 4,
+      "stations": 2
+    },
+    "capacity": 2,
+    "speed_km_per_min": 0.9,
+    "relay_location_seed": 42,
+    "safety_margin_seconds": 1.0,
+    "objective": "逾期任务数→总逾期分钟→航程，严格三级词典序",
+    "K_interpretation": "延续论文扩展：只统计最终交付责任，前半程转运不占K；存储型异步交接",
+    "baseline_solver": "solve_relay_staged, DIRECT预热80%，当前main默认开关",
+    "candidate_solver": "独立solve_joint_relay，全程联合搜索，无ALNS搜索和DIRECT预热阶段",
+    "pairing": "同官方实例/起点/站点/种子/初解/端到端总预算，仅求解流程不同",
+    "screen_gate": "全部预定初筛配对合法且预算内，任一配对获胜即可进入验证",
+    "default_gate": "两组追加仅诊断启动慢，不构成三种子多数胜；默认不替换",
+    "continuation": "用户显式选择在初筛失败后追加两个30秒新配对，全部完成，结果单独保存",
+    "time_boundary": "CSV读取前至完整校验与完整解JSON写出后，不含进程启动/模块导入",
+    "history": "前一批中继微调及正式四策略独立展示，不混合跨批改善率",
+    "user_choices": [
+      "更换整套求解器，联合优化直送、中继、分机和顺序",
+      "沿用三级目标以隔离算法变化",
+      "延续10秒初筛/30秒三种子轻量验证",
+      "任一配对胜即可扩大",
+      "多数胜才默认",
+      "初筛失败后追加少量30秒配对观察启动慢"
+    ],
+    "shared_budget": "首批与追加共用540秒上限，预留30秒；追加最多4次、120秒"
+  },
+  "parent_directory": "../batch1",
+  "parent_bindings": {
+    "manifest": "8bf1420b057267b8c8e230fba445342897e54327ff1191f21953d34142fa35e0",
+    "runs": "a738fa6ef696fd3050014bf3ade02ed652f9d9750f928595368828137280814c",
+    "decisions": "25494cf5dcdcf85b7f4bc878cfc8da43ff43b48586c133d0895acaf0122d77b3",
+    "validation": "06afe022b9eb9464aeba745fc647934073db80fc0abceb5fea7d0ca133b2c538"
+  },
+  "prior_seconds": 72.33398033306003,
+  "created_at": "2026-10-14T03:23:21Z",
+  "environment": {
+    "python": "3.14.5",
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O"
+  }
+}

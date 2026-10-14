@@ -10,6 +10,14 @@
 
 ## 当前方法
 
+新增独立完整求解器 `Joint-Relay-VNS`，CLI 使用 `--method joint-relay`。
+它在同一搜索状态中联合调整两任务的分机、直送/中继、站点与访问次序，
+不调用 ALNS 搜索或分阶段 DIRECT 预热；其他邻域负责单任务模式修改及访问
+交换，历史最优仍经完整校验。官方 10 秒初筛四负，用户独立追加 30 秒两负，
+故默认入口仍为 ALNS。代码和实验保持可运行，完整对照、真实跨机交接及
+使用命令见[新算法报告](results/joint_relay_trials_20261014/batch1/index.html)和
+[复现说明](results/joint_relay_trials_20261014/batch1/README.md)。
+
 最新[中继接力 HTML 对比](results/relay_trials_20261013/batch1/index.html)
 独立尝试 `enable_relay_seed_checkpoint`、`enable_relay_route_diversity` 与
 `enable_relay_risk_seed`。三个开关默认关闭，分别保留中继播种预算耗尽前的

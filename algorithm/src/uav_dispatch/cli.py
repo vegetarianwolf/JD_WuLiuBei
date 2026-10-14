@@ -6,6 +6,7 @@ import argparse
 import json
 import sys
 from collections.abc import Mapping, Sequence
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -375,6 +376,7 @@ def _parser() -> argparse.ArgumentParser:
         "greedy",
         "regret2",
         "alns",
+        "joint-relay",
     ), default="alns")
     solve.add_argument("--tasks", type=int)
     solve.add_argument("--drones", type=int, default=8)
@@ -570,6 +572,29 @@ def _solve(args: argparse.Namespace) -> SolverResult:
         result = construct_regret_initial(
             problem, candidate_limit=candidate_limit
         )
+    elif args.method == "joint-relay":
+        from time import perf_counter
+        from .joint_relay import JointRelayConfig, solve_joint_relay
+
+        construction_started = perf_counter()
+        initial = construct_regret_initial(
+            problem, candidate_limit=candidate_limit,
+            home_seed=args.enable_home_seed or home_aware,
+            home_bias=args.enable_home_bias or home_aware,
+        )
+        construction_seconds = perf_counter() - construction_started
+        remaining = (None if args.time_limit is None else
+                     max(1e-6, args.time_limit - construction_seconds))
+        result = solve_joint_relay(
+            problem,
+            config=JointRelayConfig(max_iterations=args.iterations,
+                                   time_limit_seconds=remaining, seed=args.seed,
+                                   candidate_limit=candidate_limit),
+            initial_routes=initial.routes,
+        )
+        result = replace(result, runtime_seconds=result.runtime_seconds + construction_seconds,
+                         metadata={**result.metadata, "construction_seconds": construction_seconds,
+                                   "cli_total_time_limit_seconds": args.time_limit})
     else:
         config = ALNSConfig(
             max_iterations=args.iterations,
