@@ -56,7 +56,8 @@ METHODS = {"batch": "batch_relay_refinement", "reciprocal": "reciprocal_relay_re
            "damage_direct": "window_damage_repair", "damage_relay": "window_damage_repair",
            "split_feeder_direct": "split_feeder_refinement", "split_feeder_relay": "split_feeder_refinement",
            "native_price_direct": "split_feeder_refinement_v2", "native_price_relay": "split_feeder_refinement_v2",
-           "carry_price_direct": "split_feeder_refinement_v3", "carry_price_relay": "split_feeder_refinement_v3"}
+           "carry_price_direct": "split_feeder_refinement_v3", "carry_price_relay": "split_feeder_refinement_v3",
+           "separated_delivery_direct": "split_feeder_refinement_v4", "separated_delivery_relay": "split_feeder_refinement_v4"}
 DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct", "repool_direct", "repool_polish_direct", "mobile_repool_direct", "joint_mobile_direct", "frontier_mobile_direct", "bundle_cached_direct", "full_credit_direct", "full_credit_pin_direct", "cold_pin_direct", "pair_pin_direct", "six_sort_direct", "wide_six_direct", "six_pin_direct", "window_direct")
 WINDOW_PAIR = ("window_direct", "window_relay")
 DAMAGE_PAIR = ("damage_direct", "damage_relay")
@@ -67,6 +68,8 @@ NATIVE_PRICE_PAIR = ("native_price_direct", "native_price_relay")
 DIRECT_ARMS = (*DIRECT_ARMS, "native_price_direct")
 CARRY_PRICE_PAIR = ("carry_price_direct", "carry_price_relay")
 DIRECT_ARMS = (*DIRECT_ARMS, "carry_price_direct")
+SEPARATED_DELIVERY_PAIR = ("separated_delivery_direct", "separated_delivery_relay")
+DIRECT_ARMS = (*DIRECT_ARMS, "separated_delivery_direct")
 SIX_SORT_PAIR = ("six_sort_direct", "six_sort_relay")
 WIDE_SIX_PAIR = ("wide_six_direct", "wide_six_relay")
 SIX_PIN_PAIR = ("six_pin_direct", "six_pin_relay")
@@ -125,6 +128,8 @@ EXECUTION = (
     "audit_split_feeder_v2.py", "audit_split_feeder_batch_v2.py",
     "split_feeder_catalogue_v3.py", "split_feeder_refinement_v3.py",
     "audit_split_feeder_v3.py", "audit_split_feeder_batch_v3.py",
+    "split_feeder_catalogue_v4.py", "split_feeder_refinement_v4.py", "direct_flexible_pair_v1.py",
+    "audit_split_feeder_v4.py", "audit_split_feeder_batch_v4.py",
     "directed_bundle_insertion.py",
     "run_weighted_relay_ablation.py", "run_weighted_direct_pair.py", "weighted_direct_objective.py",
     "weighted_relay_objective.py", "weighted_periodic_exchange.py", "run_scenario_comparison.py",
@@ -598,6 +603,40 @@ def prepare(args):
             "Every pricing/check/output is charged within the same declared wall boundary. "
             "JSON indentation alone is compacted for new artifacts; all fields and their "
             "source/manifest/route/output hashes are preserved, old artifacts unchanged.")
+    if set(arms) & set(SEPARATED_DELIVERY_PAIR):
+        for field, name in (
+                ("split_feeder_design", "split_feeder_quota_neutral_design_v1.md"),
+                ("carry_price_design", "noncontiguous_in_native_price_implementation_v1.md"),
+                ("separated_delivery_design", "receiver_separated_delivery_price_design_v1.md"),
+                ("separated_delivery_implementation", "receiver_separated_delivery_price_implementation_v1.md")):
+            note = ROOT / "papers/notes/proactive_relay_20261014" / name
+            manifest[field] = dict(path=str(note.relative_to(ROOT)), sha256=sha(note))
+        protocol_path = ROOT / "papers/notes/proactive_relay_20261014/separated_delivery_protocol_v1.json"
+        protocol = read(protocol_path)
+        assert arms == protocol["arms"] and args.seed == protocol["seed"]
+        assert args.budget_seconds == protocol["budget_seconds_per_arm"]
+        assert checkpoint and checkpoint["sha256"] == protocol["checkpoint_sha256"]
+        assert manifest["input_sha256"] == protocol["input_sha256"]
+        assert manifest["weights"] == protocol["weights"] and manifest["scales"] == protocol["scales"]
+        assert all(parameters[arm] == protocol["method_parameters"] for arm in arms)
+        manifest["separated_delivery_protocol"] = dict(path=str(protocol_path.relative_to(ROOT)), sha256=sha(protocol_path))
+        assert protocol["artifact_json_indent"] == 0
+        manifest["artifact_json_indent"] = protocol["artifact_json_indent"]
+        manifest["protocol"] += (
+            " Separated-delivery variants keep the033 capacity-legal g<=h IN source prices "
+            "and add C empty consecutive double OUT take, first delivery, original native "
+            "interval, then second delivery. The entire carry interval must remain withinC2. "
+            "Original skeleton native clocks, actual source waiting once, true second delivery "
+            "flight chain and stable middle/tail costs are priced before base64; boundary and "
+            "numerical error cases replay actual routes before ranking. The original early "
+            "receiver layouts enter the complete candidate pool within unchanged caps. DIRECT "
+            "also gains flexible whole-pair native interleaving in both insertion orders, "
+            "keeps six contiguous PD orders at all empty gaps and twelve independent donor "
+            "maps, with the strong original input as final guard. It has no relay window or "
+            "mandatory relay final map. All construction, checks and saves share equal wall "
+            "ceilings; resources, homes, four sites, final responsibility rules, weights and "
+            "scales are unchanged. This is a short historical-checkpoint mechanism pair, "
+            "not fresh fair performance or a guarantee of relay superiority.")
     write(output / "manifest.json", manifest)
     write(output / "runs.json", [])
     print(json.dumps({"prepared": str(output), "purpose": manifest["purpose"], "arms": arms,
@@ -633,7 +672,7 @@ def verify(output, manifest, *, current_execution=True):
     if "six_task_pinned_polish_design" in manifest:
         note = manifest["six_task_pinned_polish_design"]
         assert sha(ROOT / note["path"]) == note["sha256"], "Changed declared six-task pinned polish design"
-    for field in ("deadline_rescue_window_design", "fixed_h_rescue_selector_review", "relay_damage_closure_repair_design", "window_damage_repair_protocol", "split_feeder_design", "split_feeder_protocol", "exact_suffix_delay_design", "native_price_design", "native_price_protocol", "noncontiguous_in_design", "carry_price_design", "carry_price_protocol"):
+    for field in ("deadline_rescue_window_design", "fixed_h_rescue_selector_review", "relay_damage_closure_repair_design", "window_damage_repair_protocol", "split_feeder_design", "split_feeder_protocol", "exact_suffix_delay_design", "native_price_design", "native_price_protocol", "noncontiguous_in_design", "carry_price_design", "carry_price_protocol", "separated_delivery_design", "separated_delivery_implementation", "separated_delivery_protocol"):
         if field in manifest:
             note = manifest[field]
             assert sha(ROOT / note["path"]) == note["sha256"], "Changed declared fixed-window design/review"
@@ -720,7 +759,7 @@ def worker(request):
                 controls = {"relay_enabled": method == "quota_relay"}
             if method.startswith("repool_"):
                 controls = {"relay_enabled": method.endswith("_relay")}
-            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_", "full_credit_", "cold_pin_", "pair_pin_", "six_sort_", "wide_six_", "six_pin_", "window_", "damage_", "split_feeder_", "native_price_", "carry_price_")):
+            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_", "full_credit_", "cold_pin_", "pair_pin_", "six_sort_", "wide_six_", "six_pin_", "window_", "damage_", "split_feeder_", "native_price_", "carry_price_", "separated_delivery_")):
                 controls = {"relay_enabled": method.endswith("_relay")}
             controls = {**controls, **manifest.get("method_parameters", {}).get(method, {})}
             outcome = modules[method].refine(full, routes, deadline=sub_deadline,
@@ -800,6 +839,13 @@ def run(output):
 
 def audit(output):
     schedule = read(output / "manifest.json")["schedule"]
+    if any(row["arm"] in SEPARATED_DELIVERY_PAIR for row in schedule):
+        assert all(row["arm"] in SEPARATED_DELIVERY_PAIR for row in schedule), "Separated-delivery batches use their own paired audit"
+        try:
+            from .audit_split_feeder_batch_v4 import audit as separated_delivery_audit
+        except ImportError:
+            from audit_split_feeder_batch_v4 import audit as separated_delivery_audit
+        return separated_delivery_audit(output)
     if any(row["arm"] in CARRY_PRICE_PAIR for row in schedule):
         assert all(row["arm"] in CARRY_PRICE_PAIR for row in schedule), "Carry-price batches use their own paired audit"
         try:

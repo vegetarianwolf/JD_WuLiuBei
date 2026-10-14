@@ -973,3 +973,68 @@ native区间配送，真实等待及两段native延误放入base64前；DIRECT�
 pair灵活插入，并保留六块、独立12map及强原解。旧repool receiver本已有native
 交付穿插，不能称新物理机制；需验证的是当前免补偿目录的前置真价和确切seed
 保留。下一轮需单独预注册，不复用本次结果作已知参数探测，也没有收益保证。
+
+## 034：接收机分散交付与增强DIRECT已实际对照，仍无采用
+
+上节“尚未实现/测试/运行”描述截至033。本轮依据冻结设计，实现
+[034合同](../../../papers/notes/proactive_relay_20261014/receiver_separated_delivery_price_implementation_v1.md)
+和[预定协议](../../../papers/notes/proactive_relay_20261014/separated_delivery_protocol_v1.json)。
+C空载连续双取、交第一件、沿容量合法的native区间服务、再交第二件；g=h保留
+原连续四块，g<h分别计两条不同原边的绕行，等待只加一次。native分段延误与
+selected实际第二交付flight链放到base64前，浮点边界/误差在前池前实际回放。
+early原receiver布局真实入完整池，general receiver也使用同一分散域。
+
+DIRECT同步增强：同owner及donor12map的每个Cpair均按两种整单插入顺序枚举
+所有C2合法P/D位置，逐路线计真实native时钟，再按层保至多3个代表；第一层
+缺另一任务，仅为同present集合的排名状态，不能作为完整解。两条pipeline与
+原全空gap×6连续PD块融合后再保J/minN/pooled代表。保留原025强guard，不强迫
+DIRECT去H或遵守接力时间窗/分工。A/B single构造、source3/feeder3/base64/family16、
+资源/home/原4H/最终K25/目标与尺度不变。
+
+ROOT最终75项新小测试通过（1.89s）；源码前后SHA一致，7个source核心函数AST
+与033相同，测试凭证先于prepare。固定seed2026101519、每臂40s上限，实际
+DIRECT28.555066s、RELAY27.713172s，两臂共同目录完整且无超时，不追加重跑。
+source仍计270200位置；C实际执行4897836次gap/order条件价格，其中2744948次
+是新增分散交付域（含重复availability查询，不是独立全局方案数）。两臂各16个
+family/48个完整快照，DIRECT完整执行112个灵活pair helper、224条pipeline及
+192个独立map。其真实partial路线及合法slot数也由批审计独立核对。
+
+| 完整方案（候选均未采用） | N | L/min | D/km | J |
+|---|---:|---:|---:|---:|
+| 原强输入及两臂最终输出 | 59 | 1790.632129 | 578.534685 | .434215789 |
+| RELAY最低J候选 | 59 | 1786.348155 | 585.952824 | .436366444 |
+| DIRECT本轮最低N、其中最低J候选 | 58 | 1855.163525 | 590.358826 | .439140067 |
+| RELAY最低N候选 | 58 | 1849.495813 | 593.436580 | .439814503 |
+
+RELAY最低J与最低N仍和033相同。DIRECT新增自由后，有限minN代表选择可以改变，
+不能宣称所有保留候选严格包含旧版；旧033的N58/J.438999567仍是有效历史候选。
+本轮最佳双pooled救期RELAY退回124/166、N73/J.478276600，旧033的89/123、
+N66/J.465794502也保持历史有效，不因新有限目录遗漏而否定。容量/真实时钟检验
+通过，不等于这些新构造已经带来运输净收益。
+
+[manifest](batch034/manifest.json)、[75项测试凭证](batch034/final_test_receipt.json)、
+[runs](batch034/runs.json)及[严格独立审计](batch034/audit.json)完整保存。原始102个
+proposal引用、两early价格、source/receiver入池、全部当前时钟和DIRECT实际
+完整覆盖均通过，无字段修正例外。这仍是历史强checkpoint上的追加短机制对照，
+该新方法的fresh公平多种子性能实验未开始。
+截至034共59个官方200任务诊断cell，累计576.611644秒；当前最强仍为025纯DIRECT，
+中继远胜目标未达到。
+
+[034精确归因](batch034_search_diagnosis_v1.md)独立复放4个完整代表和2个early：
+48个保存RELAY仅2个真正分散C交付，均为178/190、A4/B6/C7/H4，原gap40→43
+或40→42，均无目标救期。较好的真实分散方案N59/L1818.432139/D583.793771、
+J.437467414，仍输强输入；其中源端8项原任务及C后缀受到损伤。旧89/123的
+N66双救期family被这一有限H4代表替换，不能据此否定历史方案或声称全域退化。
+
+当前全局最低J接力的两个source共50项native时钟反而与输入完全相同，却控制
+了很晚的交站时刻。只按ΔL损伤选closure会漏掉这些关键前缀。旧025已有“只pin
+两项中继、198项native可换责/重排”的普通ALNS，不把换新种子重新称为新邻域；
+下步需明确检验交接关键前缀与真实外机槽位，以及在修复状态内动态选择任务
+owner的联合搜索，DIRECT对应应不pin分工、允许全部200项自由。尚无新方案收益。
+
+[因果前缀与动态额度联合修复设计](../../../papers/notes/proactive_relay_20261014/critical_prefix_joint_quota_repair_design_v1.md)
+明确了这个单一后续方向：真实移除preview只作因果排名，先释放真实donor槽，
+再在同coverage状态内联合选owner和插入路线；只将完整恢复200单、q全0且通过
+当前实体检查的leaf与原强解比较。DIRECT无pins，用自身真实delivery目标选prefix；
+未来fresh对照可将全部预算用于自身DIRECT构造/修复，不被迫付中继目录开销。
+该设计尚未实现/测试/运行，未来seed与预算也尚未注册，没有收益保证。
