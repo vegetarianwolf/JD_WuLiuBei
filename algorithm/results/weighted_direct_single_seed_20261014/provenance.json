@@ -1,0 +1,24 @@
+{
+  "access_date": "2026-10-14",
+  "timezone": "Asia/Shanghai",
+  "scope": "Current adopted main versus its consistent weighted objective; two sequential runs, one shared seed, one fixed weight set, pure DIRECT only.",
+  "comparison_base_commit": "61488fe",
+  "prior_untracked_batch": "algorithm/results/weighted_direct_240s_20261014/ was present before this task and was not read as result evidence, modified, or included in this commit.",
+  "literature_provenance": "literature.json",
+  "method_review": "Subagent inspected DIRECT comparison sites, insertion keys, regret, full incumbent validation, adjacent/terminal polish, and original task metrics. Its review identified complete regret tie-break preservation as necessary.",
+  "narrow_tests_before_timed_runs": {
+    "command": "PYTHONPATH=algorithm/src:. PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -q -p no:cacheprovider algorithm/tests/test_weighted_direct_pair.py",
+    "passed": 16,
+    "reported_elapsed_seconds": 1.07,
+    "scope": "Objective ordering/restoration, normalization validation, scalar annealing probability, raw insertion ranking, exact source transformation counts, complete regret keys, and six-task two-drone six-iteration inactive equivalence. No official-instance screening."
+  },
+  "timing_policy": "No pytest, auxiliary optimizer or report rendering during the two timed runs. Source review, literature browsing and text editing continued. The host was not reserved exclusively.",
+  "commands": [
+    ".venv/bin/python algorithm/experiments/run_weighted_direct_pair.py prepare",
+    ".venv/bin/python algorithm/experiments/run_weighted_direct_pair.py run",
+    ".venv/bin/python algorithm/experiments/audit_weighted_direct_pair.py",
+    ".venv/bin/python algorithm/experiments/render_weighted_direct_report.py",
+    "# Re-solving requires a new output directory; commands above refer to the original batch and will refuse to overwrite its completed runs. See README.md for fresh preparation."
+  ],
+  "adoption": "Weighted objective remains an isolated experimental entry point; public solver defaults retain the current adopted lexicographic algorithm. One paired seed is insufficient to justify a general default change."
+}

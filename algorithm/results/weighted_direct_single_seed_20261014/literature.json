@@ -1,0 +1,353 @@
+{
+  "access_date": "2026-10-14",
+  "timezone": "Asia/Shanghai",
+  "scope": "targeted lookup; 4 optimization papers plus skill software citation; not exhaustive",
+  "question": "容量2、先取后送、开放路线、软截止期、200任务/8机/每机25任务的物流无人机调度：固定加权总分与当前严格词典序的240秒单种子比较，可迁移方法",
+  "skill": {
+    "name": "paper-lookup",
+    "version": "2.1",
+    "path": "/Users/vegetarianwolf/.agent-skills/src/scientific-agent-skills/skills/paper-lookup/SKILL.md",
+    "references_read": [
+      "references/crossref.md"
+    ],
+    "software_citation": {
+      "title": "Scientific Agent Skills: A Library of Procedural Knowledge for Research Agents",
+      "authors": [
+        "Timothy Kassis",
+        "Vinayak Agarwal",
+        "Yuhuan He",
+        "Darshil Patel",
+        "Aubrey M. Brueckner"
+      ],
+      "year": 2026,
+      "arxiv": "2609.00065",
+      "current_version_verified": "v2",
+      "revision_date": "2026-09-02",
+      "url": "https://arxiv.org/abs/2609.00065",
+      "doi": "10.48550/arXiv.2609.00065",
+      "verified_via": "web primary arXiv record; no journal reference or publisher DOI shown"
+    }
+  },
+  "repository_contract": {
+    "problem_file": "命题1-低空经济场景下的物流无人机调度算法.docx",
+    "historical_reads": [
+      "algorithm/README.md",
+      "algorithm/deep-research-report (1).md",
+      "algorithm/OPTIMIZATION_UPDATE_2026-08-15.md",
+      "algorithm/results/objective_trials_20261013/README.md",
+      "algorithm/results/objective_trials_20261013/compact_trial/README.md",
+      "algorithm/results/relay_trials_20261013/problem_contract.md"
+    ],
+    "problem_metrics": [
+      "按时任务数/按时率（等价于减少逾期任务数）",
+      "总配送航程；不计末单完成后返航",
+      "求解端到端时间，集群建议小于4分钟"
+    ],
+    "repository_secondary_metric": "总逾期分钟；原题未明确将其置于航程前",
+    "hard_constraints": {
+      "n": 200,
+      "m": 8,
+      "k": 25,
+      "capacity": 2,
+      "speed_km_per_min": 0.9,
+      "all_tasks_completed": true,
+      "same_drone_for_pickup_delivery": true,
+      "open_routes": true
+    },
+    "observations": [
+      "N=M*K，全部完成意味着每架机必须恰好承接25项，跨机单项迁移不能单独满足最终分配数约束",
+      "历史 deadline-boundary、first-objective reward、compact-neighborhood 的短阶段退化已记录；本次不将历史结果混入基线"
+    ]
+  },
+  "google_scholar": {
+    "actual_source": "Google Scholar via Codex In-app Browser (iab), visible=false",
+    "success": true,
+    "queries": [
+      {
+        "query": "drone pickup delivery soft time windows multi objective weighted sum",
+        "url": "https://scholar.google.com/scholar?q=drone+pickup+delivery+soft+time+windows+multi+objective+weighted+sum",
+        "observed_approx_total": 17900,
+        "inspected": "first page",
+        "selected_titles": [
+          "Multi-objective multi-drone collaborative routing problem with heterogeneous delivery and pickup service",
+          "Hybrid multi-objective optimization approach with pareto local search for collaborative truck-drone routing problems considering flexible time windows"
+        ],
+        "evidence": "Live AX tree from browser tab 1 showed both titles and IEEE publisher links"
+      },
+      {
+        "query": "\"weighted sum method\" \"new insights\"",
+        "url": "https://scholar.google.com/scholar?hl=zh-CN&as_sdt=0%2C5&q=%22weighted+sum+method%22+%22new+insights%22&btnG=",
+        "observed_approx_total": 2100,
+        "inspected": "first page",
+        "selected_titles": [
+          "The weighted sum method for multi-objective optimization: new insights"
+        ],
+        "evidence": "Live AX tree showed first result with authors RT Marler, JS Arora, Springer DOI link, 2010"
+      },
+      {
+        "query": "\"adaptive large neighborhood search\" \"pickup and delivery\" Ropke Pisinger",
+        "url": "https://scholar.google.com/scholar?hl=zh-CN&as_sdt=0%2C5&q=%22adaptive+large+neighborhood+search%22+%22pickup+and+delivery%22+Ropke+Pisinger&btnG=",
+        "observed_approx_total": 2730,
+        "inspected": "first page",
+        "selected_titles": [
+          "An adaptive large neighborhood search heuristic for the pickup and delivery problem with time windows"
+        ],
+        "evidence": "Live AX tree showed first result with Ropke/Pisinger, Transportation Science 2006 and publisher DOI link"
+      }
+    ],
+    "count_reconciliation": "Approximate search totals describe visible Google Scholar results, not retrieved counts. First pages only; 4 papers selected; no exhaustive coverage claim.",
+    "failed_access_attempts": [
+      {
+        "via": "web.open",
+        "urls": [
+          "https://scholar.google.com/scholar?q=%22adaptive+large+neighborhood+search%22+%22pickup+and+delivery%22",
+          "https://scholar.google.com/scholar?q=%22weighted+sum%22+%22multi-objective%22+optimization+normalization"
+        ],
+        "outcome": "URL not accessible via tool; not interpreted as zero results"
+      },
+      {
+        "via": "sandbox curl",
+        "query": "drone pickup delivery soft time windows multi objective weighted sum",
+        "outcome": "curl exit 6: could not resolve scholar.google.com; HTTP 000; browser then succeeded"
+      }
+    ]
+  },
+  "papers": [
+    {
+      "id": "marler_arora_2010",
+      "title": "The weighted sum method for multi-objective optimization: new insights",
+      "authors": [
+        "R. Timothy Marler",
+        "Jasbir S. Arora"
+      ],
+      "publication_year": 2010,
+      "journal": "Structural and Multidisciplinary Optimization",
+      "volume": "41",
+      "issue": "6",
+      "pages": "853-862",
+      "doi": "10.1007/s00158-009-0460-7",
+      "url": "https://doi.org/10.1007/s00158-009-0460-7",
+      "publisher_url": "http://link.springer.com/10.1007/s00158-009-0460-7",
+      "crossref_dates": {
+        "published": {
+          "date-parts": [
+            [
+              2009,
+              12,
+              12
+            ]
+          ]
+        },
+        "online": {
+          "date-parts": [
+            [
+              2009,
+              12,
+              12
+            ]
+          ]
+        },
+        "print": {
+          "date-parts": [
+            [
+              2010,
+              6
+            ]
+          ]
+        }
+      },
+      "crossref_endpoint": "https://api.crossref.org/works/10.1007%2Fs00158-009-0460-7",
+      "crossref_http_status": 200,
+      "crossref_valid_work_shape": true,
+      "abstract_available_in_crossref": false,
+      "evidence_level": "Crossref metadata + Springer publisher abstract; no full text read",
+      "method_support": "权重的意义依赖目标函数值与偏好；支持报告清楚说明交换关系。本文未给本实例最优权重。",
+      "transferable_project_inference": "用只依赖输入的固定尺度归一化，再预先冻结一组有限权重；正向报告每1逾期等价多少min/km。"
+    },
+    {
+      "id": "ropke_pisinger_2006",
+      "title": "An Adaptive Large Neighborhood Search Heuristic for the Pickup and Delivery Problem with Time Windows",
+      "authors": [
+        "Stefan Ropke",
+        "David Pisinger"
+      ],
+      "publication_year": 2006,
+      "journal": "Transportation Science",
+      "volume": "40",
+      "issue": "4",
+      "pages": "455-472",
+      "doi": "10.1287/trsc.1050.0135",
+      "url": "https://doi.org/10.1287/trsc.1050.0135",
+      "publisher_url": "https://pubsonline.informs.org/doi/10.1287/trsc.1050.0135",
+      "crossref_dates": {
+        "published": {
+          "date-parts": [
+            [
+              2006,
+              11
+            ]
+          ]
+        },
+        "online": null,
+        "print": {
+          "date-parts": [
+            [
+              2006,
+              11
+            ]
+          ]
+        }
+      },
+      "crossref_endpoint": "https://api.crossref.org/works/10.1287%2Ftrsc.1050.0135",
+      "crossref_http_status": 200,
+      "crossref_valid_work_shape": true,
+      "abstract_available_in_crossref": true,
+      "evidence_level": "Crossref metadata/abstract + INFORMS publisher abstract; no full text read",
+      "method_support": "竞争的破坏/修复子启发式根据历史表现调频；支持保留当前 ALNS 框架做单目标形式改变。",
+      "transferable_project_inference": "插入比较、接受准则、best保留与启发式学习应采用一致标量；硬约束检查仍独立。"
+    },
+    {
+      "id": "hong_2025",
+      "title": "Multi-Objective Multi-Drone Collaborative Routing Problem With Heterogeneous Delivery and Pickup Service",
+      "authors": [
+        "Fangyu Hong",
+        "Guohua Wu",
+        "Yalin Wang",
+        "Qizhang Luo",
+        "Ling Wang",
+        "Jianmai Shi"
+      ],
+      "publication_year": 2025,
+      "journal": "IEEE Transactions on Intelligent Transportation Systems",
+      "volume": "26",
+      "issue": "5",
+      "pages": "6084-6100",
+      "doi": "10.1109/tits.2025.3548426",
+      "url": "https://doi.org/10.1109/tits.2025.3548426",
+      "publisher_url": "https://ieeexplore.ieee.org/document/10937313/",
+      "crossref_dates": {
+        "published": {
+          "date-parts": [
+            [
+              2025,
+              5
+            ]
+          ]
+        },
+        "online": null,
+        "print": {
+          "date-parts": [
+            [
+              2025,
+              5
+            ]
+          ]
+        }
+      },
+      "crossref_endpoint": "https://api.crossref.org/works/10.1109%2FTITS.2025.3548426",
+      "crossref_http_status": 200,
+      "crossref_valid_work_shape": true,
+      "abstract_available_in_crossref": false,
+      "evidence_level": "Crossref metadata + IEEE publisher abstract; no full text read",
+      "method_support": "多无人机、软时间窗、任务先后关系；成本与客户满意度双目标，ALNSMO。其单件容量、能耗与智能柜设置不同于本题。",
+      "transferable_project_inference": "未来保留若干按时率/航程权衡不同的非支配方案可减少单一偏好盲区；本轮只跑固定一组权重。"
+    },
+    {
+      "id": "luo_2022",
+      "title": "Hybrid Multi-Objective Optimization Approach With Pareto Local Search for Collaborative Truck-Drone Routing Problems Considering Flexible Time Windows",
+      "authors": [
+        "Qizhang Luo",
+        "Guohua Wu",
+        "Bin Ji",
+        "Ling Wang",
+        "Ponnuthurai Nagaratnam Suganthan"
+      ],
+      "publication_year": 2022,
+      "journal": "IEEE Transactions on Intelligent Transportation Systems",
+      "volume": "23",
+      "issue": "8",
+      "pages": "13011-13025",
+      "doi": "10.1109/tits.2021.3119080",
+      "url": "https://doi.org/10.1109/tits.2021.3119080",
+      "publisher_url": "https://ieeexplore.ieee.org/document/9580555/",
+      "crossref_dates": {
+        "published": {
+          "date-parts": [
+            [
+              2022,
+              8
+            ]
+          ]
+        },
+        "online": null,
+        "print": {
+          "date-parts": [
+            [
+              2022,
+              8
+            ]
+          ]
+        }
+      },
+      "crossref_endpoint": "https://api.crossref.org/works/10.1109%2FTITS.2021.3119080",
+      "crossref_http_status": 200,
+      "crossref_valid_work_shape": true,
+      "abstract_available_in_crossref": false,
+      "evidence_level": "Crossref metadata + Google Scholar result/title only; IEEE article page had no readable abstract; no full text read",
+      "method_support": "题名可核验含 flexible time windows 和 Pareto local search。有限非支配存档/有界局部搜索是本项目迁移建议，未声称已复现文中具体算子。",
+      "transferable_project_inference": "未来可对零载荷段做等任务数尾段交换，再用非支配过滤；保持先取后送、载荷2与每机25。当前已存在相关关闭研究开关，不在本轮叠加。"
+    }
+  ],
+  "recommended_weight_example": {
+    "status": "Future suggestion only; not executed in this batch, not a paper parameter or result-tuned value; actual candidate is experiment_frozen_config",
+    "formula": "F = 0.60*late_count/N + 0.25*total_lateness_min/(N*median_deadline_min) + 0.15*distance_km/sum_direct_pickup_delivery_distance_km",
+    "input_only_scales": {
+      "N": 200,
+      "median_deadline_min": 36.45,
+      "total_lateness_scale_min": 7290.000000000001,
+      "sum_direct_pickup_delivery_distance_km": 754.2129900620787,
+      "input_sha256": "386d3fbaa9009aeed947493782d657ed0b30b25d369c8187bfc9619fc7e31d25"
+    },
+    "tradeoffs": {
+      "one_late_equivalent_total_lateness_min": 87.48000000000002,
+      "one_late_equivalent_distance_km": 15.084259801241576
+    },
+    "interpretation": "Any mixed changes combine linearly. Sum direct pickup-delivery distance is a reference scale, not a lower bound: capacity2 permits shared flight segments.",
+    "implementation_checks": [
+      "同一公式贯穿候选插入、当前解接受、历史最好解保留、局部及末端强化",
+      "若仅接受概率加权而最终best仍词典序，应标为加权引导搜索",
+      "不随搜索轨迹/结果动态改变归一化尺度",
+      "保留原始逾期数、总逾期分钟、航程，不用单一总分代替考核指标"
+    ]
+  },
+  "experiment_frozen_config": {
+    "provided_by": "parent execution protocol, frozen before results",
+    "scenario": "origin DIRECT only",
+    "seed": 2026101451,
+    "solver_budget_s_each": 240,
+    "weights": [
+      0.5,
+      0.25,
+      0.25
+    ],
+    "scales": [
+      200,
+      4464.183540734935,
+      775.7731679286865
+    ],
+    "scale_source": "See experiment manifest; not a literature-derived optimum",
+    "formula": "F = 0.50*late_count/200 + 0.25*total_lateness_min/4464.183540734935 + 0.25*distance_km/775.7731679286865",
+    "one_late_equivalent_total_lateness_min": 44.64183540734935,
+    "one_late_equivalent_distance_km": 7.757731679286865,
+    "best_retention": "Weighted objective, including terminal polishing",
+    "scope": "Exactly one fixed-weight candidate vs current lexicographic baseline; no further runs delegated here"
+  },
+  "provenance": {
+    "crossref": "5 sequential curl calls to 4 exact DOI records (Marler connectivity check + 4-record verification); all HTTP200 and validated status=ok/message-type=work/exact DOI; no pagination",
+    "credentials": "No API keys, mailto or email parameters used; no secrets loaded",
+    "crossref_parameters": "GET /works/{URL-encoded DOI}; public pool; calls sequential, 0.3s between verification calls; curl -sS -L --max-time30 -w HTTP_STATUS",
+    "skill_citation_verified": "arXiv latest v2 record checked on access date; DOI without version suffix",
+    "publisher_gaps": "Luo IEEE page via web and browser had no readable abstract; IEEE-only focused search empty; only metadata/title used",
+    "network_recovery": "Sandbox curl DNS failure; approved read-only network curl reached Crossref; actual Google Scholar retrieval used browser"
+  }
+}

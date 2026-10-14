@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "passed": true,
+  "run_count": 2,
+  "manifest_sha256": "8f4d2d86ec977539c9650d8358b04d3ac75dfd4ec836064cf6eca5684407f33f",
+  "runs_sha256": "bf1da43c48135ee0fbbf638582217572b95379449345363723df39e7532b11d4",
+  "audited_at": "2026-10-14T15:54:21.899766+08:00",
+  "evaluator": "Independent CSV + math.hypot DIRECT walk; no production imports",
+  "source_checks": {
+    "source_commit": "61488fe2967afa7ed7bf5afad8ff9ef4ad8ad0c9",
+    "frozen_sources_match_adopted_main": true,
+    "current_production_sources_unchanged": true,
+    "public_defaults_match": true,
+    "only_bounded_candidate_ast_edits": true,
+    "reversed_adapter_counts": {
+      "alns.py": {
+        "attribute_keys": 6,
+        "regret_keys": 2,
+        "regret_output_keys": 2,
+        "regret_missing_keys": 2,
+        "raw_insertion_keys": 0,
+        "acceptance": 1
+      },
+      "search.py": {
+        "attribute_keys": 2,
+        "regret_keys": 0,
+        "regret_output_keys": 0,
+        "regret_missing_keys": 0,
+        "raw_insertion_keys": 2,
+        "acceptance": 0
+      }
+    }
+  },
+  "input_sha256": "386d3fbaa9009aeed947493782d657ed0b30b25d369c8187bfc9619fc7e31d25",
+  "initial_routes_sha256": "0aa05645d9ca61227c51c1d69993de896ecca045136165dec06a4bd1636288b6",
+  "independent_initial_score": {
+    "late_count": 108,
+    "total_lateness_min": 4464.183540734935,
+    "distance_km": 775.7731679286865
+  },
+  "runs": [
+    {
+      "variant": "current_lex",
+      "passed": true,
+      "independent_score": {
+        "late_count": 69,
+        "total_lateness_min": 2272.8759024087794,
+        "distance_km": 630.3038181742652
+      },
+      "independent_weighted_score": 0.502905134981001,
+      "delivered_count": 200,
+      "pickups_and_deliveries_once": true,
+      "capacity_precedence_and_K25": true,
+      "origin_open_direct_only": true,
+      "every_event_clock_and_coordinate": true,
+      "end_to_end_budget_compliant": true,
+      "hashes_and_default_config_match": true,
+      "trajectory": {
+        "checkpoint_count": 395,
+        "complete_initial_and_final_scores": true,
+        "selected_objective_strictly_monotonic": true,
+        "weighted_score_nonincreasing": false,
+        "intermediate_routes_available": false
+      }
+    },
+    {
+      "variant": "current_weighted",
+      "passed": true,
+      "independent_score": {
+        "late_count": 67,
+        "total_lateness_min": 2099.6176421889336,
+        "distance_km": 605.1448235787769
+      },
+      "independent_weighted_score": 0.480094734186151,
+      "delivered_count": 200,
+      "pickups_and_deliveries_once": true,
+      "capacity_precedence_and_K25": true,
+      "origin_open_direct_only": true,
+      "every_event_clock_and_coordinate": true,
+      "end_to_end_budget_compliant": true,
+      "hashes_and_default_config_match": true,
+      "trajectory": {
+        "checkpoint_count": 262,
+        "complete_initial_and_final_scores": true,
+        "selected_objective_strictly_monotonic": true,
+        "weighted_score_nonincreasing": true,
+        "intermediate_routes_available": false
+      }
+    }
+  ],
+  "comparison": {
+    "weighted_minus_lex": {
+      "late_count": -2,
+      "total_lateness_min": -173.2582602198454,
+      "distance_km": -25.158994595488252,
+      "weighted_score": -0.022810400794849972,
+      "on_time_rate": 0.010000000000000009,
+      "end_to_end_seconds": -0.004910290997941047
+    },
+    "weighted_objective_improves": true,
+    "original_lex_objective_improves": true
+  },
+  "limitations": [
+    "One complete official instance and one shared seed; no statistical or cross-instance claim.",
+    "Intermediate trajectory routes are not stored; scores are checked for complete telemetry and selected-objective monotonicity, not independently rerouted.",
+    "Elapsed time is checked against stored timing telemetry; it cannot be reconstructed from route geometry."
+  ]
+}
