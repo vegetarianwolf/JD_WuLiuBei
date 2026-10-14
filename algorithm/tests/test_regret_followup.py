@@ -162,9 +162,9 @@ def test_portfolio_retains_position_operators_and_adapts_distinct_operators(
 @pytest.mark.parametrize("portfolio,fallback", [(False, True), (True, False), (True, True)])
 def test_followup_flags_never_change_initial_construction(portfolio, fallback):
     problem = _problem()
-    baseline = solve_alns(problem, config=ALNSConfig(max_iterations=0))
+    baseline = solve_alns(problem, config=ALNSConfig(max_iterations=0, enable_terminal_polish=False))
     candidate = solve_alns(problem, config=ALNSConfig(
-        max_iterations=0, enable_route_distinct_regret=True,
+        max_iterations=0, enable_route_distinct_regret=True, enable_terminal_polish=False,
         enable_regret_portfolio=portfolio,
         enable_regret_position_fallback=fallback,
     ))

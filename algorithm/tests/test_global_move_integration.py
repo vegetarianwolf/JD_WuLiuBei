@@ -47,7 +47,8 @@ def test_global_moves_observe_fixed_intervals_and_preserve_common_initial_score(
     monkeypatch.setattr(route_exchange, "bounded_tail_exchange", tail)
     monkeypatch.setattr(home_assignment, "reassign_route_homes", home)
     cfg = ALNSConfig(max_iterations=80, seed=9, relay_enabled=False,
-                     enable_tail_exchange=True, enable_home_reassignment=True)
+                     enable_tail_exchange=True, enable_home_reassignment=True,
+                     enable_terminal_polish=False)
     result = alns.solve_alns(problem, config=cfg, initial_routes=initial)
     before = evaluate_solution(problem, initial, _force_full=True).score
     assert seen_tails == [(0, 4, None), (4, 4, None), (8, 4, None), (12, 4, None)]
@@ -97,7 +98,8 @@ def test_same_home_fleet_disables_home_reassignment(monkeypatch):
     problem = replace(problem, drone_homes=None)
     monkeypatch.setattr(home_assignment, "reassign_route_homes", lambda *a, **k: pytest.fail("same-home permutation"))
     result = alns.solve_alns(problem, initial_routes=initial,
-                             config=ALNSConfig(max_iterations=40, enable_home_reassignment=True))
+                             config=ALNSConfig(max_iterations=40, enable_home_reassignment=True,
+                                               enable_terminal_polish=False))
     assert result.metadata["home_reassignment_active"] is False
     assert dict(result.metadata["home_reassignment_statistics"]) == {}
 
@@ -125,6 +127,7 @@ def test_operator_result_completed_after_budget_is_not_an_incumbent(monkeypatch,
     result = alns.solve_alns(
         problem, initial_routes=initial,
         config=ALNSConfig(max_iterations=iterations, time_limit_seconds=1,
+                          enable_terminal_polish=False,
                           enable_adjacent_polish=False,
                           enable_tail_exchange=kind == "tail",
                           enable_home_reassignment=kind == "home"),
@@ -148,6 +151,7 @@ def test_staged_search_combines_complete_work_counters_and_preserves_phase_bound
         problem, initial_routes=initial,
         config=ALNSConfig(max_iterations=100, seed=4, relay_direct_warmup_fraction=0.8,
                           enable_tail_exchange=True, enable_home_reassignment=True,
+                          enable_terminal_polish=False,
                           enable_relay_seed=False, enable_relay_refine=False),
     )
     assert len(phases) == 2

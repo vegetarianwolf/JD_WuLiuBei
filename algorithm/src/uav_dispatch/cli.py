@@ -430,8 +430,8 @@ def _parser() -> argparse.ArgumentParser:
     solve.add_argument(
         "--relay-direct-warmup",
         type=float,
-        default=0.80,
-        help="中继搜索前用于 DIRECT 预热的总预算比例；0 表示纯中继搜索",
+        default=0.95,
+        help="中继搜索前用于 DIRECT 预热的总预算比例（默认 0.95）；0 表示纯中继搜索",
     )
     solve.add_argument("--relay-detour-ratio", type=float, default=2.0)
     solve.add_argument("--relay-plan-beam", type=int, default=4)

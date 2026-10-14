@@ -56,6 +56,7 @@ def test_option_memo_preserves_fixed_iteration_routes_and_every_search_decision(
         max_iterations=60, seed=seed, candidate_limit=candidate_limit,
         repair_rank_candidate_limit=8, repair_exact_candidate_limit=12,
         min_destroy_fraction=0.15, max_destroy_fraction=0.30,
+        enable_terminal_polish=False,
     )
     baseline = solve_alns(problem, config=config, initial_routes=initial.routes)
     cached = solve_alns(

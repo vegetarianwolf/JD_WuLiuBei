@@ -1,0 +1,30 @@
+{
+  "measured_source_archive": "sources/candidate.zip",
+  "measured_source_sha256": "d06ef9df1472be3d9b1b79c20ab92b13e7744e4e32790649791f014ef4d6375b",
+  "changed_files": [
+    {
+      "path": "algorithm/src/uav_dispatch/alns.py",
+      "measured_sha256": "971dc6c781c676b8181ba813883016d30d18b317bac3a5570dab0cd14168d860",
+      "final_sha256": "c792ab27ba638d0c5de4d61b6e8b376d69341b3104da73a57787f6e6f3aca2fc"
+    },
+    {
+      "path": "algorithm/src/uav_dispatch/cli.py",
+      "measured_sha256": "96182326d04656652605007df75fa8aba5ffdb3a935fad72f1799fbee9b45fb5",
+      "final_sha256": "ec6a42cdcaa72f151b49c7eb4005fd4e09823356178355e5fea3a130f81475e5"
+    }
+  ],
+  "patch": "post_measurement_defaults.patch",
+  "patch_sha256": "c4b9c1ab519e3b10aa3fbe1aaf16034bedf9963d699e97d17c401ae739e384ed",
+  "change": "Only public defaults and help/comments: terminal=True, relay seed checkpoint=True, DIRECT warmup fraction=0.95. Experimental override remains False, preserving explicit 0/.5/.8 fractions. No search operator or acceptance logic changed after measurement.",
+  "configuration_equivalence": "Measured rebalanced uses explicit .80 + override=True; promoted public default uses .95 + override=False. Effective staged configs/initial-route forwarding are tested equal, apart from reporting-only raw config fields. Non-relay defaults are equivalent to measured terminal.",
+  "quality_measurement": "All 57 quality runs use frozen source archives. Public default/CLI adoption is covered by regression and configuration-equivalence tests, not additional performance runs. No extra speed or quality gain is attributed to changing defaults.",
+  "public_defaults": {
+    "enable_terminal_polish": true,
+    "enable_relay_seed_checkpoint": true,
+    "relay_direct_warmup_fraction": 0.95,
+    "enable_relay_budget_rebalance": false
+  },
+  "targeted_test_result": "228 passed in 2.68s",
+  "full_regression_result": "1051 passed in 56.77s",
+  "additional_replay_tests": "13 additional replay preparation tests passed; audit+replay targeted run 47 passed in 8.32s. Total distinct tested cases: 1064."
+}

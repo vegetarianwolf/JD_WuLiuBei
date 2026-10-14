@@ -12,6 +12,7 @@ from uav_dispatch import (
     evaluate_solution,
 )
 from uav_dispatch.cli import _parser, main, result_payload
+import uav_dispatch.cli as cli
 
 
 def test_cli_requires_an_explicit_input_path():
@@ -19,6 +20,30 @@ def test_cli_requires_an_explicit_input_path():
         _parser().parse_args(["solve"])
 
     assert exc_info.value.code == 2
+
+
+@pytest.mark.parametrize("requested,expected", [(None, .95), ("0", 0.), ("0.5", .5), ("0.8", .8)])
+def test_cli_preserves_default_and_explicit_warmup_without_override(monkeypatch, tmp_path, requested, expected):
+    source = tmp_path / "tasks.csv"
+    source.write_text("task_id,pickup_x,pickup_y,delivery_x,delivery_y,deadline_min\n1,0,0,1,0,10\n", encoding="utf-8")
+    arguments = ["solve", "--input", str(source), "--output", str(tmp_path / "solution.json"),
+                 "--relay-count", "1", "--drones", "1", "--max-tasks", "1"]
+    if requested is not None:
+        arguments.extend(["--relay-direct-warmup", requested])
+    parsed = _parser().parse_args(arguments)
+    assert parsed.relay_direct_warmup == expected
+    captured = []
+    def staged(problem, *, config):
+        captured.append(config)
+        routes = ((1, -1),)
+        return SolverResult(routes, evaluate_solution(problem, routes, _force_full=True))
+    monkeypatch.setattr(cli, "solve_relay_staged", staged)
+    assert main(arguments) == 0
+    assert len(captured) == 1
+    config = captured[0]
+    assert config.relay_direct_warmup_fraction == expected
+    assert config.enable_relay_budget_rebalance is False
+    assert config.enable_terminal_polish is True and config.enable_relay_seed_checkpoint is True
 
 
 def test_cli_exposes_one_alns_product_method_and_rejects_removed_hybrid_names():

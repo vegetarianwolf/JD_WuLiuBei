@@ -10,14 +10,33 @@
 
 ## 当前方法
 
-最新[全局调整与下游接力 HTML 对比](results/global_relay_trials_20261014/index.html)
+最新[退化诊断与完整复测报告](results/global_relay_followup_20261014/index.html)
+在四策略、完整 200 任务、三个新种子的 60 秒验证中获 10 胜 2 负，其中 1 胜
+仅为浮点尾差；12 对逾期任务总数减少 2，各场景至少 2/3 胜且逐对逾期不增加。
+57 次实测（兼容、30 秒初筛、60 秒验证）全部独立审计通过。现默认启用
+`enable_terminal_polish` 与 `enable_relay_seed_checkpoint`，默认
+`relay_direct_warmup_fraction=0.95`。末端仅对 DIRECT 已核验最优解做最多 56 对
+路线的有界强化，从原预算内预留至多 0.1 秒且至多剩余时间的 1%，不改主循环
+随机调用和奖励。无总时间限制时该末端步骤仍至多 0.1 秒；固定迭代数不代表
+关闭后处理，需用 `enable_terminal_polish=False` 明确关闭。
+
+`enable_relay_budget_rebalance` 仍是默认关闭的实验覆盖开关；采用通过修改公共
+默认比例实现，保留显式 `relay_direct_warmup_fraction` 和 CLI
+`--relay-direct-warmup` 参数（含 0）的语义。研究配置 `.8 + rebalance=True`
+与公共默认 `.95 + rebalance=False` 的有效分期行为等价，原始配置/元数据不相同。
+历史论文及旧实验应使用其冻结源码；当前源码重新求解必须写入新目录，不能混入
+旧结果。验证中“预部署＋中继”的逾期均值改善伴随约 1.42 km 航程增加，完整
+逐种子退化、浮点尾差和文献依据见[本批说明](results/global_relay_followup_20261014/README.md)。
+
+此前[全局调整与下游接力 HTML 对比](results/global_relay_trials_20261014/index.html)
 保留现有 ALNS，增加三个默认关闭的研究开关：`enable_tail_exchange` 在多机 DIRECT
 中每 20 轮尝试有界的零载荷等任务数尾段交换；`enable_home_reassignment` 每 40 轮
 为既有路线在固定起点槽位间求最优匹配；`enable_relay_downstream_refine` 在中继
 精化时考虑后续受影响任务，允许改进自身已按时的接力任务。前两项也可作用于 Relay
 的 DIRECT 预热；实际接力阶段仍采用完整交接调度评分，所有候选须通过规范校验。
 官方完整规模、四策略、三个种子的 20 秒配对初筛中，全局候选 5 胜 7 负，追加
-下游接力的消融 2 胜 4 负。未过门槛，不启用新默认或扩大测试。33 次运行全部通过
+下游接力的版本比较 2 胜 1 平 3 负；其中 5/6 对预热得分已不同，不能纯归因于下游排序。
+未过门槛，不启用新默认或扩大测试。33 次运行全部通过
 独立审计，测后另补中继精化两处截止时间检查。协议、限制和使用命令见
 [本批说明](results/global_relay_trials_20261014/README.md)。
 
@@ -31,10 +50,11 @@
 
 最新[中继接力 HTML 对比](results/relay_trials_20261013/batch1/index.html)
 独立尝试 `enable_relay_seed_checkpoint`、`enable_relay_route_diversity` 与
-`enable_relay_risk_seed`。三个开关默认关闭，分别保留中继播种预算耗尽前的
+`enable_relay_risk_seed`。该批三个开关均未采用，分别保留中继播种预算耗尽前的
 已核验改善、在固定腿束宽内保留不同无人机候选、按含等待的全局风险优先播种。
 跨机候选多样性在两个代表场景的 30 秒三种子验证均为 1 胜 2 负，没有
-替换默认。全部 35 次运行通过完整结构及独立 DAG 时序复算，完整口径、逐种子
+替换默认；其中 checkpoint 在后续完整复测达标后随新组合启用，其余仍关闭。
+全部 35 次运行通过完整结构及独立 DAG 时序复算，完整口径、逐种子
 结果与重放命令见[批次说明](results/relay_trials_20261013/batch1/README.md)。
 
 最新默认启用 `enable_adjacent_polish=True`：多机 DIRECT 搜索每 40 轮对一条候选

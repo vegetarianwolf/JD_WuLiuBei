@@ -51,6 +51,7 @@ def test_staged_fixed_iteration_counts_include_warmup_with_final_phase_inactive(
         config=ALNSConfig(
             max_iterations=100, seed=3, relay_direct_warmup_fraction=.8,
             enable_adjacent_polish=enabled,
+            enable_terminal_polish=False,
             enable_relay_seed=False, enable_relay_refine=False,
         ),
     )

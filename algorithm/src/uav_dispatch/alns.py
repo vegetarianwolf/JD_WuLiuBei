@@ -109,11 +109,19 @@ class ALNSConfig:
     # strings and per-UAV task counts instead of sequentially repairing them.
     enable_tail_exchange: bool = False
     enable_home_reassignment: bool = False
+    # Terminal descent promoted after the complete paired follow-up validation.
+    # Operates on the verified DIRECT incumbent only.
+    # Reserve at most 0.1 s (and at most 1% of the remaining phase budget),
+    # without changing candidates, RNG draws or operator rewards in the loop.
+    enable_terminal_polish: bool = True
     relay_enabled: bool = True
     # A relay-aware search has a much larger neighbourhood than DIRECT.
     # Spend most of a fixed budget building a strong DIRECT incumbent, then
     # let the relay phase improve (and never worsen) that incumbent.
-    relay_direct_warmup_fraction: float = 0.80
+    relay_direct_warmup_fraction: float = 0.95
+    # Retain the frozen experiment's explicit override for reproducibility.
+    # Public defaults use the numeric fraction above so custom ratios win.
+    enable_relay_budget_rebalance: bool = False
     relay_candidates_per_task: int = 2
     relay_plan_beam: int = 4
     relay_leg_candidate_limit: int | None = 4
@@ -131,7 +139,7 @@ class ALNSConfig:
     enable_relay_downstream_refine: bool = False
     # Preserve only seed moves already independently checked before the
     # deadline; an unfinished or over-budget candidate is never adopted.
-    enable_relay_seed_checkpoint: bool = False
+    enable_relay_seed_checkpoint: bool = True
     # The seed pass converts strictly-better DIRECT tasks to relay right
     # after construction; the refine pass then moves relay legs between UAVs.
     enable_relay_seed: bool = True
@@ -3163,6 +3171,16 @@ def solve_alns(
         ))
 
     direct_multi_active = not relay_active and len(current) > 1
+    terminal_polish_active = cfg.enable_terminal_polish and direct_multi_active
+    terminal_deadline = deadline
+    terminal_reserved_seconds = (
+        min(0.1, max(0.0, deadline - perf_counter()) * 0.01)
+        if terminal_polish_active and deadline is not None
+        else (0.1 if terminal_polish_active else 0.0)
+    )
+    if terminal_polish_active and deadline is not None:
+        deadline -= terminal_reserved_seconds
+    terminal_polish_statistics: dict[str, int] = {}
     boundary_destroy_active = cfg.enable_boundary_destroy and direct_multi_active
     objective_rewards_active = cfg.enable_objective_rewards and direct_multi_active
     multiroute_string_active = cfg.enable_multiroute_string_destroy and direct_multi_active
@@ -3476,6 +3494,33 @@ def solve_alns(
             )
         completed_iterations = iteration
 
+    terminal_before = best_score
+    terminal_elapsed = 0.0
+    terminal_accepted = False
+    if terminal_polish_active and (
+        terminal_deadline is None or perf_counter() < terminal_deadline
+    ):
+        from .incumbent_polish import polish_direct_incumbent
+        terminal_started = perf_counter()
+        polish_deadline = terminal_started + terminal_reserved_seconds
+        if terminal_deadline is not None:
+            polish_deadline = min(polish_deadline, terminal_deadline)
+        polished = polish_direct_incumbent(
+            problem, evaluator, best, deadline=polish_deadline,
+            statistics=terminal_polish_statistics,
+        )
+        if polished != best:
+            checked = evaluate_solution(problem, polished, _force_full=True)
+            if (checked.valid and checked.score < best_score
+                    and perf_counter() < polish_deadline):
+                best, best_score = polished, checked.score
+                terminal_accepted = True
+                time_to_best = perf_counter() - started
+                best_trajectory.append((
+                    completed_iterations, time_to_best, best_score.late_count,
+                    best_score.total_lateness_min, best_score.distance_km,
+                ))
+        terminal_elapsed = perf_counter() - terminal_started
     evaluation = evaluate_solution(problem, best, _force_full=True)
     if not evaluation.valid:
         raise RuntimeError(f"ALNS 最终解非法: {evaluation.violations}")
@@ -3527,6 +3572,19 @@ def solve_alns(
             "enable_home_reassignment": cfg.enable_home_reassignment,
             "home_reassignment_active": home_reassignment_active,
             "home_reassignment_statistics": MappingProxyType(home_reassignment_statistics),
+            "enable_terminal_polish": cfg.enable_terminal_polish,
+            "terminal_polish": MappingProxyType({
+                "active": bool(terminal_polish_active),
+                "phase": "direct" if terminal_polish_active else "inactive",
+                "reserved_seconds": terminal_reserved_seconds,
+                "elapsed_seconds": terminal_elapsed,
+                "accepted": terminal_accepted,
+                "before_score": (terminal_before.late_count, terminal_before.total_lateness_min,
+                                 terminal_before.distance_km),
+                "after_score": (best_score.late_count, best_score.total_lateness_min,
+                                best_score.distance_km),
+                "statistics": MappingProxyType(terminal_polish_statistics),
+            }),
             "adjacent_polish_active": adjacent_polish_active,
             "adjacent_polish_passes": adjacent_polish_passes,
             "adjacent_polish_improvements": adjacent_polish_improvements,
@@ -3536,6 +3594,7 @@ def solve_alns(
             "budget_cooling_active": budget_cooling_active,
             "final_temperature": temperature,
             "relay_enabled": bool(relay_active),
+            "enable_relay_budget_rebalance": cfg.enable_relay_budget_rebalance,
             "enable_relay_route_diversity": cfg.enable_relay_route_diversity,
             "relay_route_diversity_active": bool(
                 relay_active and cfg.enable_relay_route_diversity
@@ -3642,7 +3701,7 @@ def solve_relay_staged(
 
     cfg = config or ALNSConfig()
     solver = solve_alns
-    fraction = cfg.relay_direct_warmup_fraction
+    fraction = 0.95 if cfg.enable_relay_budget_rebalance else cfg.relay_direct_warmup_fraction
     if not problem.has_relays or not cfg.relay_enabled or fraction <= 0:
         return solver(problem, config=cfg, initial_routes=initial_routes)
 
@@ -3768,6 +3827,10 @@ def solve_relay_staged(
     }
     metadata = {
         **dict(relay_result.metadata),
+        "terminal_polish": MappingProxyType({
+            **dict(warm_result.metadata.get("terminal_polish", {})),
+            "phase": "direct_warmup",
+        }),
         # Work counters include both real phases; the active flag inherited
         # above still describes the final Relay phase only.
         **combined_polish_work,

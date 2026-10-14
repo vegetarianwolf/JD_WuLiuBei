@@ -160,9 +160,9 @@ def test_actual_relay_flag_is_inactive_and_preserves_every_search_decision():
 
 def test_flag_leaves_initial_construction_unchanged_and_adds_independent_weight():
     problem, _ = _problem((4, 4, 4))
-    baseline = solve_alns(problem, config=ALNSConfig(max_iterations=0))
+    baseline = solve_alns(problem, config=ALNSConfig(max_iterations=0, enable_terminal_polish=False))
     candidate = solve_alns(problem, config=ALNSConfig(
-        max_iterations=0, enable_multiroute_string_destroy=True,
+        max_iterations=0, enable_multiroute_string_destroy=True, enable_terminal_polish=False,
     ))
     assert candidate.routes == baseline.routes
     assert candidate.evaluation == baseline.evaluation

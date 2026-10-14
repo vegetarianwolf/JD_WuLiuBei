@@ -1,0 +1,216 @@
+{
+  "schema_version": 1,
+  "retrieval_scope": "targeted non-exhaustive followup; 2-3 primary sources on local-search scheduling and budget allocation",
+  "access_date": "2026-10-14",
+  "timezone": "Asia/Shanghai",
+  "skill_path": "/Users/vegetarianwolf/.agent-skills/src/scientific-agent-skills/skills/paper-lookup/SKILL.md",
+  "references_read": [
+    "references/crossref.md",
+    "references/openalex.md"
+  ],
+  "terminal_http_attempts": 7,
+  "requests_order_note": "Requests grouped by provider; ids do not imply chronological ordering. No API keys used. All API requests bounded to one page.",
+  "requests": [
+    {
+      "database": "Crossref",
+      "endpoint": "https://api.crossref.org/works",
+      "parameters": {
+        "query.bibliographic": "The late acceptance Hill-Climbing heuristic Burke Bykov",
+        "rows": 3
+      },
+      "http_status": 200,
+      "raw_file": "raw/crossref_late_acceptance.json",
+      "bytes": 39250,
+      "sha256": "95fa18ddb06ee8f40b14e1cbf3b48afc142fe0b44aa7f3fa5f2d25c5b3450cab",
+      "shape_check": {
+        "status": "ok",
+        "message_type": "work-list",
+        "total_results": 838048,
+        "returned": 3,
+        "pages": 1,
+        "exhaustive": false
+      },
+      "id": "01",
+      "access_date": "2026-10-14",
+      "timezone": "Asia/Shanghai"
+    },
+    {
+      "database": "Crossref",
+      "endpoint": "https://api.crossref.org/works",
+      "parameters": {
+        "query.bibliographic": "Slack Induction by String Removals for Vehicle Routing Problems Christiaens Vanden Berghe",
+        "rows": 3
+      },
+      "http_status": 200,
+      "raw_file": "raw/crossref_sisr.json",
+      "bytes": 52102,
+      "sha256": "d1ca4202c20719c2ea79974f6c4f538dbcfc587909d97ed608bb8d4474a473f9",
+      "shape_check": {
+        "status": "ok",
+        "message_type": "work-list",
+        "total_results": 17812,
+        "returned": 3,
+        "pages": 1,
+        "exhaustive": false
+      },
+      "id": "02",
+      "access_date": "2026-10-14",
+      "timezone": "Asia/Shanghai"
+    },
+    {
+      "database": "Crossref",
+      "endpoint": "https://api.crossref.org/works/10.1287%2Ftrsc.2021.1059",
+      "parameters": {},
+      "http_status": 200,
+      "raw_file": "raw/crossref_filo.json",
+      "bytes": 6447,
+      "sha256": "6776a8ba5587578ab10ec88303715c5ddd5ccb18fa6c0585ecec17040011a5ea",
+      "shape_check": {
+        "status": "ok",
+        "message_type": "work",
+        "total_results": null,
+        "returned": 1,
+        "pages": 1,
+        "exhaustive": false
+      },
+      "id": "03",
+      "access_date": "2026-10-14",
+      "timezone": "Asia/Shanghai"
+    },
+    {
+      "database": "Crossref",
+      "endpoint": "https://api.crossref.org/works",
+      "parameters": {
+        "query.bibliographic": "Iterated Local Search Framework and Applications Lourenco Martin Stutzle",
+        "rows": 3
+      },
+      "http_status": 200,
+      "raw_file": "raw/crossref_ils.json",
+      "bytes": 56564,
+      "sha256": "e180f763efb67ddf832db4ec25276f8126395cd82143b9b9fe35185ca9a6cad2",
+      "shape_check": {
+        "status": "ok",
+        "message_type": "work-list",
+        "total_results": 5042034,
+        "returned": 3,
+        "pages": 1,
+        "exhaustive": false
+      },
+      "id": "04",
+      "access_date": "2026-10-14",
+      "timezone": "Asia/Shanghai"
+    },
+    {
+      "database": "OpenAlex",
+      "endpoint": "https://api.openalex.org/works/doi:10.1016%2Fj.ejor.2016.07.012",
+      "parameters": {},
+      "http_status": 200,
+      "raw_file": "raw/openalex_late_acceptance.json",
+      "bytes": 15742,
+      "sha256": "94917c3f3c786ab078ae0a2f83cd117d9bab7b142fc3b13af25b75881a96f1da",
+      "shape_check": {
+        "doi_verified": true,
+        "has_abstract_inverted_index": false,
+        "title": "The late acceptance Hill-Climbing heuristic",
+        "publication_year": 2016
+      },
+      "parser": "bundled scripts/openalex_abstract.py",
+      "parser_exit_code": 0,
+      "parsed_file": "raw/openalex_late_acceptance_abstract.json",
+      "note": "No abstract returned; not considered abstract/fulltext access. Indexed year 2016 is not journal issue year 2017.",
+      "id": "05",
+      "access_date": "2026-10-14",
+      "timezone": "Asia/Shanghai"
+    },
+    {
+      "database": "University of Bologna repository",
+      "endpoint": "https://cris.unibo.it/retrieve/handle/11585/846180/bdc18373-9a82-422b-a149-cf9493680d0d/A%20Fast%20and%20Scalable%20Heuristic%20for%20the%20Solution%20of%20Large-Scale%20Capacitated%20Vehicle%20Routing%20Problems%20-%20Revised%20version.pdf",
+      "parameters": {},
+      "http_status": 403,
+      "raw_file": "raw/filo_unibo_403.html",
+      "bytes": 6311,
+      "sha256": "52a8638c056de69ad0f4e1e2333660e8886c1f19a5997a62dd5eec05c56780f6",
+      "shape_check": {
+        "is_pdf": false,
+        "content": "HTML denial"
+      },
+      "note": "Not used as fulltext.",
+      "id": "06",
+      "access_date": "2026-10-14",
+      "timezone": "Asia/Shanghai"
+    },
+    {
+      "database": "Vrije Universiteit Amsterdam Research Portal",
+      "endpoint": "https://research.vu.nl/ws/files/224009750/A_fast_and_scalable_heuristic_for_the_solution_of_large_scale_capacitated_vehicle_routing_problems.pdf",
+      "parameters": {},
+      "http_status": 200,
+      "bytes": 864293,
+      "sha256": "77f8c21330606e1a9e939d656c66a3e9067d8bbef7b5e6bffc515230ff9023e3",
+      "shape_check": {
+        "is_pdf": true,
+        "pages": 27
+      },
+      "retained": false,
+      "note": "Temporary publisher PDF inspected via web PDF text; deleted after fingerprinting; not redistributed. Read sections 2.2.1-2.2.4 and introduction of 2.3, not every page.",
+      "id": "07",
+      "access_date": "2026-10-14",
+      "timezone": "Asia/Shanghai"
+    }
+  ],
+  "web_access": [
+    {
+      "kind": "search",
+      "queries": [
+        "\"The late acceptance Hill-Climbing heuristic\" author pdf",
+        "\"Slack Induction by String Removals\" pdf",
+        "\"A fast and scalable heuristic\" \"Accorsi\" \"Vigo\""
+      ],
+      "purpose": "Find primary author/publisher copies"
+    },
+    {
+      "kind": "open/find/read",
+      "url": "https://research.vu.nl/ws/files/224009750/A_fast_and_scalable_heuristic_for_the_solution_of_large_scale_capacitated_vehicle_routing_problems.pdf",
+      "outcome": "27-page original PDF available; inspected methods sections 2.2.1-2.2.4 and 2.3 introduction"
+    },
+    {
+      "kind": "search snippet and unsuccessful open",
+      "url": "https://www.sciencedirect.com/science/article/pii/S0377221716305495",
+      "outcome": "Publisher abstract/section preview exposed by search; direct open failed; not fulltext and not used among three main papers."
+    }
+  ],
+  "selected_sources": [
+    {
+      "doi": "10.1287/trsc.2021.1059",
+      "evidence": "Crossref metadata/abstract plus original fulltext methods sections inspected",
+      "role": "hierarchical local search and selective recently changed vertex caching"
+    },
+    {
+      "doi": "10.2139/ssrn.273397",
+      "evidence": "Crossref metadata and abstract only",
+      "role": "ILS components and mechanism separation",
+      "note": "Do not conflate with 2010 chapter DOI10.1007/978-1-4419-1665-5_12, metadata only."
+    },
+    {
+      "doi": "10.1287/trsc.2019.0914",
+      "evidence": "Crossref metadata and abstract only",
+      "role": "future bounded adjacent ruin-recreate; not current implementation"
+    }
+  ],
+  "deprioritized_sources": [
+    {
+      "doi": "10.1016/j.ejor.2016.07.012",
+      "reason": "Scope narrowed to terminal scheduling and budget arms; no acceptance-rule change this round."
+    }
+  ],
+  "software_citation_reused": {
+    "source_file": "papers/notes/global_relay_20261014/provenance.json",
+    "sha256": "41d176867b0728cab9d8f24ccc8f395b412818bb3cd5c3780e0e8da60050b07a",
+    "citation_url": "https://arxiv.org/abs/2609.00065",
+    "note": "Same-day prior verified current record, v2 2026-09-02; no new lookup claimed."
+  },
+  "prior_result_diagnostics": {
+    "file": "previous_result_diagnostics.json",
+    "sha256": "0a81a81be6d2e4193d93624f8a545bb54945dadd765f0272d6c48301f236d5d0",
+    "score_rule": "Exact Python tuple (late_count,total_lateness_min,distance_km), no tolerance; downstream 2 wins, 1 exact tie, 3 losses."
+  }
+}

@@ -165,8 +165,9 @@ def test_actual_relay_flag_remains_inactive_and_preserves_search():
 
 def test_promoted_default_leaves_zero_iteration_construction_unchanged():
     problem = _positive_problem()
-    baseline = solve_alns(problem, config=ALNSConfig(max_iterations=0, enable_adjacent_polish=False))
-    candidate = solve_alns(problem, config=ALNSConfig(max_iterations=0))
+    baseline = solve_alns(problem, config=ALNSConfig(max_iterations=0, enable_adjacent_polish=False,
+                                                    enable_terminal_polish=False))
+    candidate = solve_alns(problem, config=ALNSConfig(max_iterations=0, enable_terminal_polish=False))
     assert candidate.routes == baseline.routes
     assert candidate.evaluation == baseline.evaluation
     assert candidate.metadata["adjacent_polish_passes"] == 0

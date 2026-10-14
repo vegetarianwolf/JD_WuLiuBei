@@ -41,7 +41,23 @@ def frozen_fixture(tmp_path_factory):
     """Synthetic audit evidence, built by scoring routes, never by search."""
     directory = tmp_path_factory.mktemp("global-audit") / "complete"
     p = audit._protocol()
-    p.prepare(directory)
+    archived = p.ROOT / "algorithm/results/global_relay_trials_20261014"
+    original = p.base.read_json(archived / "manifest.json")
+    assert original["baseline_commit"] == p.BASELINE_COMMIT
+
+    def historical_snapshot(path, commit=None):
+        assert commit in (None, p.BASELINE_COMMIT)
+        source = original["source_snapshots"]["baseline" if commit else "global"]
+        frozen = archived / source["path"]
+        assert p.base.sha256(frozen) == source["sha256"]
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(frozen.read_bytes())
+
+    # Later solver modules must remain forbidden by this historical audit.
+    # Isolate fixture construction to the old SHA-bound module generation.
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(p, "snapshot", historical_snapshot)
+        p.prepare(directory)
     manifest = audit._read(directory / "manifest.json")
     tasks = tuple(load_tasks_csv(audit.checks.DEFAULT_INPUT))
     rows, cache = [], {}

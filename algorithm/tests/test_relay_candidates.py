@@ -183,11 +183,11 @@ def test_checkpoint_rejects_candidate_whose_full_confirmation_finishes_late(monk
     assert config.seed_deadline_reached and not config.seed_checkpoint_retained
 
 
-def test_relay_experiments_are_opt_in_and_inactive_in_direct_search():
+def test_relay_experiments_and_promoted_checkpoint_are_inactive_in_direct_search():
     defaults = ALNSConfig()
     assert not defaults.enable_relay_route_diversity
     assert not defaults.enable_relay_risk_seed
-    assert not defaults.enable_relay_seed_checkpoint
+    assert defaults.enable_relay_seed_checkpoint
     result = solve_alns(
         _bridge(), initial_routes=((1, -1), (2, -2, 3, -3)),
         config=ALNSConfig(

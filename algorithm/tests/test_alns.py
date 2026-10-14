@@ -39,7 +39,7 @@ def test_direct_defaults_use_the_validated_small_destroy_band():
 
     assert config.min_destroy_fraction == 0.03
     assert config.max_destroy_fraction == 0.08
-    assert config.relay_direct_warmup_fraction == 0.80
+    assert config.relay_direct_warmup_fraction == 0.95
     assert config.relay_candidates_per_task == 2
     assert config.relay_sample_every == 3
     assert config.relay_plan_beam == 4
@@ -68,6 +68,9 @@ def test_fixed_iteration_alns_is_reproducible_and_preserves_best_so_far():
         seed=20260805,
         candidate_limit=None,
         weight_update_interval=8,
+        # This regression isolates deterministic ALNS iterations, not the
+        # separately wall-clock-bounded terminal refinement.
+        enable_terminal_polish=False,
     )
 
     first = solve_alns(problem, config=config, initial_routes=initial.routes)
@@ -157,7 +160,7 @@ def test_warm_start_with_unused_drones_is_padded_with_empty_routes():
 
     result = solve_alns(
         problem,
-        config=ALNSConfig(max_iterations=0),
+        config=ALNSConfig(max_iterations=0, enable_terminal_polish=False),
         initial_routes=warm_start,
     )
 

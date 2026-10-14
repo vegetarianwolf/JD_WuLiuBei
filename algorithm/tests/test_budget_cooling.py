@@ -82,7 +82,8 @@ def test_wall_budget_uses_search_time_after_startup(monkeypatch):
     monkeypatch.setattr(alns, "_accept_worse", lambda c, s, p, t, rng:
                         (temperatures.append(t), original(c, s, p, t, rng))[1])
     cfg = ALNSConfig(max_iterations=100, time_limit_seconds=6.,
-                     enable_budget_cooling=True, relay_enabled=False)
+                     enable_budget_cooling=True, relay_enabled=False,
+                     enable_terminal_polish=False)
     result = solve_alns(p, config=cfg, initial_routes=initial.routes)
     assert temperatures == pytest.approx([
         alns._budget_temperature(cfg, i / 4) for i in (1, 2, 3)])
@@ -104,8 +105,8 @@ def test_single_drone_does_not_change_search_decisions():
 
 def test_zero_iteration_budget_preserves_construction():
     p = problem()
-    baseline = solve_alns(p, config=ALNSConfig(max_iterations=0))
+    baseline = solve_alns(p, config=ALNSConfig(max_iterations=0, enable_terminal_polish=False))
     candidate = solve_alns(p, config=ALNSConfig(max_iterations=0,
-                                              enable_budget_cooling=True))
+                                              enable_budget_cooling=True, enable_terminal_polish=False))
     assert candidate.routes == baseline.routes
     assert candidate.evaluation == baseline.evaluation

@@ -1,0 +1,8629 @@
+{
+  "source": "algorithm/命题1-低空经济场景下的物流无人机调度算法数据.csv",
+  "problem": {
+    "task_count": 200,
+    "drone_count": 8,
+    "max_tasks_per_drone": 25,
+    "capacity": 2,
+    "speed_km_per_min": 0.9,
+    "depot_km": [
+      0.0,
+      0.0
+    ],
+    "drone_homes": [
+      "origin",
+      "station_1",
+      "station_1",
+      "station_2",
+      "station_2",
+      "station_3",
+      "station_3",
+      "station_4"
+    ],
+    "deployment": {
+      "distribution": {
+        "depot": 1,
+        "relay_1": 2,
+        "relay_2": 2,
+        "relay_3": 2,
+        "relay_4": 1
+      },
+      "homes": [
+        "origin",
+        "station_1",
+        "station_1",
+        "station_2",
+        "station_2",
+        "station_3",
+        "station_3",
+        "station_4"
+      ]
+    },
+    "open_routes": true,
+    "service_time_min": 0.0,
+    "objective_order": [
+      "late_count",
+      "total_lateness_min",
+      "distance_km"
+    ]
+  },
+  "valid": true,
+  "violations": [],
+  "score": {
+    "late_count": 64,
+    "total_lateness_min": 2003.5272383738309,
+    "distance_km": 618.0926501789648
+  },
+  "on_time_rate": 0.68,
+  "max_lateness_min": 59.28050143732127,
+  "max_route_distance_km": 83.52481837583073,
+  "max_route_completion_min": 92.80535375092305,
+  "runtime_seconds": 58.42961454199394,
+  "iterations": 4653,
+  "iterations_per_second": 79.6342751269708,
+  "relay": {
+    "relay_count": 4,
+    "relay_candidate_coverage": 0.0,
+    "relay_coordinates": [
+      [
+        1,
+        3.925,
+        5.775
+      ],
+      [
+        2,
+        4.605,
+        3.215
+      ],
+      [
+        3,
+        5.890000000000001,
+        5.029999999999999
+      ],
+      [
+        4,
+        2.975,
+        4.154999999999999
+      ]
+    ],
+    "direct_task_count": 200,
+    "relay_task_count": 0,
+    "relay_share": 0.0,
+    "cross_uav_handoff_count": 0,
+    "same_uav_relay_count": 0,
+    "total_relay_waiting_time": 0,
+    "average_relay_waiting_time": 0.0,
+    "max_relay_waiting_time": 0.0,
+    "relay_usage_per_station": [
+      {
+        "station_id": 1,
+        "x": 3.925,
+        "y": 5.775,
+        "drop_count": 0,
+        "pickup_count": 0,
+        "task_count": 0,
+        "average_wait": 0.0
+      },
+      {
+        "station_id": 2,
+        "x": 4.605,
+        "y": 3.215,
+        "drop_count": 0,
+        "pickup_count": 0,
+        "task_count": 0,
+        "average_wait": 0.0
+      },
+      {
+        "station_id": 3,
+        "x": 5.890000000000001,
+        "y": 5.029999999999999,
+        "drop_count": 0,
+        "pickup_count": 0,
+        "task_count": 0,
+        "average_wait": 0.0
+      },
+      {
+        "station_id": 4,
+        "x": 2.975,
+        "y": 4.154999999999999,
+        "drop_count": 0,
+        "pickup_count": 0,
+        "task_count": 0,
+        "average_wait": 0.0
+      }
+    ],
+    "per_drone": [
+      {
+        "drone_id": 1,
+        "original_task_count": 25,
+        "transport_leg_count": 25,
+        "relay_drop_count": 0,
+        "relay_pickup_count": 0,
+        "distance_km": 74.47633154826488
+      },
+      {
+        "drone_id": 2,
+        "original_task_count": 25,
+        "transport_leg_count": 25,
+        "relay_drop_count": 0,
+        "relay_pickup_count": 0,
+        "distance_km": 72.73140653290999
+      },
+      {
+        "drone_id": 3,
+        "original_task_count": 25,
+        "transport_leg_count": 25,
+        "relay_drop_count": 0,
+        "relay_pickup_count": 0,
+        "distance_km": 78.74489281448272
+      },
+      {
+        "drone_id": 4,
+        "original_task_count": 25,
+        "transport_leg_count": 25,
+        "relay_drop_count": 0,
+        "relay_pickup_count": 0,
+        "distance_km": 79.54245129358914
+      },
+      {
+        "drone_id": 5,
+        "original_task_count": 25,
+        "transport_leg_count": 25,
+        "relay_drop_count": 0,
+        "relay_pickup_count": 0,
+        "distance_km": 77.35271008910925
+      },
+      {
+        "drone_id": 6,
+        "original_task_count": 25,
+        "transport_leg_count": 25,
+        "relay_drop_count": 0,
+        "relay_pickup_count": 0,
+        "distance_km": 72.51129928110412
+      },
+      {
+        "drone_id": 7,
+        "original_task_count": 25,
+        "transport_leg_count": 25,
+        "relay_drop_count": 0,
+        "relay_pickup_count": 0,
+        "distance_km": 79.20874024367382
+      },
+      {
+        "drone_id": 8,
+        "original_task_count": 25,
+        "transport_leg_count": 25,
+        "relay_drop_count": 0,
+        "relay_pickup_count": 0,
+        "distance_km": 83.52481837583073
+      }
+    ]
+  },
+  "task_plans": {
+    "1": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "2": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "3": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "4": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "5": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "6": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "7": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "8": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "9": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "10": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "11": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "12": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "13": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "14": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "15": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "16": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "17": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "18": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "19": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "20": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "21": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "22": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "23": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "24": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "25": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "26": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "27": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "28": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "29": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "30": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "31": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "32": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "33": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "34": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "35": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "36": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "37": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "38": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "39": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "40": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "41": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "42": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "43": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "44": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "45": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "46": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "47": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "48": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "49": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "50": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "51": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "52": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "53": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "54": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "55": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "56": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "57": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "58": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "59": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "60": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "61": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "62": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "63": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "64": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "65": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "66": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "67": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "68": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "69": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "70": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "71": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "72": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "73": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "74": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "75": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "76": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "77": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "78": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "79": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "80": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "81": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "82": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "83": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "84": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "85": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "86": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "87": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "88": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "89": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "90": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "91": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "92": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "93": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "94": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "95": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "96": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "97": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "98": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "99": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "100": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "101": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "102": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "103": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "104": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "105": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "106": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "107": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "108": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "109": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "110": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "111": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "112": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "113": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "114": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "115": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "116": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "117": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "118": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "119": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "120": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "121": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "122": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "123": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "124": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "125": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "126": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "127": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "128": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "129": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "130": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "131": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "132": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "133": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "134": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "135": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "136": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "137": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "138": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "139": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "140": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "141": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "142": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "143": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "144": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "145": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "146": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "147": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "148": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "149": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "150": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "151": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "152": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "153": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "154": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "155": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "156": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "157": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "158": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "159": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "160": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "161": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "162": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "163": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "164": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "165": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "166": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "167": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "168": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "169": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "170": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "171": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "172": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "173": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "174": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "175": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "176": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "177": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "178": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "179": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "180": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "181": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "182": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "183": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "184": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "185": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "186": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "187": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "188": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "189": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "190": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "191": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "192": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "193": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "194": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "195": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "196": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "197": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "198": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "199": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    },
+    "200": {
+      "mode": "DIRECT",
+      "relay_id": null,
+      "leg_ids": []
+    }
+  },
+  "metadata": {
+    "method": "C2-Lex-ALNS",
+    "seed": 2026102441,
+    "enable_home_seed": true,
+    "enable_deadline_risk": true,
+    "enable_lazy_repair": false,
+    "enable_direct_option_cache": false,
+    "direct_option_cache_active": false,
+    "direct_option_cache_hits": 0,
+    "direct_option_cache_misses": 0,
+    "direct_option_cache_size": 0,
+    "direct_option_cache_evictions": 0,
+    "direct_option_cache_maxsize": 0,
+    "enable_route_distinct_regret": false,
+    "enable_regret_position_fallback": false,
+    "enable_regret_portfolio": false,
+    "regret_portfolio_active": false,
+    "enable_boundary_destroy": false,
+    "boundary_destroy_active": false,
+    "enable_objective_rewards": false,
+    "objective_rewards_active": false,
+    "enable_multiroute_string_destroy": false,
+    "multiroute_string_active": false,
+    "enable_adjacent_polish": true,
+    "enable_tail_exchange": false,
+    "tail_exchange_active": false,
+    "tail_exchange_statistics": {},
+    "enable_home_reassignment": false,
+    "home_reassignment_active": false,
+    "home_reassignment_statistics": {},
+    "adjacent_polish_active": true,
+    "adjacent_polish_passes": 116,
+    "adjacent_polish_improvements": 17,
+    "adjacent_polish_probes": 3076,
+    "adjacent_polish_position_checks": 5332,
+    "enable_budget_cooling": false,
+    "budget_cooling_active": false,
+    "final_temperature": 0.0005,
+    "relay_enabled": false,
+    "enable_relay_route_diversity": false,
+    "relay_route_diversity_active": false,
+    "enable_relay_risk_seed": false,
+    "enable_relay_downstream_refine": false,
+    "relay_risk_seed_active": false,
+    "enable_relay_seed_checkpoint": false,
+    "relay_seed_checkpoint_active": false,
+    "time_limit_seconds": 58.42899091599975,
+    "initial_score": [
+      103,
+      3900.2294869051616,
+      733.1421110380724
+    ],
+    "time_to_best_seconds": 56.068995042005554,
+    "best_trajectory": [
+      [
+        0,
+        0.0008136249962262809,
+        103,
+        3900.2294869051616,
+        733.1421110380724
+      ],
+      [
+        34,
+        0.4385602500406094,
+        102,
+        3892.744894863201,
+        759.1813526504988
+      ],
+      [
+        35,
+        0.45498720899922773,
+        102,
+        3818.4096342434796,
+        760.4987192561802
+      ],
+      [
+        36,
+        0.46240058401599526,
+        102,
+        3808.2205840085226,
+        763.8733853889426
+      ],
+      [
+        37,
+        0.46826325001893565,
+        102,
+        3788.262505545369,
+        764.4936270241952
+      ],
+      [
+        38,
+        0.4759296250413172,
+        102,
+        3787.8138741964035,
+        759.4625736847331
+      ],
+      [
+        39,
+        0.494536500016693,
+        101,
+        3760.9504828449553,
+        761.4973197353385
+      ],
+      [
+        45,
+        0.5550583340227604,
+        101,
+        3698.0631772922857,
+        756.5782498959421
+      ],
+      [
+        46,
+        0.5712252919911407,
+        100,
+        3778.5706907168997,
+        759.4137192932803
+      ],
+      [
+        48,
+        0.5840268339961767,
+        100,
+        3756.304132320326,
+        759.9029137173286
+      ],
+      [
+        53,
+        0.6486601670039818,
+        99,
+        3599.8951433724055,
+        743.090502433201
+      ],
+      [
+        54,
+        0.6666707090334967,
+        98,
+        3782.7917401478685,
+        761.4348666168548
+      ],
+      [
+        88,
+        1.0643779170350172,
+        97,
+        3631.603481347701,
+        771.1863526080423
+      ],
+      [
+        89,
+        1.0746982090058737,
+        97,
+        3621.6243376518078,
+        769.8368713098321
+      ],
+      [
+        91,
+        1.1078953749965876,
+        97,
+        3565.62425102171,
+        768.1062918415582
+      ],
+      [
+        92,
+        1.1137312920182012,
+        97,
+        3485.7307674132976,
+        762.0393118612822
+      ],
+      [
+        93,
+        1.1273358750040643,
+        96,
+        3487.60396879841,
+        768.2744467543465
+      ],
+      [
+        108,
+        1.321846084028948,
+        94,
+        3525.627559688025,
+        755.1910273950833
+      ],
+      [
+        112,
+        1.37074395903619,
+        94,
+        3440.1559504648853,
+        741.8402591058748
+      ],
+      [
+        143,
+        1.762794375012163,
+        94,
+        3254.7491612999042,
+        731.2818656685937
+      ],
+      [
+        146,
+        1.7935609589912929,
+        93,
+        3279.228820150077,
+        728.1897681697453
+      ],
+      [
+        148,
+        1.8281789590255357,
+        93,
+        3275.6472349499218,
+        720.3846109104783
+      ],
+      [
+        149,
+        1.835323375009466,
+        93,
+        3260.125270865003,
+        727.2513331717812
+      ],
+      [
+        153,
+        1.8890321250073612,
+        93,
+        3223.815560066081,
+        729.0937220326326
+      ],
+      [
+        154,
+        1.901262667030096,
+        92,
+        3200.8556205538903,
+        728.4081810897837
+      ],
+      [
+        155,
+        1.908294124994427,
+        91,
+        3230.6460083714524,
+        729.1809348999085
+      ],
+      [
+        166,
+        2.039823334023822,
+        90,
+        3400.161887129322,
+        754.7912555541255
+      ],
+      [
+        167,
+        2.0590457090293057,
+        90,
+        3284.07263540663,
+        735.1317342666911
+      ],
+      [
+        207,
+        2.5093383340281434,
+        89,
+        3073.317324242675,
+        732.1968248390465
+      ],
+      [
+        209,
+        2.5466540420311503,
+        89,
+        3011.919206954182,
+        729.6960586168594
+      ],
+      [
+        211,
+        2.5743857090128586,
+        88,
+        2952.8946102705754,
+        719.9513100139912
+      ],
+      [
+        212,
+        2.586896041990258,
+        87,
+        2834.815929882882,
+        701.6593498116412
+      ],
+      [
+        218,
+        2.666124834038783,
+        85,
+        2784.743946878788,
+        693.7637886840495
+      ],
+      [
+        219,
+        2.672918791999109,
+        85,
+        2775.1886644077604,
+        691.7957456716207
+      ],
+      [
+        267,
+        3.2689618750009686,
+        84,
+        3009.373659533426,
+        723.5666544061605
+      ],
+      [
+        270,
+        3.286223625007551,
+        84,
+        2998.364314137807,
+        722.6658897828827
+      ],
+      [
+        278,
+        3.4037602090393193,
+        83,
+        2949.8578627321763,
+        714.3416315356192
+      ],
+      [
+        296,
+        3.640170417027548,
+        83,
+        2918.9002096894546,
+        706.0522726865867
+      ],
+      [
+        299,
+        3.659386374987662,
+        83,
+        2878.6655859889056,
+        709.3779980487016
+      ],
+      [
+        300,
+        3.6730400000233203,
+        82,
+        2865.59817576128,
+        711.2249883043315
+      ],
+      [
+        302,
+        3.6989439169992693,
+        81,
+        2836.0329183046542,
+        702.8495388033112
+      ],
+      [
+        306,
+        3.744398250011727,
+        81,
+        2823.853186547365,
+        703.6850386357489
+      ],
+      [
+        312,
+        3.80952570901718,
+        80,
+        2807.356168309604,
+        701.6978737918133
+      ],
+      [
+        383,
+        4.803355709009338,
+        79,
+        3067.855013870149,
+        736.5902182609121
+      ],
+      [
+        387,
+        4.860020874999464,
+        79,
+        3028.5821208035063,
+        735.1544412660512
+      ],
+      [
+        388,
+        4.8818068749969825,
+        78,
+        2975.056041006776,
+        713.4647085748737
+      ],
+      [
+        391,
+        4.9436537500005215,
+        78,
+        2932.9653451177483,
+        709.1916750627478
+      ],
+      [
+        407,
+        5.166755125042982,
+        77,
+        2959.0867044439337,
+        707.9892979621123
+      ],
+      [
+        408,
+        5.175747792003676,
+        77,
+        2937.706152349702,
+        701.1892998952889
+      ],
+      [
+        412,
+        5.2265240420238115,
+        77,
+        2937.5282348579317,
+        701.082549625496
+      ],
+      [
+        418,
+        5.331957334012259,
+        77,
+        2917.458367986045,
+        698.8394952461697
+      ],
+      [
+        419,
+        5.361289458989631,
+        76,
+        2879.0163991943664,
+        697.965480042755
+      ],
+      [
+        420,
+        5.373194249987137,
+        75,
+        2861.9982153824353,
+        699.2120200759477
+      ],
+      [
+        430,
+        5.494879625039175,
+        75,
+        2688.5832287484745,
+        690.1005840310254
+      ],
+      [
+        431,
+        5.507655250024982,
+        74,
+        2685.8863529673226,
+        691.4973238626868
+      ],
+      [
+        433,
+        5.529861834016629,
+        74,
+        2666.771165963802,
+        689.3608173571585
+      ],
+      [
+        434,
+        5.535743959015235,
+        74,
+        2664.7501016441124,
+        690.317656925265
+      ],
+      [
+        438,
+        5.59952325001359,
+        74,
+        2614.020393759069,
+        683.3334087712872
+      ],
+      [
+        444,
+        5.683156584040262,
+        74,
+        2605.6615687000326,
+        685.2788040289103
+      ],
+      [
+        451,
+        5.766908416990191,
+        74,
+        2603.7995760420936,
+        684.1004718731336
+      ],
+      [
+        455,
+        5.805818249995355,
+        74,
+        2594.0495825921657,
+        680.3893999164636
+      ],
+      [
+        457,
+        5.819349042023532,
+        74,
+        2587.650690866192,
+        679.0478104034862
+      ],
+      [
+        459,
+        5.845927584043238,
+        74,
+        2583.99202982126,
+        678.8275781192906
+      ],
+      [
+        461,
+        5.866121667029802,
+        74,
+        2576.6915636254835,
+        683.3280591946208
+      ],
+      [
+        470,
+        5.983282000001054,
+        73,
+        2505.338946221248,
+        676.5999034992318
+      ],
+      [
+        471,
+        5.996340792044066,
+        73,
+        2499.960789662218,
+        676.0620878433288
+      ],
+      [
+        476,
+        6.063786167011131,
+        73,
+        2477.8584597551658,
+        670.977334879938
+      ],
+      [
+        477,
+        6.073635999986436,
+        73,
+        2473.1200446976886,
+        669.672037332846
+      ],
+      [
+        479,
+        6.101492375019006,
+        73,
+        2462.455491480567,
+        671.585296065094
+      ],
+      [
+        480,
+        6.121673125016969,
+        73,
+        2454.6036158113593,
+        661.9897999405396
+      ],
+      [
+        493,
+        6.275731083995197,
+        73,
+        2443.9541632997234,
+        658.1831138818563
+      ],
+      [
+        504,
+        6.418254708987661,
+        73,
+        2437.3519851297797,
+        667.4250264809594
+      ],
+      [
+        505,
+        6.425275084038731,
+        73,
+        2428.8661640458295,
+        666.6231965198656
+      ],
+      [
+        511,
+        6.509493875026237,
+        73,
+        2427.1009099471426,
+        659.4077898681377
+      ],
+      [
+        513,
+        6.5458129170001484,
+        73,
+        2421.149922663845,
+        650.1697959931228
+      ],
+      [
+        515,
+        6.562862624996342,
+        73,
+        2411.7737585066634,
+        649.6055843429046
+      ],
+      [
+        517,
+        6.577732709003612,
+        73,
+        2411.3157468342033,
+        649.5643632923832
+      ],
+      [
+        526,
+        6.679376624990255,
+        73,
+        2395.764317615121,
+        652.8011402407147
+      ],
+      [
+        533,
+        6.7592373749939725,
+        72,
+        2412.408765924734,
+        669.8890891307661
+      ],
+      [
+        536,
+        6.822311750031076,
+        72,
+        2405.597773876651,
+        663.4062217519686
+      ],
+      [
+        537,
+        6.827387124998495,
+        72,
+        2405.0778760383832,
+        663.4147516686037
+      ],
+      [
+        541,
+        6.878215667034965,
+        72,
+        2402.7387808896515,
+        662.7070003792004
+      ],
+      [
+        545,
+        6.933465667010751,
+        72,
+        2401.2898251751776,
+        660.0473791968567
+      ],
+      [
+        549,
+        6.994554959004745,
+        72,
+        2399.3408875351834,
+        659.8003603424434
+      ],
+      [
+        574,
+        7.312798459024634,
+        71,
+        2421.892530352272,
+        680.433521349183
+      ],
+      [
+        575,
+        7.324809000012465,
+        71,
+        2411.7834257918835,
+        676.060068842623
+      ],
+      [
+        578,
+        7.373479625035543,
+        70,
+        2304.367888369529,
+        650.7997050747149
+      ],
+      [
+        582,
+        7.413860291999299,
+        70,
+        2287.079246680534,
+        651.0517513884745
+      ],
+      [
+        584,
+        7.427787750028074,
+        70,
+        2284.89222786337,
+        652.1042422091639
+      ],
+      [
+        595,
+        7.533463417028543,
+        69,
+        2233.0283203903887,
+        647.5708774277521
+      ],
+      [
+        599,
+        7.567724374996033,
+        69,
+        2231.795260048886,
+        647.4599019970169
+      ],
+      [
+        603,
+        7.616173334012274,
+        69,
+        2229.453787128587,
+        654.6560711729655
+      ],
+      [
+        610,
+        7.697791667014826,
+        69,
+        2229.421276664088,
+        654.6471691066769
+      ],
+      [
+        614,
+        7.73689550004201,
+        69,
+        2227.782059542681,
+        654.3774620271429
+      ],
+      [
+        626,
+        7.8361500420141965,
+        69,
+        2220.579899025916,
+        648.1426271569414
+      ],
+      [
+        628,
+        7.866703250037972,
+        69,
+        2218.4411781011145,
+        647.9676408994577
+      ],
+      [
+        654,
+        8.164085209020413,
+        68,
+        2356.3584030331663,
+        672.1296141929218
+      ],
+      [
+        664,
+        8.26213229203131,
+        68,
+        2354.468130189701,
+        673.0942165335138
+      ],
+      [
+        672,
+        8.370551083993632,
+        68,
+        2324.093975331337,
+        665.1267182616546
+      ],
+      [
+        674,
+        8.398599292035215,
+        68,
+        2312.4685970434293,
+        658.6460733753074
+      ],
+      [
+        678,
+        8.449196792033035,
+        68,
+        2312.3909725430767,
+        658.6373406190177
+      ],
+      [
+        682,
+        8.495036750042345,
+        68,
+        2310.0996698480726,
+        655.4521596326309
+      ],
+      [
+        689,
+        8.608138084004167,
+        68,
+        2309.8959205513556,
+        658.8778799717879
+      ],
+      [
+        690,
+        8.671651625016239,
+        68,
+        2309.7949189170704,
+        658.8598458614103
+      ],
+      [
+        704,
+        8.851701167004649,
+        68,
+        2305.846548583223,
+        652.8831567948307
+      ],
+      [
+        710,
+        8.949476750043686,
+        68,
+        2305.8050893028185,
+        652.8727316863475
+      ],
+      [
+        713,
+        9.015521084016655,
+        68,
+        2302.2178590792632,
+        649.7141799879165
+      ],
+      [
+        714,
+        9.03497941698879,
+        68,
+        2280.6708132488934,
+        649.6140348276125
+      ],
+      [
+        717,
+        9.06291608401807,
+        68,
+        2274.450473101055,
+        648.9142465609807
+      ],
+      [
+        739,
+        9.331916416995227,
+        68,
+        2270.8223568477624,
+        648.3256789725335
+      ],
+      [
+        741,
+        9.343561209039763,
+        68,
+        2269.9017307998306,
+        646.0003727137649
+      ],
+      [
+        743,
+        9.384399084025063,
+        68,
+        2265.1870597907487,
+        646.797158722512
+      ],
+      [
+        747,
+        9.437610708991997,
+        68,
+        2264.275062676985,
+        646.7059590111355
+      ],
+      [
+        751,
+        9.4772475840291,
+        68,
+        2254.799253522402,
+        642.2819148825067
+      ],
+      [
+        754,
+        9.517418959003408,
+        68,
+        2250.7723395582125,
+        641.6778777878783
+      ],
+      [
+        818,
+        10.296454625029583,
+        67,
+        2247.6731736881384,
+        655.3671352565633
+      ],
+      [
+        819,
+        10.302045042044483,
+        67,
+        2243.6344189143238,
+        655.4710302033723
+      ],
+      [
+        821,
+        10.328766583988909,
+        67,
+        2224.7162714579536,
+        651.6380672222436
+      ],
+      [
+        850,
+        10.693208749988116,
+        67,
+        2223.177822403982,
+        651.6773074263848
+      ],
+      [
+        877,
+        11.035544167039916,
+        67,
+        2221.9216975704935,
+        652.6606602873366
+      ],
+      [
+        888,
+        11.15569158399012,
+        67,
+        2215.151734141634,
+        648.6534826930308
+      ],
+      [
+        898,
+        11.290062334039249,
+        67,
+        2193.7893098474046,
+        645.3025727351375
+      ],
+      [
+        932,
+        11.733638375008013,
+        67,
+        2193.391578019698,
+        646.3211552197193
+      ],
+      [
+        964,
+        12.141275792033412,
+        67,
+        2191.72976691852,
+        654.1208599347879
+      ],
+      [
+        965,
+        12.148262583999895,
+        67,
+        2184.927054724012,
+        647.0553342511723
+      ],
+      [
+        975,
+        12.269968209031504,
+        67,
+        2168.719047173576,
+        642.7236845339007
+      ],
+      [
+        987,
+        12.4235055000172,
+        67,
+        2163.288483237296,
+        643.4167536614002
+      ],
+      [
+        993,
+        12.51113316701958,
+        67,
+        2162.6473751300427,
+        643.2573105496448
+      ],
+      [
+        996,
+        12.552535625000019,
+        66,
+        2189.291878143987,
+        652.787925712106
+      ],
+      [
+        1006,
+        12.718811917002313,
+        66,
+        2181.963133223815,
+        649.2917426373383
+      ],
+      [
+        1019,
+        12.860437666997313,
+        66,
+        2178.828078732595,
+        648.9390490070759
+      ],
+      [
+        1025,
+        12.936638959043194,
+        66,
+        2173.3555812071945,
+        644.5555688552913
+      ],
+      [
+        1031,
+        13.010522000025958,
+        66,
+        2164.883629974759,
+        644.8789508827182
+      ],
+      [
+        1035,
+        13.071108625037596,
+        66,
+        2162.0425783265946,
+        644.4867284765758
+      ],
+      [
+        1037,
+        13.104323334002402,
+        66,
+        2157.9785452404144,
+        644.0420856880123
+      ],
+      [
+        1046,
+        13.208275209006388,
+        66,
+        2154.795250552874,
+        639.281405881588
+      ],
+      [
+        1051,
+        13.256886249990202,
+        66,
+        2154.7025988670407,
+        639.3778253755612
+      ],
+      [
+        1052,
+        13.272693250037264,
+        66,
+        2154.188412248556,
+        638.6637860870522
+      ],
+      [
+        1090,
+        13.69085570902098,
+        66,
+        2154.0518181629946,
+        639.8747476147187
+      ],
+      [
+        1110,
+        13.924137542024255,
+        66,
+        2150.3674675243597,
+        638.216196424223
+      ],
+      [
+        1323,
+        16.533556917042006,
+        66,
+        2144.0259487832136,
+        634.6596765120103
+      ],
+      [
+        1326,
+        16.55134512501536,
+        66,
+        2137.652822126004,
+        631.1685784165121
+      ],
+      [
+        1351,
+        16.879829584038816,
+        66,
+        2135.161226731875,
+        628.6452115110702
+      ],
+      [
+        1367,
+        17.082588334043976,
+        66,
+        2133.7547331774917,
+        628.8706486520015
+      ],
+      [
+        1372,
+        17.15487775002839,
+        66,
+        2133.2502396925006,
+        628.4657375753953
+      ],
+      [
+        1415,
+        17.67070675001014,
+        66,
+        2132.048700559718,
+        634.6566679044988
+      ],
+      [
+        1418,
+        17.710884875035845,
+        66,
+        2131.244665843057,
+        636.6211553155756
+      ],
+      [
+        1438,
+        17.947677624993958,
+        66,
+        2129.1007314265908,
+        634.9998239360264
+      ],
+      [
+        1447,
+        18.03984095901251,
+        66,
+        2124.2202412152437,
+        634.8728898575054
+      ],
+      [
+        1454,
+        18.132410791993607,
+        66,
+        2119.339200959622,
+        629.1616275815214
+      ],
+      [
+        1458,
+        18.16477895900607,
+        66,
+        2119.3317995181087,
+        629.1546063220096
+      ],
+      [
+        1460,
+        18.180617750040255,
+        66,
+        2115.450931758392,
+        628.7614820109542
+      ],
+      [
+        1672,
+        20.947978375013918,
+        66,
+        2114.1413939697118,
+        631.7131531778688
+      ],
+      [
+        1677,
+        21.01169562502764,
+        66,
+        2112.001862741385,
+        628.7949596457713
+      ],
+      [
+        1681,
+        21.062537334044464,
+        66,
+        2108.9621018327566,
+        628.9629896222875
+      ],
+      [
+        1706,
+        21.3641446250258,
+        66,
+        2108.114196795426,
+        630.2003479808428
+      ],
+      [
+        1707,
+        21.368113542033825,
+        66,
+        2107.8911455694697,
+        630.1752547179227
+      ],
+      [
+        1733,
+        21.739018208987545,
+        66,
+        2105.4664634370347,
+        628.8353536152171
+      ],
+      [
+        1749,
+        21.9484583340236,
+        66,
+        2103.537400257516,
+        628.9389576926194
+      ],
+      [
+        1753,
+        21.99227820901433,
+        66,
+        2103.3531172744497,
+        628.3594194671169
+      ],
+      [
+        1782,
+        22.34454087499762,
+        66,
+        2103.299611010767,
+        628.9130949982093
+      ],
+      [
+        1840,
+        23.042447834042832,
+        66,
+        2092.34344789343,
+        630.7722882281166
+      ],
+      [
+        1843,
+        23.07487041701097,
+        66,
+        2092.3381099595535,
+        630.7569112844667
+      ],
+      [
+        1894,
+        23.681803666986525,
+        66,
+        2090.9868111422597,
+        631.6559796057203
+      ],
+      [
+        1942,
+        24.297514167032205,
+        66,
+        2090.6363362197244,
+        629.676496247746
+      ],
+      [
+        1963,
+        24.526873541995883,
+        66,
+        2089.7210552188326,
+        629.4801511889038
+      ],
+      [
+        2181,
+        27.283620042027906,
+        66,
+        2084.5117520389067,
+        647.4756690099191
+      ],
+      [
+        2182,
+        27.295970125007443,
+        66,
+        2080.467293489664,
+        638.9775753426378
+      ],
+      [
+        2183,
+        27.305225374992006,
+        66,
+        2066.1327736645785,
+        633.0437349329943
+      ],
+      [
+        2193,
+        27.40335762500763,
+        66,
+        2065.011842661185,
+        632.9428511426889
+      ],
+      [
+        2194,
+        27.421928375028074,
+        65,
+        2088.8174431336383,
+        646.1348186027074
+      ],
+      [
+        2205,
+        27.574950042006094,
+        65,
+        2088.102368938421,
+        646.1474485489206
+      ],
+      [
+        2206,
+        27.58667816699017,
+        65,
+        2082.0472555587567,
+        641.3478538168602
+      ],
+      [
+        2207,
+        27.59155675000511,
+        65,
+        2081.613901850906,
+        642.0724432619467
+      ],
+      [
+        2221,
+        27.743016958993394,
+        65,
+        2079.265055027521,
+        636.2035488514035
+      ],
+      [
+        2233,
+        27.909424209035933,
+        65,
+        2079.2576535860076,
+        636.1965275918917
+      ],
+      [
+        2240,
+        27.997157917008735,
+        65,
+        2078.9735227328897,
+        636.1645628709158
+      ],
+      [
+        2244,
+        28.034089584019966,
+        65,
+        2077.4194445903545,
+        643.1525611601684
+      ],
+      [
+        2245,
+        28.04135666700313,
+        65,
+        2077.364271482505,
+        643.0970489461309
+      ],
+      [
+        2260,
+        28.208679709001444,
+        65,
+        2077.3568700409915,
+        643.0900276866191
+      ],
+      [
+        2275,
+        28.38543520902749,
+        65,
+        2074.3764342982217,
+        643.7043007818035
+      ],
+      [
+        2283,
+        28.48443137499271,
+        65,
+        2072.058716543388,
+        643.2535939143934
+      ],
+      [
+        2284,
+        28.489987750013825,
+        65,
+        2071.5048259439495,
+        642.6853755704586
+      ],
+      [
+        2404,
+        29.906574541993905,
+        65,
+        2069.260823402492,
+        638.235417698352
+      ],
+      [
+        2406,
+        29.92027079203399,
+        65,
+        2068.2211981761,
+        637.5760475619144
+      ],
+      [
+        2410,
+        29.980702792003285,
+        65,
+        2067.4474048106526,
+        636.685849991288
+      ],
+      [
+        2413,
+        30.01360604201909,
+        65,
+        2065.340846391258,
+        634.6389835989412
+      ],
+      [
+        2415,
+        30.047707583988085,
+        65,
+        2051.2607260074547,
+        630.2502625545098
+      ],
+      [
+        2572,
+        31.881944917025976,
+        65,
+        2051.0681360790722,
+        632.6762122794049
+      ],
+      [
+        2732,
+        33.791825208987575,
+        65,
+        2048.506489238171,
+        627.6913071272594
+      ],
+      [
+        2738,
+        33.86489783402067,
+        65,
+        2046.2445586491792,
+        632.3678783810051
+      ],
+      [
+        2843,
+        35.1884888340137,
+        65,
+        2043.6639725167838,
+        628.2245713510735
+      ],
+      [
+        2875,
+        35.57756112504285,
+        65,
+        2041.3792045486684,
+        617.7221413926833
+      ],
+      [
+        2885,
+        35.69918404199416,
+        65,
+        2039.5778979827157,
+        617.3805589101456
+      ],
+      [
+        2909,
+        36.00797120900825,
+        65,
+        2034.9466933522297,
+        615.7683419696828
+      ],
+      [
+        2941,
+        36.3920201670262,
+        65,
+        2028.4399689604684,
+        614.1797492026218
+      ],
+      [
+        2954,
+        36.543285791995004,
+        65,
+        2024.9153422292952,
+        612.5882927025299
+      ],
+      [
+        2998,
+        37.06638283398934,
+        65,
+        2023.9533196033435,
+        608.5994448924989
+      ],
+      [
+        3003,
+        37.11411429202417,
+        65,
+        2023.4784475123715,
+        608.4652291540361
+      ],
+      [
+        3005,
+        37.14159491698956,
+        65,
+        2023.3681122432708,
+        608.5640533732528
+      ],
+      [
+        3182,
+        39.1196165420115,
+        65,
+        2018.5212751222957,
+        611.8244900301648
+      ],
+      [
+        3276,
+        40.27978325000731,
+        65,
+        2014.923410812132,
+        608.4023076217242
+      ],
+      [
+        3280,
+        40.33307762502227,
+        65,
+        2013.6894138947303,
+        609.1931890541933
+      ],
+      [
+        3330,
+        40.9498738340335,
+        65,
+        2013.5671673361892,
+        609.1654956736164
+      ],
+      [
+        3550,
+        43.62975150003331,
+        65,
+        2009.895896132774,
+        609.8167387937488
+      ],
+      [
+        3566,
+        43.85375450004358,
+        65,
+        2004.167636077913,
+        609.2788681188955
+      ],
+      [
+        3572,
+        43.969901208998635,
+        65,
+        2002.9336403582793,
+        609.4749490677733
+      ],
+      [
+        3644,
+        45.19453983398853,
+        65,
+        1994.9066458648488,
+        608.2223332602674
+      ],
+      [
+        3670,
+        45.622064083989244,
+        65,
+        1993.2621668196743,
+        609.3825893052755
+      ],
+      [
+        3673,
+        45.66361345903715,
+        65,
+        1993.2367376186435,
+        609.3797285201596
+      ],
+      [
+        3689,
+        45.89944850001484,
+        65,
+        1993.084477580427,
+        609.364409307478
+      ],
+      [
+        3771,
+        46.92247345903888,
+        65,
+        1992.340998223595,
+        620.6446820645899
+      ],
+      [
+        3774,
+        46.96461233403534,
+        65,
+        1981.4835546606328,
+        611.566096674045
+      ],
+      [
+        3844,
+        47.895415875012986,
+        65,
+        1981.330293539698,
+        611.4977644114957
+      ],
+      [
+        3854,
+        48.00845095899422,
+        65,
+        1981.1950548489053,
+        611.4824451988142
+      ],
+      [
+        3991,
+        49.7576305840048,
+        65,
+        1979.9272811994251,
+        611.6752783635014
+      ],
+      [
+        4043,
+        50.4451199999894,
+        64,
+        2043.176613094807,
+        621.9497041847724
+      ],
+      [
+        4157,
+        51.85836058401037,
+        64,
+        2034.5450831293147,
+        626.0092295940786
+      ],
+      [
+        4209,
+        52.46168591699097,
+        64,
+        2030.4212153793533,
+        628.9945231178594
+      ],
+      [
+        4213,
+        52.52089745900594,
+        64,
+        2030.1115876237259,
+        632.4002789501852
+      ],
+      [
+        4229,
+        52.69288941699779,
+        64,
+        2029.9943825880232,
+        631.9780830168952
+      ],
+      [
+        4233,
+        52.74508191703353,
+        64,
+        2029.8428623731972,
+        631.5432574713899
+      ],
+      [
+        4291,
+        53.75573908403749,
+        64,
+        2027.1235699842312,
+        635.5326696826615
+      ],
+      [
+        4292,
+        53.76630191702861,
+        64,
+        2022.4466829597638,
+        634.3167356469356
+      ],
+      [
+        4300,
+        53.86166787502589,
+        64,
+        2021.0174246482864,
+        633.3471145677637
+      ],
+      [
+        4333,
+        54.30508175003342,
+        64,
+        2017.5834292710706,
+        624.447659083197
+      ],
+      [
+        4345,
+        54.470996334042866,
+        64,
+        2011.2123149221964,
+        620.704191622115
+      ],
+      [
+        4365,
+        54.71633004199248,
+        64,
+        2008.9008677264103,
+        620.3596376665326
+      ],
+      [
+        4384,
+        54.939842667023186,
+        64,
+        2008.8324042633114,
+        620.6147319509014
+      ],
+      [
+        4460,
+        55.975660792028066,
+        64,
+        2005.183401748939,
+        618.1114863410064
+      ],
+      [
+        4467,
+        56.068995042005554,
+        64,
+        2003.5272383738309,
+        618.0926501789648
+      ]
+    ],
+    "best_update_count": 230,
+    "accepted_solutions": 2228,
+    "iterations_per_second": 79.6342751269708,
+    "operator_uses": {
+      "destroy:random": 646,
+      "destroy:worst_distance": 674,
+      "destroy:worst_lex": 589,
+      "destroy:spatial_related": 519,
+      "destroy:deadline_related": 513,
+      "destroy:late_critical": 644,
+      "destroy:route_segment": 81,
+      "destroy:capacity_conflict": 482,
+      "destroy:assignment_destroy": 505,
+      "repair:greedy": 1250,
+      "repair:regret2": 915,
+      "repair:regret3": 1301,
+      "repair:deadline": 595,
+      "repair:slack": 592
+    },
+    "operator_statistics": {
+      "destroy:random": {
+        "uses": 646,
+        "accepted": 384,
+        "current_improvements": 57,
+        "best_improvements": 25,
+        "current_late_count_improvements": 17,
+        "best_late_count_improvements": 4,
+        "equal_score_accepts": 296,
+        "unchanged_route_accepts": 296,
+        "total_reward": 655.0
+      },
+      "destroy:worst_distance": {
+        "uses": 674,
+        "accepted": 307,
+        "current_improvements": 116,
+        "best_improvements": 46,
+        "current_late_count_improvements": 20,
+        "best_late_count_improvements": 9,
+        "equal_score_accepts": 117,
+        "unchanged_route_accepts": 117,
+        "total_reward": 839.0
+      },
+      "destroy:worst_lex": {
+        "uses": 589,
+        "accepted": 263,
+        "current_improvements": 105,
+        "best_improvements": 48,
+        "current_late_count_improvements": 22,
+        "best_late_count_improvements": 9,
+        "equal_score_accepts": 99,
+        "unchanged_route_accepts": 99,
+        "total_reward": 770.0
+      },
+      "destroy:spatial_related": {
+        "uses": 519,
+        "accepted": 237,
+        "current_improvements": 44,
+        "best_improvements": 19,
+        "current_late_count_improvements": 7,
+        "best_late_count_improvements": 4,
+        "equal_score_accepts": 168,
+        "unchanged_route_accepts": 168,
+        "total_reward": 445.0
+      },
+      "destroy:deadline_related": {
+        "uses": 513,
+        "accepted": 265,
+        "current_improvements": 43,
+        "best_improvements": 13,
+        "current_late_count_improvements": 7,
+        "best_late_count_improvements": 1,
+        "equal_score_accepts": 204,
+        "unchanged_route_accepts": 204,
+        "total_reward": 446.0
+      },
+      "destroy:late_critical": {
+        "uses": 644,
+        "accepted": 283,
+        "current_improvements": 69,
+        "best_improvements": 30,
+        "current_late_count_improvements": 3,
+        "best_late_count_improvements": 0,
+        "equal_score_accepts": 161,
+        "unchanged_route_accepts": 161,
+        "total_reward": 610.0
+      },
+      "destroy:route_segment": {
+        "uses": 81,
+        "accepted": 22,
+        "current_improvements": 4,
+        "best_improvements": 1,
+        "current_late_count_improvements": 3,
+        "best_late_count_improvements": 0,
+        "equal_score_accepts": 1,
+        "unchanged_route_accepts": 1,
+        "total_reward": 38.0
+      },
+      "destroy:capacity_conflict": {
+        "uses": 482,
+        "accepted": 259,
+        "current_improvements": 41,
+        "best_improvements": 17,
+        "current_late_count_improvements": 12,
+        "best_late_count_improvements": 4,
+        "equal_score_accepts": 189,
+        "unchanged_route_accepts": 189,
+        "total_reward": 450.0
+      },
+      "destroy:assignment_destroy": {
+        "uses": 505,
+        "accepted": 208,
+        "current_improvements": 83,
+        "best_improvements": 31,
+        "current_late_count_improvements": 21,
+        "best_late_count_improvements": 6,
+        "equal_score_accepts": 90,
+        "unchanged_route_accepts": 90,
+        "total_reward": 581.0
+      },
+      "repair:greedy": {
+        "uses": 1250,
+        "accepted": 693,
+        "current_improvements": 189,
+        "best_improvements": 74,
+        "current_late_count_improvements": 49,
+        "best_late_count_improvements": 20,
+        "equal_score_accepts": 400,
+        "unchanged_route_accepts": 400,
+        "total_reward": 1556.0
+      },
+      "repair:regret2": {
+        "uses": 915,
+        "accepted": 414,
+        "current_improvements": 97,
+        "best_improvements": 38,
+        "current_late_count_improvements": 17,
+        "best_late_count_improvements": 4,
+        "equal_score_accepts": 259,
+        "unchanged_route_accepts": 259,
+        "total_reward": 857.0
+      },
+      "repair:regret3": {
+        "uses": 1301,
+        "accepted": 730,
+        "current_improvements": 203,
+        "best_improvements": 87,
+        "current_late_count_improvements": 30,
+        "best_late_count_improvements": 8,
+        "equal_score_accepts": 426,
+        "unchanged_route_accepts": 426,
+        "total_reward": 1687.0
+      },
+      "repair:deadline": {
+        "uses": 595,
+        "accepted": 202,
+        "current_improvements": 37,
+        "best_improvements": 16,
+        "current_late_count_improvements": 7,
+        "best_late_count_improvements": 2,
+        "equal_score_accepts": 123,
+        "unchanged_route_accepts": 123,
+        "total_reward": 377.0
+      },
+      "repair:slack": {
+        "uses": 592,
+        "accepted": 189,
+        "current_improvements": 36,
+        "best_improvements": 15,
+        "current_late_count_improvements": 9,
+        "best_late_count_improvements": 3,
+        "equal_score_accepts": 117,
+        "unchanged_route_accepts": 117,
+        "total_reward": 357.0
+      }
+    },
+    "operator_weights": {
+      "destroy:random": 0.9196446677833992,
+      "destroy:worst_distance": 0.7847455138930378,
+      "destroy:worst_lex": 0.7552752952634506,
+      "destroy:spatial_related": 0.5742081706552242,
+      "destroy:deadline_related": 0.7069247847224974,
+      "destroy:late_critical": 0.464587079539047,
+      "destroy:route_segment": 0.05,
+      "destroy:capacity_conflict": 0.6219459425672383,
+      "destroy:assignment_destroy": 0.7726529234867252,
+      "repair:greedy": 0.7823202550770451,
+      "repair:regret2": 0.7042800261107924,
+      "repair:regret3": 0.8591937257231468,
+      "repair:deadline": 0.4527440307475385,
+      "repair:slack": 0.5784634758553544
+    },
+    "profiling": {
+      "route_full_evaluation_count": 12610,
+      "route_delta_evaluation_count": 21252036,
+      "route_materialization_count": 1214945,
+      "relay_beam_build_count": 0,
+      "relay_beam_cache_hit_count": 0,
+      "relay_leg_cache_hit_count": 0,
+      "relay_plans_for_task_count": 0,
+      "relay_global_evaluation_count": 0,
+      "repair_rank_evaluation_count": 331528,
+      "repair_exact_evaluation_count": 51291,
+      "regret_distinct_round_count": 0,
+      "regret_distinct_ranking_count": 0,
+      "regret_distinct_shortage_count": 0,
+      "regret_position_fallback_count": 0,
+      "regret_position_shortage_count": 0,
+      "regret_all_infinite_round_count": 0,
+      "surface_build_count": 43810,
+      "surface_cache_hit_count": 1391317,
+      "surface_cache_miss_count": 43810
+    }
+  },
+  "delivery_times_min": {
+    "1": 13.873927724532678,
+    "2": 67.9687930892795,
+    "3": 84.33209726830924,
+    "4": 18.854924612642833,
+    "5": 26.899832937046234,
+    "6": 23.624048134974192,
+    "7": 54.39545603315801,
+    "8": 36.98261266791792,
+    "9": 11.534687323493888,
+    "10": 3.6887739910564115,
+    "11": 22.666219072615128,
+    "12": 60.11262952055332,
+    "13": 18.626028148562806,
+    "14": 46.01116890901604,
+    "15": 80.56811031233788,
+    "16": 74.12461605285375,
+    "17": 70.45704761735868,
+    "18": 18.812222066324857,
+    "19": 46.29982090703276,
+    "20": 30.864367858215502,
+    "21": 41.407930002905914,
+    "22": 4.582254438189786,
+    "23": 69.65570713935605,
+    "24": 55.34985140995128,
+    "25": 75.77402524617685,
+    "26": 85.9474556545658,
+    "27": 35.07400373964858,
+    "28": 44.70024534604521,
+    "29": 31.20673068260086,
+    "30": 60.5784841252424,
+    "31": 55.79229706088501,
+    "32": 63.132197727241525,
+    "33": 2.7719237547385673,
+    "34": 71.59157857499146,
+    "35": 17.583492981558514,
+    "36": 9.613749059275687,
+    "37": 80.81267392545554,
+    "38": 26.50123268062778,
+    "39": 63.575992895920784,
+    "40": 44.72987418417262,
+    "41": 87.49432534942522,
+    "42": 12.027694051633004,
+    "43": 43.01619117062928,
+    "44": 38.83502835214922,
+    "45": 5.115131091073881,
+    "46": 36.43150177442429,
+    "47": 17.782137547020746,
+    "48": 30.59974449205942,
+    "49": 50.95500652355513,
+    "50": 23.25016055454717,
+    "51": 25.53325398758542,
+    "52": 19.230263745523263,
+    "53": 52.26944839133309,
+    "54": 16.083735217273272,
+    "55": 25.05705021706071,
+    "56": 12.39143397501974,
+    "57": 31.53103452488217,
+    "58": 33.24687907394817,
+    "59": 80.86016385263966,
+    "60": 6.226408947407464,
+    "61": 35.93087029219082,
+    "62": 57.71001483989986,
+    "63": 92.80535375092305,
+    "64": 8.3923054322528,
+    "65": 42.845428632635674,
+    "66": 21.023618436715246,
+    "67": 6.718833283699597,
+    "68": 20.559240947233462,
+    "69": 4.311282324510062,
+    "70": 74.37823187975405,
+    "71": 23.455672460537738,
+    "72": 15.570387787012047,
+    "73": 17.82956710197089,
+    "74": 60.673496486223016,
+    "75": 8.476891957777957,
+    "76": 25.123855612215404,
+    "77": 42.17661869207763,
+    "78": 49.58451963572151,
+    "79": 30.76896393233893,
+    "80": 29.348199991777708,
+    "81": 58.32557084776478,
+    "82": 60.30749225117575,
+    "83": 68.44298909204612,
+    "84": 39.929417061617926,
+    "85": 52.691816787083056,
+    "86": 19.083746591319382,
+    "87": 51.550587631672904,
+    "88": 11.900206059430317,
+    "89": 40.97073945739063,
+    "90": 76.02008030927206,
+    "91": 58.589027908787514,
+    "92": 7.470349164439167,
+    "93": 48.84165608831342,
+    "94": 45.637796924740876,
+    "95": 12.684364549717172,
+    "96": 86.7874891596376,
+    "97": 3.014516375500882,
+    "98": 73.24394028605997,
+    "99": 10.25380177833859,
+    "100": 42.98238566347917,
+    "101": 31.33311958899609,
+    "102": 44.66969988098968,
+    "103": 24.345969808126245,
+    "104": 82.33951999469761,
+    "105": 47.38199491189228,
+    "106": 28.96811300151561,
+    "107": 49.61422238824249,
+    "108": 81.96451067618882,
+    "109": 75.45669191246466,
+    "110": 15.988684598633172,
+    "111": 34.519293281996404,
+    "112": 38.4298492920521,
+    "113": 60.63944150238131,
+    "114": 21.384956021547474,
+    "115": 41.27251497967795,
+    "116": 65.39898994386567,
+    "117": 36.38681953910436,
+    "118": 10.071693402222303,
+    "119": 11.247341162354978,
+    "120": 7.9361328670284665,
+    "121": 8.926679416982179,
+    "122": 34.43279186682934,
+    "123": 51.72450402992289,
+    "124": 74.34602533472246,
+    "125": 33.278724231045594,
+    "126": 44.96364751245285,
+    "127": 22.97240933111974,
+    "128": 6.86428361903903,
+    "129": 13.4104769884907,
+    "130": 23.860127573106325,
+    "131": 20.927094748684617,
+    "132": 16.69705550922116,
+    "133": 58.31801954833161,
+    "134": 8.045564620381757,
+    "135": 28.370139954381408,
+    "136": 88.00971138185983,
+    "137": 52.06763184905416,
+    "138": 7.873977472364306,
+    "139": 22.793852412851567,
+    "140": 5.7701728566615085,
+    "141": 9.624477233516087,
+    "142": 28.395358939057395,
+    "143": 25.10640410982667,
+    "144": 78.58231795016235,
+    "145": 79.81837784976733,
+    "146": 15.361172074585038,
+    "147": 61.557500528068005,
+    "148": 31.777926966959875,
+    "149": 20.983695397418103,
+    "150": 71.18346569132322,
+    "151": 19.061595337325514,
+    "152": 16.16860135416871,
+    "153": 15.488906709063698,
+    "154": 26.416688423171873,
+    "155": 29.83014427775458,
+    "156": 38.014675717301664,
+    "157": 6.404461011569613,
+    "158": 54.392579171327654,
+    "159": 35.59753695885748,
+    "160": 28.20100803629857,
+    "161": 66.3521394489747,
+    "162": 29.193416442841865,
+    "163": 55.88687567544437,
+    "164": 27.990272094462643,
+    "165": 52.18451092539842,
+    "166": 39.61117930179135,
+    "167": 5.625362199333084,
+    "168": 39.33495652819335,
+    "169": 10.343288743492694,
+    "170": 67.98777138711436,
+    "171": 39.14754931118518,
+    "172": 14.395450447063356,
+    "173": 34.076343052123406,
+    "174": 50.45182709113869,
+    "175": 15.58577271763805,
+    "176": 82.75147949807214,
+    "177": 72.93116875639386,
+    "178": 58.91859174917804,
+    "179": 30.823064764945006,
+    "180": 64.07684773904487,
+    "181": 7.440741805143462,
+    "182": 83.6142394230656,
+    "183": 34.77283303817077,
+    "184": 79.91480264319613,
+    "185": 21.09649574625603,
+    "186": 71.95759625126102,
+    "187": 68.8963714423373,
+    "188": 14.17171335022281,
+    "189": 60.45125808644222,
+    "190": 75.31973108158594,
+    "191": 23.65585913475957,
+    "192": 66.20654708864659,
+    "193": 11.854500099791167,
+    "194": 2.330734679435897,
+    "195": 88.38050143732127,
+    "196": 31.791136716978162,
+    "197": 64.96624510934497,
+    "198": 40.24745731705886,
+    "199": 67.51291483639562,
+    "200": 34.261683652273675
+  },
+  "routes": [
+    {
+      "drone_id": 1,
+      "task_count": 25,
+      "transport_leg_count": 25,
+      "relay_drop_count": 0,
+      "relay_pickup_count": 0,
+      "distance_km": 74.47633154826488,
+      "completion_time_min": 82.75147949807214,
+      "late_count": 8,
+      "total_lateness_min": 225.68556605844782,
+      "on_time_task_count": 17,
+      "on_time_rate": 0.68,
+      "encoded_visits": [
+        75,
+        181,
+        -181,
+        119,
+        -75,
+        193,
+        -119,
+        -193,
+        175,
+        13,
+        -175,
+        86,
+        -13,
+        -86,
+        79,
+        130,
+        -130,
+        38,
+        -38,
+        101,
+        -79,
+        -101,
+        200,
+        89,
+        -200,
+        46,
+        -46,
+        168,
+        -168,
+        126,
+        -89,
+        14,
+        -126,
+        165,
+        -14,
+        31,
+        -165,
+        178,
+        -31,
+        180,
+        -178,
+        170,
+        -180,
+        124,
+        -170,
+        109,
+        -124,
+        -109,
+        176,
+        -176
+      ],
+      "visits": [
+        {
+          "task_id": 75,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.71,
+            1.13
+          ],
+          "arrival_time_min": 2.2773712374328476
+        },
+        {
+          "task_id": 181,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.46,
+            1.19
+          ],
+          "arrival_time_min": 3.1133669843651446
+        },
+        {
+          "task_id": 181,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.27,
+            5.08
+          ],
+          "arrival_time_min": 7.440741805143462
+        },
+        {
+          "task_id": 119,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.97,
+            5.49
+          ],
+          "arrival_time_min": 8.005225618293709
+        },
+        {
+          "task_id": 75,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.66,
+            5.78
+          ],
+          "arrival_time_min": 8.476891957777957
+        },
+        {
+          "task_id": 193,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.58,
+            5.22
+          ],
+          "arrival_time_min": 9.105431318832666
+        },
+        {
+          "task_id": 119,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.27,
+            3.42
+          ],
+          "arrival_time_min": 11.247341162354978
+        },
+        {
+          "task_id": 193,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.72,
+            3.73
+          ],
+          "arrival_time_min": 11.854500099791167
+        },
+        {
+          "task_id": 175,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.61,
+            2.9
+          ],
+          "arrival_time_min": 13.206681693264615
+        },
+        {
+          "task_id": 13,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.72,
+            2.9
+          ],
+          "arrival_time_min": 13.328903915486837
+        },
+        {
+          "task_id": 175,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.51,
+            3.86
+          ],
+          "arrival_time_min": 15.58577271763805
+        },
+        {
+          "task_id": 86,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.85,
+            4.09
+          ],
+          "arrival_time_min": 16.36235910674945
+        },
+        {
+          "task_id": 13,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.8,
+            3.5
+          ],
+          "arrival_time_min": 18.626028148562806
+        },
+        {
+          "task_id": 86,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.21,
+            3.46
+          ],
+          "arrival_time_min": 19.083746591319382
+        },
+        {
+          "task_id": 79,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.93,
+            3.89
+          ],
+          "arrival_time_min": 20.01555751899638
+        },
+        {
+          "task_id": 130,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.23,
+            5.16
+          ],
+          "arrival_time_min": 21.626821879523906
+        },
+        {
+          "task_id": 130,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.75,
+            6.52
+          ],
+          "arrival_time_min": 23.860127573106325
+        },
+        {
+          "task_id": 38,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.62,
+            6.72
+          ],
+          "arrival_time_min": 24.12516891625914
+        },
+        {
+          "task_id": 38,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.89,
+            4.71
+          ],
+          "arrival_time_min": 26.50123268062778
+        },
+        {
+          "task_id": 101,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.89,
+            4.75
+          ],
+          "arrival_time_min": 27.613232325356385
+        },
+        {
+          "task_id": 79,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.6,
+            6.43
+          ],
+          "arrival_time_min": 30.76896393233893
+        },
+        {
+          "task_id": 101,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.17,
+            6.7
+          ],
+          "arrival_time_min": 31.33311958899609
+        },
+        {
+          "task_id": 200,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.64,
+            7.42
+          ],
+          "arrival_time_min": 33.211949011801686
+        },
+        {
+          "task_id": 89,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.59,
+            7.91
+          ],
+          "arrival_time_min": 33.759220583180564
+        },
+        {
+          "task_id": 200,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.96,
+            7.65
+          ],
+          "arrival_time_min": 34.261683652273675
+        },
+        {
+          "task_id": 46,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.71,
+            7.81
+          ],
+          "arrival_time_min": 35.11376896649758
+        },
+        {
+          "task_id": 46,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.75,
+            7.24
+          ],
+          "arrival_time_min": 36.43150177442429
+        },
+        {
+          "task_id": 168,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.93,
+            7.4
+          ],
+          "arrival_time_min": 36.69909276506412
+        },
+        {
+          "task_id": 168,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.54,
+            5.06
+          ],
+          "arrival_time_min": 39.33495652819335
+        },
+        {
+          "task_id": 126,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.58,
+            4.24
+          ],
+          "arrival_time_min": 40.24715100604996
+        },
+        {
+          "task_id": 89,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.62,
+            3.59
+          ],
+          "arrival_time_min": 40.97073945739063
+        },
+        {
+          "task_id": 14,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.8,
+            1.99
+          ],
+          "arrival_time_min": 43.17969988547428
+        },
+        {
+          "task_id": 126,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.23,
+            1.26
+          ],
+          "arrival_time_min": 44.96364751245285
+        },
+        {
+          "task_id": 165,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.62,
+            1.03
+          ],
+          "arrival_time_min": 45.4667244645716
+        },
+        {
+          "task_id": 14,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.62,
+            1.52
+          ],
+          "arrival_time_min": 46.01116890901604
+        },
+        {
+          "task_id": 31,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.36,
+            2.68
+          ],
+          "arrival_time_min": 47.53998673682199
+        },
+        {
+          "task_id": 165,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.33,
+            3.79
+          ],
+          "arrival_time_min": 52.18451092539842
+        },
+        {
+          "task_id": 178,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.25,
+            5.57
+          ],
+          "arrival_time_min": 54.4978645382885
+        },
+        {
+          "task_id": 31,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.01,
+            4.43
+          ],
+          "arrival_time_min": 55.79229706088501
+        },
+        {
+          "task_id": 180,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.43,
+            3.05
+          ],
+          "arrival_time_min": 57.39507243157452
+        },
+        {
+          "task_id": 178,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.67,
+            1.7
+          ],
+          "arrival_time_min": 58.91859174917804
+        },
+        {
+          "task_id": 170,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.9,
+            1.6
+          ],
+          "arrival_time_min": 60.28976768857828
+        },
+        {
+          "task_id": 180,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.27,
+            1.09
+          ],
+          "arrival_time_min": 64.07684773904487
+        },
+        {
+          "task_id": 124,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.45,
+            1.43
+          ],
+          "arrival_time_min": 64.50430071819312
+        },
+        {
+          "task_id": 170,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.98,
+            4.52
+          ],
+          "arrival_time_min": 67.98777138711436
+        },
+        {
+          "task_id": 109,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.68,
+            5.24
+          ],
+          "arrival_time_min": 68.85443805378104
+        },
+        {
+          "task_id": 124,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.94,
+            6.64
+          ],
+          "arrival_time_min": 74.34602533472246
+        },
+        {
+          "task_id": 109,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.6,
+            5.7
+          ],
+          "arrival_time_min": 75.45669191246466
+        },
+        {
+          "task_id": 176,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.09,
+            6.01
+          ],
+          "arrival_time_min": 76.11983072630363
+        },
+        {
+          "task_id": 176,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.61,
+            1.19
+          ],
+          "arrival_time_min": 82.75147949807214
+        }
+      ]
+    },
+    {
+      "drone_id": 2,
+      "task_count": 25,
+      "transport_leg_count": 25,
+      "relay_drop_count": 0,
+      "relay_pickup_count": 0,
+      "distance_km": 72.73140653290999,
+      "completion_time_min": 80.81267392545554,
+      "late_count": 8,
+      "total_lateness_min": 231.82381545315738,
+      "on_time_task_count": 17,
+      "on_time_rate": 0.68,
+      "encoded_visits": [
+        33,
+        99,
+        -33,
+        140,
+        -140,
+        92,
+        -92,
+        141,
+        -141,
+        -99,
+        153,
+        131,
+        -153,
+        18,
+        -18,
+        127,
+        -131,
+        154,
+        -127,
+        20,
+        -154,
+        57,
+        -20,
+        -57,
+        112,
+        27,
+        -27,
+        21,
+        -112,
+        19,
+        -21,
+        28,
+        -28,
+        -19,
+        163,
+        24,
+        -24,
+        -163,
+        39,
+        147,
+        -147,
+        17,
+        -39,
+        34,
+        -17,
+        -34,
+        37,
+        184,
+        -184,
+        -37
+      ],
+      "visits": [
+        {
+          "task_id": 33,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.57,
+            5.43
+          ],
+          "arrival_time_min": 0.5500280576457272
+        },
+        {
+          "task_id": 99,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.19,
+            5.34
+          ],
+          "arrival_time_min": 1.246137173542487
+        },
+        {
+          "task_id": 33,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.43,
+            4.75
+          ],
+          "arrival_time_min": 2.7719237547385673
+        },
+        {
+          "task_id": 140,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.27,
+            3.02
+          ],
+          "arrival_time_min": 4.7023494098407115
+        },
+        {
+          "task_id": 140,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.07,
+            2.08
+          ],
+          "arrival_time_min": 5.7701728566615085
+        },
+        {
+          "task_id": 92,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.45,
+            1.08
+          ],
+          "arrival_time_min": 7.077512063779974
+        },
+        {
+          "task_id": 92,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.28,
+            1.39
+          ],
+          "arrival_time_min": 7.470349164439167
+        },
+        {
+          "task_id": 141,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.73,
+            1.36
+          ],
+          "arrival_time_min": 7.971459043718264
+        },
+        {
+          "task_id": 141,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.36,
+            1.94
+          ],
+          "arrival_time_min": 9.624477233516087
+        },
+        {
+          "task_id": 99,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.94,
+            2.32
+          ],
+          "arrival_time_min": 10.25380177833859
+        },
+        {
+          "task_id": 153,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.06,
+            3.18
+          ],
+          "arrival_time_min": 11.620965193029436
+        },
+        {
+          "task_id": 131,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.61,
+            4.76
+          ],
+          "arrival_time_min": 13.446335103113958
+        },
+        {
+          "task_id": 153,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.74,
+            6.21
+          ],
+          "arrival_time_min": 15.488906709063698
+        },
+        {
+          "task_id": 18,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.28,
+            6.11
+          ],
+          "arrival_time_min": 16.09910805207463
+        },
+        {
+          "task_id": 18,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.46,
+            7.21
+          ],
+          "arrival_time_min": 18.812222066324857
+        },
+        {
+          "task_id": 127,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.99,
+            7.27
+          ],
+          "arrival_time_min": 19.404872526462395
+        },
+        {
+          "task_id": 131,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.11,
+            6.22
+          ],
+          "arrival_time_min": 20.927094748684617
+        },
+        {
+          "task_id": 154,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.99,
+            6.34
+          ],
+          "arrival_time_min": 21.115656557001028
+        },
+        {
+          "task_id": 127,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.58,
+            4.72
+          ],
+          "arrival_time_min": 22.97240933111974
+        },
+        {
+          "task_id": 20,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.46,
+            4.66
+          ],
+          "arrival_time_min": 23.121480529619724
+        },
+        {
+          "task_id": 154,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.14,
+            3.39
+          ],
+          "arrival_time_min": 26.416688423171873
+        },
+        {
+          "task_id": 57,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.23,
+            3.37
+          ],
+          "arrival_time_min": 26.519127806030685
+        },
+        {
+          "task_id": 20,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.99,
+            1.18
+          ],
+          "arrival_time_min": 30.864367858215502
+        },
+        {
+          "task_id": 57,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.63,
+            1.66
+          ],
+          "arrival_time_min": 31.53103452488217
+        },
+        {
+          "task_id": 112,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.82,
+            1.94
+          ],
+          "arrival_time_min": 31.907010620786362
+        },
+        {
+          "task_id": 27,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.92,
+            2.55
+          ],
+          "arrival_time_min": 32.59383548569861
+        },
+        {
+          "task_id": 27,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.84,
+            3.36
+          ],
+          "arrival_time_min": 35.07400373964858
+        },
+        {
+          "task_id": 21,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.22,
+            5.45
+          ],
+          "arrival_time_min": 37.496251445936544
+        },
+        {
+          "task_id": 112,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.2,
+            6.29
+          ],
+          "arrival_time_min": 38.4298492920521
+        },
+        {
+          "task_id": 19,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.84,
+            5.99
+          ],
+          "arrival_time_min": 39.215209160810865
+        },
+        {
+          "task_id": 21,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.2,
+            4.56
+          ],
+          "arrival_time_min": 41.407930002905914
+        },
+        {
+          "task_id": 28,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.26,
+            4.63
+          ],
+          "arrival_time_min": 41.510369385764726
+        },
+        {
+          "task_id": 28,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.92,
+            3.55
+          ],
+          "arrival_time_min": 44.70024534604521
+        },
+        {
+          "task_id": 19,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.33,
+            4.93
+          ],
+          "arrival_time_min": 46.29982090703276
+        },
+        {
+          "task_id": 163,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.89,
+            6.87
+          ],
+          "arrival_time_min": 49.06584046544714
+        },
+        {
+          "task_id": 24,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.1,
+            6.63
+          ],
+          "arrival_time_min": 49.98323075222349
+        },
+        {
+          "task_id": 24,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.31,
+            7.25
+          ],
+          "arrival_time_min": 55.34985140995128
+        },
+        {
+          "task_id": 163,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.87,
+            7.45
+          ],
+          "arrival_time_min": 55.88687567544437
+        },
+        {
+          "task_id": 39,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.65,
+            7.28
+          ],
+          "arrival_time_min": 56.19579653709899
+        },
+        {
+          "task_id": 147,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.15,
+            6.7
+          ],
+          "arrival_time_min": 57.0466494135024
+        },
+        {
+          "task_id": 147,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.66,
+            4.66
+          ],
+          "arrival_time_min": 61.557500528068005
+        },
+        {
+          "task_id": 17,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.04,
+            5.36
+          ],
+          "arrival_time_min": 63.2768170733022
+        },
+        {
+          "task_id": 39,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.3,
+            5.43
+          ],
+          "arrival_time_min": 63.575992895920784
+        },
+        {
+          "task_id": 34,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.85,
+            3.25
+          ],
+          "arrival_time_min": 66.04928230353713
+        },
+        {
+          "task_id": 17,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.32,
+            1.44
+          ],
+          "arrival_time_min": 70.45704761735868
+        },
+        {
+          "task_id": 34,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.31,
+            1.29
+          ],
+          "arrival_time_min": 71.59157857499146
+        },
+        {
+          "task_id": 37,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.39,
+            1.79
+          ],
+          "arrival_time_min": 72.91394084581918
+        },
+        {
+          "task_id": 184,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.05,
+            3.06
+          ],
+          "arrival_time_min": 74.50422772109641
+        },
+        {
+          "task_id": 184,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.64,
+            6.35
+          ],
+          "arrival_time_min": 79.91480264319613
+        },
+        {
+          "task_id": 37,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.47,
+            7.14
+          ],
+          "arrival_time_min": 80.81267392545554
+        }
+      ]
+    },
+    {
+      "drone_id": 3,
+      "task_count": 25,
+      "transport_leg_count": 25,
+      "relay_drop_count": 0,
+      "relay_pickup_count": 0,
+      "distance_km": 78.74489281448272,
+      "completion_time_min": 87.49432534942522,
+      "late_count": 7,
+      "total_lateness_min": 257.51288403626097,
+      "on_time_task_count": 18,
+      "on_time_rate": 0.72,
+      "encoded_visits": [
+        67,
+        194,
+        -194,
+        167,
+        -167,
+        -67,
+        42,
+        188,
+        -42,
+        35,
+        -188,
+        146,
+        -146,
+        6,
+        -35,
+        149,
+        -149,
+        143,
+        -6,
+        164,
+        -143,
+        106,
+        -164,
+        -106,
+        125,
+        156,
+        -125,
+        105,
+        -156,
+        115,
+        -115,
+        107,
+        -105,
+        -107,
+        158,
+        91,
+        -158,
+        189,
+        -91,
+        -189,
+        25,
+        199,
+        -199,
+        177,
+        -177,
+        59,
+        -25,
+        41,
+        -59,
+        -41
+      ],
+      "visits": [
+        {
+          "task_id": 67,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.49,
+            6.3
+          ],
+          "arrival_time_min": 0.7575545451575666
+        },
+        {
+          "task_id": 194,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.49,
+            6.03
+          ],
+          "arrival_time_min": 1.057554545157566
+        },
+        {
+          "task_id": 194,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.08,
+            4.96
+          ],
+          "arrival_time_min": 2.330734679435897
+        },
+        {
+          "task_id": 167,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.57,
+            4.17
+          ],
+          "arrival_time_min": 3.3755336736312422
+        },
+        {
+          "task_id": 167,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.99,
+            2.23
+          ],
+          "arrival_time_min": 5.625362199333084
+        },
+        {
+          "task_id": 67,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.1,
+            1.81
+          ],
+          "arrival_time_min": 6.718833283699597
+        },
+        {
+          "task_id": 42,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.06,
+            1.71
+          ],
+          "arrival_time_min": 6.838503612747031
+        },
+        {
+          "task_id": 188,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.91,
+            1.13
+          ],
+          "arrival_time_min": 8.992712814275661
+        },
+        {
+          "task_id": 42,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.64,
+            1.04
+          ],
+          "arrival_time_min": 12.027694051633004
+        },
+        {
+          "task_id": 35,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.74,
+            1.12
+          ],
+          "arrival_time_min": 12.169985701353735
+        },
+        {
+          "task_id": 188,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.4,
+            1.82
+          ],
+          "arrival_time_min": 14.17171335022281
+        },
+        {
+          "task_id": 146,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.89,
+            1.98
+          ],
+          "arrival_time_min": 14.765612373106933
+        },
+        {
+          "task_id": 146,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.57,
+            2.41
+          ],
+          "arrival_time_min": 15.361172074585038
+        },
+        {
+          "task_id": 6,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.5,
+            2.4
+          ],
+          "arrival_time_min": 15.439739494716877
+        },
+        {
+          "task_id": 35,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.58,
+            2.59
+          ],
+          "arrival_time_min": 17.583492981558514
+        },
+        {
+          "task_id": 149,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.24,
+            3.11
+          ],
+          "arrival_time_min": 18.273814073425584
+        },
+        {
+          "task_id": 149,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.23,
+            4.52
+          ],
+          "arrival_time_min": 20.983695397418103
+        },
+        {
+          "task_id": 143,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.32,
+            5.17
+          ],
+          "arrival_time_min": 21.712807829263568
+        },
+        {
+          "task_id": 6,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.6,
+            5.15
+          ],
+          "arrival_time_min": 23.624048134974192
+        },
+        {
+          "task_id": 164,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.63,
+            5.14
+          ],
+          "arrival_time_min": 23.65918455342051
+        },
+        {
+          "task_id": 143,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.3,
+            3.88
+          ],
+          "arrival_time_min": 25.10640410982667
+        },
+        {
+          "task_id": 106,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.28,
+            3.9
+          ],
+          "arrival_time_min": 25.137831077879405
+        },
+        {
+          "task_id": 164,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.79,
+            1.38
+          ],
+          "arrival_time_min": 27.990272094462643
+        },
+        {
+          "task_id": 106,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.91,
+            1.39
+          ],
+          "arrival_time_min": 28.96811300151561
+        },
+        {
+          "task_id": 125,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.29,
+            2.47
+          ],
+          "arrival_time_min": 30.351792119387444
+        },
+        {
+          "task_id": 156,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.05,
+            2.6
+          ],
+          "arrival_time_min": 30.655066431919803
+        },
+        {
+          "task_id": 125,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.59,
+            4.39
+          ],
+          "arrival_time_min": 33.278724231045594
+        },
+        {
+          "task_id": 105,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.16,
+            3.67
+          ],
+          "arrival_time_min": 35.197861125525264
+        },
+        {
+          "task_id": 156,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.06,
+            6.04
+          ],
+          "arrival_time_min": 38.014675717301664
+        },
+        {
+          "task_id": 115,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.6,
+            6.49
+          ],
+          "arrival_time_min": 39.71220478576311
+        },
+        {
+          "task_id": 115,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.78,
+            5.35
+          ],
+          "arrival_time_min": 41.27251497967795
+        },
+        {
+          "task_id": 107,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.69,
+            8.0
+          ],
+          "arrival_time_min": 45.64563715163521
+        },
+        {
+          "task_id": 105,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.79,
+            6.89
+          ],
+          "arrival_time_min": 47.38199491189228
+        },
+        {
+          "task_id": 107,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.98,
+            4.89
+          ],
+          "arrival_time_min": 49.61422238824249
+        },
+        {
+          "task_id": 158,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.36,
+            5.08
+          ],
+          "arrival_time_min": 50.33473318099242
+        },
+        {
+          "task_id": 91,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.44,
+            4.91
+          ],
+          "arrival_time_min": 51.37426061398811
+        },
+        {
+          "task_id": 158,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.81,
+            4.23
+          ],
+          "arrival_time_min": 54.392579171327654
+        },
+        {
+          "task_id": 189,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.92,
+            4.88
+          ],
+          "arrival_time_min": 55.617122422029524
+        },
+        {
+          "task_id": 91,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.97,
+            7.34
+          ],
+          "arrival_time_min": 58.589027908787514
+        },
+        {
+          "task_id": 189,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.56,
+            6.81
+          ],
+          "arrival_time_min": 60.45125808644222
+        },
+        {
+          "task_id": 25,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.65,
+            7.27
+          ],
+          "arrival_time_min": 61.7658016160973
+        },
+        {
+          "task_id": 199,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.6,
+            5.86
+          ],
+          "arrival_time_min": 63.333453000875664
+        },
+        {
+          "task_id": 199,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.91,
+            5.13
+          ],
+          "arrival_time_min": 67.51291483639562
+        },
+        {
+          "task_id": 177,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.62,
+            5.7
+          ],
+          "arrival_time_min": 68.2235049232987
+        },
+        {
+          "task_id": 177,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.14,
+            1.73
+          ],
+          "arrival_time_min": 72.93116875639386
+        },
+        {
+          "task_id": 59,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.21,
+            1.26
+          ],
+          "arrival_time_min": 73.45915117286127
+        },
+        {
+          "task_id": 25,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.23,
+            1.77
+          ],
+          "arrival_time_min": 75.77402524617685
+        },
+        {
+          "task_id": 41,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.49,
+            1.59
+          ],
+          "arrival_time_min": 78.29308836812233
+        },
+        {
+          "task_id": 59,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.76,
+            3.52
+          ],
+          "arrival_time_min": 80.86016385263966
+        },
+        {
+          "task_id": 41,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.13,
+            7.29
+          ],
+          "arrival_time_min": 87.49432534942522
+        }
+      ]
+    },
+    {
+      "drone_id": 4,
+      "task_count": 25,
+      "transport_leg_count": 25,
+      "relay_drop_count": 0,
+      "relay_pickup_count": 0,
+      "distance_km": 79.54245129358914,
+      "completion_time_min": 88.38050143732127,
+      "late_count": 8,
+      "total_lateness_min": 285.5775074531684,
+      "on_time_task_count": 17,
+      "on_time_rate": 0.68,
+      "encoded_visits": [
+        10,
+        64,
+        -10,
+        128,
+        -128,
+        121,
+        -64,
+        -121,
+        172,
+        110,
+        -172,
+        -110,
+        185,
+        50,
+        -185,
+        11,
+        -11,
+        -50,
+        162,
+        179,
+        -162,
+        166,
+        -179,
+        148,
+        -148,
+        173,
+        -173,
+        77,
+        -166,
+        40,
+        -77,
+        85,
+        -40,
+        53,
+        -53,
+        -85,
+        30,
+        32,
+        -30,
+        161,
+        -32,
+        -161,
+        70,
+        16,
+        -16,
+        -70,
+        104,
+        195,
+        -104,
+        -195
+      ],
+      "visits": [
+        {
+          "task_id": 10,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.64,
+            3.18
+          ],
+          "arrival_time_min": 1.1506573537239528
+        },
+        {
+          "task_id": 64,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.87,
+            3.86
+          ],
+          "arrival_time_min": 1.94826179171698
+        },
+        {
+          "task_id": 10,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.64,
+            4.83
+          ],
+          "arrival_time_min": 3.6887739910564115
+        },
+        {
+          "task_id": 128,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.13,
+            4.73
+          ],
+          "arrival_time_min": 4.26623116706469
+        },
+        {
+          "task_id": 128,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.7,
+            2.88
+          ],
+          "arrival_time_min": 6.86428361903903
+        },
+        {
+          "task_id": 121,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.18,
+            2.95
+          ],
+          "arrival_time_min": 7.4472729355876925
+        },
+        {
+          "task_id": 64,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.21,
+            2.1
+          ],
+          "arrival_time_min": 8.3923054322528
+        },
+        {
+          "task_id": 121,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.24,
+            1.62
+          ],
+          "arrival_time_min": 8.926679416982179
+        },
+        {
+          "task_id": 172,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.33,
+            1.26
+          ],
+          "arrival_time_min": 9.338989979543944
+        },
+        {
+          "task_id": 110,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.51,
+            1.79
+          ],
+          "arrival_time_min": 10.77627995346563
+        },
+        {
+          "task_id": 172,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.3,
+            4.95
+          ],
+          "arrival_time_min": 14.395450447063356
+        },
+        {
+          "task_id": 110,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.7,
+            4.64
+          ],
+          "arrival_time_min": 15.988684598633172
+        },
+        {
+          "task_id": 185,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.08,
+            4.41
+          ],
+          "arrival_time_min": 17.54316835637605
+        },
+        {
+          "task_id": 50,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.5,
+            4.0
+          ],
+          "arrival_time_min": 18.195325271524013
+        },
+        {
+          "task_id": 185,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.26,
+            6.6
+          ],
+          "arrival_time_min": 21.09649574625603
+        },
+        {
+          "task_id": 11,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.79,
+            6.43
+          ],
+          "arrival_time_min": 21.714936637370506
+        },
+        {
+          "task_id": 11,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.58,
+            7.26
+          ],
+          "arrival_time_min": 22.666219072615128
+        },
+        {
+          "task_id": 50,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.77,
+            7.75
+          ],
+          "arrival_time_min": 23.25016055454717
+        },
+        {
+          "task_id": 162,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.16,
+            7.54
+          ],
+          "arrival_time_min": 25.054202655285
+        },
+        {
+          "task_id": 179,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.06,
+            6.99
+          ],
+          "arrival_time_min": 25.675332649034942
+        },
+        {
+          "task_id": 162,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.48,
+            4.16
+          ],
+          "arrival_time_min": 29.193416442841865
+        },
+        {
+          "task_id": 166,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.44,
+            3.42
+          ],
+          "arrival_time_min": 30.01683899011515
+        },
+        {
+          "task_id": 179,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.81,
+            3.78
+          ],
+          "arrival_time_min": 30.823064764945006
+        },
+        {
+          "task_id": 148,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.14,
+            3.75
+          ],
+          "arrival_time_min": 31.191243465517914
+        },
+        {
+          "task_id": 148,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.72,
+            4.07
+          ],
+          "arrival_time_min": 31.777926966959875
+        },
+        {
+          "task_id": 173,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.43,
+            4.17
+          ],
+          "arrival_time_min": 32.11876833696383
+        },
+        {
+          "task_id": 173,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.67,
+            4.09
+          ],
+          "arrival_time_min": 34.076343052123406
+        },
+        {
+          "task_id": 77,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.83,
+            5.88
+          ],
+          "arrival_time_min": 37.806384590302734
+        },
+        {
+          "task_id": 166,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.43,
+            6.16
+          ],
+          "arrival_time_min": 39.61117930179135
+        },
+        {
+          "task_id": 40,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.44,
+            6.08
+          ],
+          "arrival_time_min": 39.70075994343912
+        },
+        {
+          "task_id": 77,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.4,
+            7.14
+          ],
+          "arrival_time_min": 42.17661869207763
+        },
+        {
+          "task_id": 85,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.54,
+            6.53
+          ],
+          "arrival_time_min": 43.61322133738141
+        },
+        {
+          "task_id": 40,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.28,
+            7.21
+          ],
+          "arrival_time_min": 44.72987418417262
+        },
+        {
+          "task_id": 53,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.31,
+            7.93
+          ],
+          "arrival_time_min": 47.06037511056189
+        },
+        {
+          "task_id": 53,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.98,
+            4.63
+          ],
+          "arrival_time_min": 52.26944839133309
+        },
+        {
+          "task_id": 85,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.64,
+            4.46
+          ],
+          "arrival_time_min": 52.691816787083056
+        },
+        {
+          "task_id": 30,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.26,
+            5.27
+          ],
+          "arrival_time_min": 53.685935293569216
+        },
+        {
+          "task_id": 32,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.69,
+            5.7
+          ],
+          "arrival_time_min": 55.34510361118284
+        },
+        {
+          "task_id": 30,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.52,
+            1.36
+          ],
+          "arrival_time_min": 60.5784841252424
+        },
+        {
+          "task_id": 161,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.95,
+            2.07
+          ],
+          "arrival_time_min": 62.35243834681829
+        },
+        {
+          "task_id": 32,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.33,
+            2.66
+          ],
+          "arrival_time_min": 63.132197727241525
+        },
+        {
+          "task_id": 161,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.03,
+            5.25
+          ],
+          "arrival_time_min": 66.3521394489747
+        },
+        {
+          "task_id": 70,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.31,
+            5.45
+          ],
+          "arrival_time_min": 66.73446501639881
+        },
+        {
+          "task_id": 16,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.1,
+            6.4
+          ],
+          "arrival_time_min": 68.10730563279414
+        },
+        {
+          "task_id": 16,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.52,
+            3.51
+          ],
+          "arrival_time_min": 74.12461605285375
+        },
+        {
+          "task_id": 70,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.32,
+            3.62
+          ],
+          "arrival_time_min": 74.37823187975405
+        },
+        {
+          "task_id": 104,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.18,
+            3.64
+          ],
+          "arrival_time_min": 74.53536672001773
+        },
+        {
+          "task_id": 195,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.65,
+            7.56
+          ],
+          "arrival_time_min": 81.1413217588678
+        },
+        {
+          "task_id": 104,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.67,
+            7.91
+          ],
+          "arrival_time_min": 82.33951999469761
+        },
+        {
+          "task_id": 195,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.13,
+            2.5
+          ],
+          "arrival_time_min": 88.38050143732127
+        }
+      ]
+    },
+    {
+      "drone_id": 5,
+      "task_count": 25,
+      "transport_leg_count": 25,
+      "relay_drop_count": 0,
+      "relay_pickup_count": 0,
+      "distance_km": 77.35271008910925,
+      "completion_time_min": 85.9474556545658,
+      "late_count": 7,
+      "total_lateness_min": 228.09746487867852,
+      "on_time_task_count": 18,
+      "on_time_rate": 0.72,
+      "encoded_visits": [
+        138,
+        60,
+        -60,
+        36,
+        -138,
+        1,
+        -36,
+        56,
+        -56,
+        54,
+        -1,
+        47,
+        -54,
+        114,
+        -47,
+        191,
+        -114,
+        76,
+        -191,
+        135,
+        -76,
+        155,
+        -135,
+        58,
+        -155,
+        44,
+        -58,
+        183,
+        -183,
+        65,
+        -44,
+        78,
+        -65,
+        174,
+        -78,
+        -174,
+        133,
+        74,
+        -133,
+        -74,
+        98,
+        116,
+        -116,
+        150,
+        -150,
+        -98,
+        3,
+        26,
+        -3,
+        -26
+      ],
+      "visits": [
+        {
+          "task_id": 138,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.9,
+            5.0
+          ],
+          "arrival_time_min": 2.0102361509822795
+        },
+        {
+          "task_id": 60,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.66,
+            6.39
+          ],
+          "arrival_time_min": 3.5775331085134354
+        },
+        {
+          "task_id": 60,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.51,
+            5.36
+          ],
+          "arrival_time_min": 6.226408947407464
+        },
+        {
+          "task_id": 36,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.22,
+            5.84
+          ],
+          "arrival_time_min": 6.849523387087905
+        },
+        {
+          "task_id": 138,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.96,
+            6.39
+          ],
+          "arrival_time_min": 7.873977472364306
+        },
+        {
+          "task_id": 1,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.62,
+            7.66
+          ],
+          "arrival_time_min": 9.464264347641535
+        },
+        {
+          "task_id": 36,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.71,
+            7.56
+          ],
+          "arrival_time_min": 9.613749059275687
+        },
+        {
+          "task_id": 56,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.51,
+            6.59
+          ],
+          "arrival_time_min": 11.010791791285602
+        },
+        {
+          "task_id": 56,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.55,
+            5.91
+          ],
+          "arrival_time_min": 12.39143397501974
+        },
+        {
+          "task_id": 54,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.19,
+            5.88
+          ],
+          "arrival_time_min": 13.103325907448246
+        },
+        {
+          "task_id": 1,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.12,
+            5.19
+          ],
+          "arrival_time_min": 13.873927724532678
+        },
+        {
+          "task_id": 47,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.56,
+            4.52
+          ],
+          "arrival_time_min": 14.764551032414978
+        },
+        {
+          "task_id": 54,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.92,
+            3.52
+          ],
+          "arrival_time_min": 16.083735217273272
+        },
+        {
+          "task_id": 114,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.13,
+            3.75
+          ],
+          "arrival_time_min": 16.997957547527683
+        },
+        {
+          "task_id": 47,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.04,
+            4.45
+          ],
+          "arrival_time_min": 17.782137547020746
+        },
+        {
+          "task_id": 191,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.2,
+            5.66
+          ],
+          "arrival_time_min": 19.138284958797627
+        },
+        {
+          "task_id": 114,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.06,
+            7.33
+          ],
+          "arrival_time_min": 21.384956021547474
+        },
+        {
+          "task_id": 76,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.23,
+            6.91
+          ],
+          "arrival_time_min": 22.418528275885926
+        },
+        {
+          "task_id": 191,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.23,
+            7.4
+          ],
+          "arrival_time_min": 23.65585913475957
+        },
+        {
+          "task_id": 135,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.21,
+            7.28
+          ],
+          "arrival_time_min": 23.791031635432866
+        },
+        {
+          "task_id": 76,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.16,
+            6.7
+          ],
+          "arrival_time_min": 25.123855612215404
+        },
+        {
+          "task_id": 155,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.77,
+            6.93
+          ],
+          "arrival_time_min": 25.8482114350157
+        },
+        {
+          "task_id": 135,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.56,
+            4.67
+          ],
+          "arrival_time_min": 28.370139954381408
+        },
+        {
+          "task_id": 58,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.25,
+            4.26
+          ],
+          "arrival_time_min": 28.94125538886569
+        },
+        {
+          "task_id": 155,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.89,
+            3.78
+          ],
+          "arrival_time_min": 29.83014427775458
+        },
+        {
+          "task_id": 44,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.66,
+            3.28
+          ],
+          "arrival_time_min": 30.85025078393451
+        },
+        {
+          "task_id": 58,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.8,
+            3.01
+          ],
+          "arrival_time_min": 33.24687907394817
+        },
+        {
+          "task_id": 183,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.13,
+            2.88
+          ],
+          "arrival_time_min": 33.64097124841413
+        },
+        {
+          "task_id": 183,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.37,
+            3.87
+          ],
+          "arrival_time_min": 34.77283303817077
+        },
+        {
+          "task_id": 65,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.84,
+            6.0
+          ],
+          "arrival_time_min": 37.21166497878659
+        },
+        {
+          "task_id": 44,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.23,
+            5.55
+          ],
+          "arrival_time_min": 38.83502835214922
+        },
+        {
+          "task_id": 78,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.62,
+            2.97
+          ],
+          "arrival_time_min": 41.734261967357824
+        },
+        {
+          "task_id": 65,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.62,
+            2.96
+          ],
+          "arrival_time_min": 42.845428632635674
+        },
+        {
+          "task_id": 174,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.92,
+            2.09
+          ],
+          "arrival_time_min": 44.08614726151548
+        },
+        {
+          "task_id": 78,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.24,
+            6.25
+          ],
+          "arrival_time_min": 49.58451963572151
+        },
+        {
+          "task_id": 174,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.27,
+            7.03
+          ],
+          "arrival_time_min": 50.45182709113869
+        },
+        {
+          "task_id": 133,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.49,
+            7.91
+          ],
+          "arrival_time_min": 52.12322777526969
+        },
+        {
+          "task_id": 74,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.7,
+            7.73
+          ],
+          "arrival_time_min": 52.43054592384612
+        },
+        {
+          "task_id": 133,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.24,
+            2.66
+          ],
+          "arrival_time_min": 58.31801954833161
+        },
+        {
+          "task_id": 74,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.34,
+            2.37
+          ],
+          "arrival_time_min": 60.673496486223016
+        },
+        {
+          "task_id": 98,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.31,
+            1.32
+          ],
+          "arrival_time_min": 61.84063924622379
+        },
+        {
+          "task_id": 116,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.65,
+            2.03
+          ],
+          "arrival_time_min": 62.71531731751348
+        },
+        {
+          "task_id": 116,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.49,
+            4.44
+          ],
+          "arrival_time_min": 65.39898994386567
+        },
+        {
+          "task_id": 150,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.3,
+            3.69
+          ],
+          "arrival_time_min": 66.25864821648277
+        },
+        {
+          "task_id": 150,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.8,
+            7.35
+          ],
+          "arrival_time_min": 71.18346569132322
+        },
+        {
+          "task_id": 98,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.97,
+            7.65
+          ],
+          "arrival_time_min": 73.24394028605997
+        },
+        {
+          "task_id": 3,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.14,
+            7.79
+          ],
+          "arrival_time_min": 75.28321515113055
+        },
+        {
+          "task_id": 26,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.99,
+            6.73
+          ],
+          "arrival_time_min": 78.66181519724505
+        },
+        {
+          "task_id": 3,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.83,
+            2.49
+          ],
+          "arrival_time_min": 84.33209726830924
+        },
+        {
+          "task_id": 26,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.03,
+            1.05
+          ],
+          "arrival_time_min": 85.9474556545658
+        }
+      ]
+    },
+    {
+      "drone_id": 6,
+      "task_count": 25,
+      "transport_leg_count": 25,
+      "relay_drop_count": 0,
+      "relay_pickup_count": 0,
+      "distance_km": 72.51129928110412,
+      "completion_time_min": 80.56811031233788,
+      "late_count": 8,
+      "total_lateness_min": 209.84591162230456,
+      "on_time_task_count": 17,
+      "on_time_rate": 0.68,
+      "encoded_visits": [
+        157,
+        97,
+        -97,
+        120,
+        -157,
+        134,
+        -120,
+        -134,
+        118,
+        -118,
+        129,
+        132,
+        -129,
+        4,
+        -132,
+        73,
+        -73,
+        -4,
+        139,
+        51,
+        -139,
+        -51,
+        142,
+        29,
+        -142,
+        8,
+        -29,
+        122,
+        -122,
+        93,
+        -8,
+        171,
+        -171,
+        102,
+        -102,
+        49,
+        -93,
+        82,
+        -49,
+        62,
+        -62,
+        187,
+        -82,
+        83,
+        -83,
+        -187,
+        145,
+        15,
+        -145,
+        -15
+      ],
+      "visits": [
+        {
+          "task_id": 157,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.86,
+            4.8
+          ],
+          "arrival_time_min": 0.257720300105404
+        },
+        {
+          "task_id": 97,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.41,
+            5.87
+          ],
+          "arrival_time_min": 1.547470969856522
+        },
+        {
+          "task_id": 97,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.18,
+            5.39
+          ],
+          "arrival_time_min": 3.014516375500882
+        },
+        {
+          "task_id": 120,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.32,
+            5.67
+          ],
+          "arrival_time_min": 3.3623491720008496
+        },
+        {
+          "task_id": 157,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.76,
+            3.42
+          ],
+          "arrival_time_min": 6.404461011569613
+        },
+        {
+          "task_id": 134,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.07,
+            2.72
+          ],
+          "arrival_time_min": 7.496576412698412
+        },
+        {
+          "task_id": 120,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.21,
+            2.35
+          ],
+          "arrival_time_min": 7.9361328670284665
+        },
+        {
+          "task_id": 134,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.12,
+            2.31
+          ],
+          "arrival_time_min": 8.045564620381757
+        },
+        {
+          "task_id": 118,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.68,
+            1.53
+          ],
+          "arrival_time_min": 9.112462743418007
+        },
+        {
+          "task_id": 118,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.9,
+            1.9
+          ],
+          "arrival_time_min": 10.071693402222303
+        },
+        {
+          "task_id": 129,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.14,
+            3.25
+          ],
+          "arrival_time_min": 11.793055194453409
+        },
+        {
+          "task_id": 132,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.89,
+            2.99
+          ],
+          "arrival_time_min": 12.675042288785237
+        },
+        {
+          "task_id": 129,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.48,
+            3.29
+          ],
+          "arrival_time_min": 13.4104769884907
+        },
+        {
+          "task_id": 4,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.28,
+            3.13
+          ],
+          "arrival_time_min": 13.69506028793216
+        },
+        {
+          "task_id": 132,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.54,
+            5.52
+          ],
+          "arrival_time_min": 16.69705550922116
+        },
+        {
+          "task_id": 73,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.72,
+            5.5
+          ],
+          "arrival_time_min": 16.898286290068658
+        },
+        {
+          "task_id": 73,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.21,
+            4.82
+          ],
+          "arrival_time_min": 17.82956710197089
+        },
+        {
+          "task_id": 4,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.67,
+            4.02
+          ],
+          "arrival_time_min": 18.854924612642833
+        },
+        {
+          "task_id": 139,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.27,
+            3.98
+          ],
+          "arrival_time_min": 20.41111495931053
+        },
+        {
+          "task_id": 51,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.06,
+            3.7
+          ],
+          "arrival_time_min": 20.80000384819942
+        },
+        {
+          "task_id": 139,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.55,
+            2.7
+          ],
+          "arrival_time_min": 22.793852412851567
+        },
+        {
+          "task_id": 51,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.96,
+            3.22
+          ],
+          "arrival_time_min": 25.53325398758542
+        },
+        {
+          "task_id": 142,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.93,
+            3.26
+          ],
+          "arrival_time_min": 26.611947756415844
+        },
+        {
+          "task_id": 29,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.74,
+            2.76
+          ],
+          "arrival_time_min": 27.206262383985457
+        },
+        {
+          "task_id": 142,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.67,
+            2.78
+          ],
+          "arrival_time_min": 28.395358939057395
+        },
+        {
+          "task_id": 8,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.66,
+            3.13
+          ],
+          "arrival_time_min": 28.784406525724318
+        },
+        {
+          "task_id": 29,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.48,
+            3.11
+          ],
+          "arrival_time_min": 31.20673068260086
+        },
+        {
+          "task_id": 122,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.23,
+            2.44
+          ],
+          "arrival_time_min": 32.001311090546686
+        },
+        {
+          "task_id": 122,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.55,
+            4.52
+          ],
+          "arrival_time_min": 34.43279186682934
+        },
+        {
+          "task_id": 93,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.82,
+            5.54
+          ],
+          "arrival_time_min": 36.66424491720915
+        },
+        {
+          "task_id": 8,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.68,
+            5.79
+          ],
+          "arrival_time_min": 36.98261266791792
+        },
+        {
+          "task_id": 171,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.47,
+            6.25
+          ],
+          "arrival_time_min": 37.544465862574384
+        },
+        {
+          "task_id": 171,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.47,
+            7.29
+          ],
+          "arrival_time_min": 39.14754931118518
+        },
+        {
+          "task_id": 102,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.14,
+            7.38
+          ],
+          "arrival_time_min": 39.527607786218226
+        },
+        {
+          "task_id": 102,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.76,
+            7.65
+          ],
+          "arrival_time_min": 44.66969988098968
+        },
+        {
+          "task_id": 49,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.58,
+            7.68
+          ],
+          "arrival_time_min": 45.58142054429683
+        },
+        {
+          "task_id": 93,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.22,
+            5.08
+          ],
+          "arrival_time_min": 48.84165608831342
+        },
+        {
+          "task_id": 82,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.27,
+            3.72
+          ],
+          "arrival_time_min": 50.75073123121235
+        },
+        {
+          "task_id": 49,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.4,
+            3.59
+          ],
+          "arrival_time_min": 50.95500652355513
+        },
+        {
+          "task_id": 62,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.83,
+            4.61
+          ],
+          "arrival_time_min": 52.184931744608306
+        },
+        {
+          "task_id": 62,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.26,
+            6.57
+          ],
+          "arrival_time_min": 57.71001483989986
+        },
+        {
+          "task_id": 187,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.98,
+            6.84
+          ],
+          "arrival_time_min": 59.16353334662164
+        },
+        {
+          "task_id": 82,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.08,
+            7.34
+          ],
+          "arrival_time_min": 60.30749225117575
+        },
+        {
+          "task_id": 83,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.24,
+            7.65
+          ],
+          "arrival_time_min": 62.73208334563037
+        },
+        {
+          "task_id": 83,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.65,
+            5.01
+          ],
+          "arrival_time_min": 68.44298909204612
+        },
+        {
+          "task_id": 187,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.89,
+            4.68
+          ],
+          "arrival_time_min": 68.8963714423373
+        },
+        {
+          "task_id": 145,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.57,
+            2.27
+          ],
+          "arrival_time_min": 71.59765143157331
+        },
+        {
+          "task_id": 15,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.41,
+            2.39
+          ],
+          "arrival_time_min": 72.89341851931671
+        },
+        {
+          "task_id": 145,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.47,
+            6.19
+          ],
+          "arrival_time_min": 79.81837784976733
+        },
+        {
+          "task_id": 15,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.04,
+            6.71
+          ],
+          "arrival_time_min": 80.56811031233788
+        }
+      ]
+    },
+    {
+      "drone_id": 7,
+      "task_count": 25,
+      "transport_leg_count": 25,
+      "relay_drop_count": 0,
+      "relay_pickup_count": 0,
+      "distance_km": 79.20874024367382,
+      "completion_time_min": 88.00971138185983,
+      "late_count": 9,
+      "total_lateness_min": 273.9267576841749,
+      "on_time_task_count": 16,
+      "on_time_rate": 0.64,
+      "encoded_visits": [
+        45,
+        69,
+        -69,
+        -45,
+        9,
+        169,
+        -169,
+        151,
+        -9,
+        95,
+        -95,
+        68,
+        -151,
+        103,
+        -68,
+        55,
+        -103,
+        80,
+        -55,
+        160,
+        -160,
+        -80,
+        117,
+        111,
+        -111,
+        -117,
+        84,
+        100,
+        -84,
+        -100,
+        123,
+        87,
+        -87,
+        -123,
+        12,
+        113,
+        -12,
+        -113,
+        2,
+        23,
+        -2,
+        -23,
+        144,
+        90,
+        -90,
+        -144,
+        96,
+        136,
+        -96,
+        -136
+      ],
+      "visits": [
+        {
+          "task_id": 45,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.6,
+            4.98
+          ],
+          "arrival_time_min": 0.3269764215458266
+        },
+        {
+          "task_id": 69,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.44,
+            4.31
+          ],
+          "arrival_time_min": 1.815409187499812
+        },
+        {
+          "task_id": 69,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.21,
+            4.04
+          ],
+          "arrival_time_min": 4.311282324510062
+        },
+        {
+          "task_id": 45,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.66,
+            3.57
+          ],
+          "arrival_time_min": 5.115131091073881
+        },
+        {
+          "task_id": 9,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.85,
+            4.47
+          ],
+          "arrival_time_min": 6.1371721378203254
+        },
+        {
+          "task_id": 169,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.09,
+            5.64
+          ],
+          "arrival_time_min": 7.687361293940664
+        },
+        {
+          "task_id": 169,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.25,
+            7.73
+          ],
+          "arrival_time_min": 10.343288743492694
+        },
+        {
+          "task_id": 151,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.82,
+            7.58
+          ],
+          "arrival_time_min": 10.849301967347614
+        },
+        {
+          "task_id": 9,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.24,
+            7.37
+          ],
+          "arrival_time_min": 11.534687323493888
+        },
+        {
+          "task_id": 95,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.09,
+            7.79
+          ],
+          "arrival_time_min": 12.030222948404504
+        },
+        {
+          "task_id": 95,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.3,
+            7.24
+          ],
+          "arrival_time_min": 12.684364549717172
+        },
+        {
+          "task_id": 68,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.29,
+            6.99
+          ],
+          "arrival_time_min": 12.962364460899323
+        },
+        {
+          "task_id": 151,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.39,
+            3.34
+          ],
+          "arrival_time_min": 19.061595337325514
+        },
+        {
+          "task_id": 103,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.29,
+            3.93
+          ],
+          "arrival_time_min": 19.726500417342276
+        },
+        {
+          "task_id": 68,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.93,
+            4.32
+          ],
+          "arrival_time_min": 20.559240947233462
+        },
+        {
+          "task_id": 55,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.67,
+            6.67
+          ],
+          "arrival_time_min": 23.296749050834975
+        },
+        {
+          "task_id": 103,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.53,
+            7.06
+          ],
+          "arrival_time_min": 24.345969808126245
+        },
+        {
+          "task_id": 80,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.52,
+            7.01
+          ],
+          "arrival_time_min": 24.4026255804995
+        },
+        {
+          "task_id": 55,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.07,
+            7.39
+          ],
+          "arrival_time_min": 25.05705021706071
+        },
+        {
+          "task_id": 160,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.1,
+            7.52
+          ],
+          "arrival_time_min": 25.205290928884335
+        },
+        {
+          "task_id": 160,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.96,
+            5.88
+          ],
+          "arrival_time_min": 28.20100803629857
+        },
+        {
+          "task_id": 80,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.0,
+            6.26
+          ],
+          "arrival_time_min": 29.348199991777708
+        },
+        {
+          "task_id": 117,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.21,
+            7.86
+          ],
+          "arrival_time_min": 31.141224886084796
+        },
+        {
+          "task_id": 111,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.64,
+            6.97
+          ],
+          "arrival_time_min": 32.23948388992049
+        },
+        {
+          "task_id": 111,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.86,
+            4.93
+          ],
+          "arrival_time_min": 34.519293281996404
+        },
+        {
+          "task_id": 117,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.45,
+            3.3
+          ],
+          "arrival_time_min": 36.38681953910436
+        },
+        {
+          "task_id": 84,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.14,
+            3.05
+          ],
+          "arrival_time_min": 36.8293152669208
+        },
+        {
+          "task_id": 100,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.47,
+            5.09
+          ],
+          "arrival_time_min": 39.21510136559813
+        },
+        {
+          "task_id": 84,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.3,
+            5.71
+          ],
+          "arrival_time_min": 39.929417061617926
+        },
+        {
+          "task_id": 100,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.54,
+            7.82
+          ],
+          "arrival_time_min": 42.98238566347917
+        },
+        {
+          "task_id": 123,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.28,
+            6.6
+          ],
+          "arrival_time_min": 44.368382652769185
+        },
+        {
+          "task_id": 87,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.0,
+            6.33
+          ],
+          "arrival_time_min": 45.222783027300935
+        },
+        {
+          "task_id": 87,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.33,
+            1.71
+          ],
+          "arrival_time_min": 51.550587631672904
+        },
+        {
+          "task_id": 123,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.4,
+            1.57
+          ],
+          "arrival_time_min": 51.72450402992289
+        },
+        {
+          "task_id": 12,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.45,
+            1.62
+          ],
+          "arrival_time_min": 54.00295921374621
+        },
+        {
+          "task_id": 113,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.93,
+            2.49
+          ],
+          "arrival_time_min": 55.94892687109738
+        },
+        {
+          "task_id": 12,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.37,
+            1.32
+          ],
+          "arrival_time_min": 60.11262952055332
+        },
+        {
+          "task_id": 113,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.95,
+            1.1
+          ],
+          "arrival_time_min": 60.63944150238131
+        },
+        {
+          "task_id": 2,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.09,
+            1.41
+          ],
+          "arrival_time_min": 61.017382643530084
+        },
+        {
+          "task_id": 23,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.03,
+            2.13
+          ],
+          "arrival_time_min": 62.33300576491814
+        },
+        {
+          "task_id": 2,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.06,
+            5.21
+          ],
+          "arrival_time_min": 67.9687930892795
+        },
+        {
+          "task_id": 23,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.51,
+            6.66
+          ],
+          "arrival_time_min": 69.65570713935605
+        },
+        {
+          "task_id": 144,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.51,
+            6.81
+          ],
+          "arrival_time_min": 69.82237380602272
+        },
+        {
+          "task_id": 90,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.63,
+            7.9
+          ],
+          "arrival_time_min": 71.04080226154835
+        },
+        {
+          "task_id": 90,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.27,
+            3.63
+          ],
+          "arrival_time_min": 76.02008030927206
+        },
+        {
+          "task_id": 144,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.76,
+            1.87
+          ],
+          "arrival_time_min": 78.58231795016235
+        },
+        {
+          "task_id": 96,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.95,
+            1.52
+          ],
+          "arrival_time_min": 79.02481367797878
+        },
+        {
+          "task_id": 136,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.88,
+            1.78
+          ],
+          "arrival_time_min": 79.32398950059736
+        },
+        {
+          "task_id": 96,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.88,
+            7.79
+          ],
+          "arrival_time_min": 86.7874891596376
+        },
+        {
+          "task_id": 136,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.78,
+            7.79
+          ],
+          "arrival_time_min": 88.00971138185983
+        }
+      ]
+    },
+    {
+      "drone_id": 8,
+      "task_count": 25,
+      "transport_leg_count": 25,
+      "relay_drop_count": 0,
+      "relay_pickup_count": 0,
+      "distance_km": 83.52481837583073,
+      "completion_time_min": 92.80535375092305,
+      "late_count": 9,
+      "total_lateness_min": 291.0573311876382,
+      "on_time_task_count": 16,
+      "on_time_rate": 0.64,
+      "encoded_visits": [
+        22,
+        -22,
+        88,
+        72,
+        -88,
+        152,
+        -72,
+        52,
+        -152,
+        71,
+        -52,
+        66,
+        -66,
+        48,
+        -71,
+        5,
+        -5,
+        196,
+        -48,
+        61,
+        -196,
+        159,
+        -159,
+        -61,
+        43,
+        198,
+        -198,
+        94,
+        -43,
+        7,
+        -94,
+        137,
+        -137,
+        -7,
+        81,
+        197,
+        -81,
+        192,
+        -197,
+        190,
+        -192,
+        186,
+        -186,
+        -190,
+        108,
+        182,
+        -108,
+        -182,
+        63,
+        -63
+      ],
+      "visits": [
+        {
+          "task_id": 22,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.75,
+            3.87
+          ],
+          "arrival_time_min": 0.4034572812303395
+        },
+        {
+          "task_id": 22,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.29,
+            2.6
+          ],
+          "arrival_time_min": 4.582254438189786
+        },
+        {
+          "task_id": 88,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.91,
+            1.51
+          ],
+          "arrival_time_min": 5.8648540360359185
+        },
+        {
+          "task_id": 72,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.5,
+            1.19
+          ],
+          "arrival_time_min": 6.442738641544623
+        },
+        {
+          "task_id": 88,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            6.75,
+            5.94
+          ],
+          "arrival_time_min": 11.900206059430317
+        },
+        {
+          "task_id": 152,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.56,
+            5.34
+          ],
+          "arrival_time_min": 12.599500236210742
+        },
+        {
+          "task_id": 72,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.1,
+            7.58
+          ],
+          "arrival_time_min": 15.570387787012047
+        },
+        {
+          "task_id": 52,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.9,
+            7.55
+          ],
+          "arrival_time_min": 15.79509610274712
+        },
+        {
+          "task_id": 152,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.73,
+            7.26
+          ],
+          "arrival_time_min": 16.16860135416871
+        },
+        {
+          "task_id": 71,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.52,
+            7.0
+          ],
+          "arrival_time_min": 16.539951908992453
+        },
+        {
+          "task_id": 52,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.87,
+            4.99
+          ],
+          "arrival_time_min": 19.230263745523263
+        },
+        {
+          "task_id": 66,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.17,
+            4.88
+          ],
+          "arrival_time_min": 19.58529808571594
+        },
+        {
+          "task_id": 66,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.28,
+            3.94
+          ],
+          "arrival_time_min": 21.023618436715246
+        },
+        {
+          "task_id": 48,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.06,
+            2.97
+          ],
+          "arrival_time_min": 22.406628215922435
+        },
+        {
+          "task_id": 71,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.61,
+            2.14
+          ],
+          "arrival_time_min": 23.455672460537738
+        },
+        {
+          "task_id": 5,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.28,
+            1.98
+          ],
+          "arrival_time_min": 23.863164034335345
+        },
+        {
+          "task_id": 5,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.05,
+            3.56
+          ],
+          "arrival_time_min": 26.899832937046234
+        },
+        {
+          "task_id": 196,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.84,
+            5.17
+          ],
+          "arrival_time_min": 28.703875037784066
+        },
+        {
+          "task_id": 48,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.17,
+            5.52
+          ],
+          "arrival_time_min": 30.59974449205942
+        },
+        {
+          "task_id": 61,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.36,
+            4.72
+          ],
+          "arrival_time_min": 31.513358939200383
+        },
+        {
+          "task_id": 196,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.36,
+            4.47
+          ],
+          "arrival_time_min": 31.791136716978162
+        },
+        {
+          "task_id": 159,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            2.07,
+            5.1
+          ],
+          "arrival_time_min": 32.845814714763435
+        },
+        {
+          "task_id": 159,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.54,
+            5.28
+          ],
+          "arrival_time_min": 35.59753695885748
+        },
+        {
+          "task_id": 61,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.78,
+            5.46
+          ],
+          "arrival_time_min": 35.93087029219082
+        },
+        {
+          "task_id": 43,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.84,
+            5.84
+          ],
+          "arrival_time_min": 36.35832327133907
+        },
+        {
+          "task_id": 198,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.47,
+            5.82
+          ],
+          "arrival_time_min": 36.77003454497571
+        },
+        {
+          "task_id": 198,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.04,
+            2.72
+          ],
+          "arrival_time_min": 40.24745731705886
+        },
+        {
+          "task_id": 94,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.62,
+            3.0
+          ],
+          "arrival_time_min": 40.8083208487977
+        },
+        {
+          "task_id": 43,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            5.56,
+            2.57
+          ],
+          "arrival_time_min": 43.01619117062928
+        },
+        {
+          "task_id": 7,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            5.25,
+            2.19
+          ],
+          "arrival_time_min": 43.56108894108436
+        },
+        {
+          "task_id": 94,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.08,
+            2.57
+          ],
+          "arrival_time_min": 45.637796924740876
+        },
+        {
+          "task_id": 137,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            6.72,
+            2.81
+          ],
+          "arrival_time_min": 46.11853709480274
+        },
+        {
+          "task_id": 137,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.2,
+            5.68
+          ],
+          "arrival_time_min": 52.06763184905416
+        },
+        {
+          "task_id": 7,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.46,
+            7.64
+          ],
+          "arrival_time_min": 54.39545603315801
+        },
+        {
+          "task_id": 81,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.72,
+            7.32
+          ],
+          "arrival_time_min": 54.853578880448865
+        },
+        {
+          "task_id": 197,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.34,
+            6.4
+          ],
+          "arrival_time_min": 56.92358812477724
+        },
+        {
+          "task_id": 81,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.54,
+            6.79
+          ],
+          "arrival_time_min": 58.32557084776478
+        },
+        {
+          "task_id": 192,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            3.68,
+            4.63
+          ],
+          "arrival_time_min": 60.90880262593589
+        },
+        {
+          "task_id": 197,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.75,
+            1.53
+          ],
+          "arrival_time_min": 64.96624510934497
+        },
+        {
+          "task_id": 190,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.08,
+            1.96
+          ],
+          "arrival_time_min": 65.85081796434476
+        },
+        {
+          "task_id": 192,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.33,
+            2.16
+          ],
+          "arrival_time_min": 66.20654708864659
+        },
+        {
+          "task_id": 186,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            1.16,
+            2.88
+          ],
+          "arrival_time_min": 67.028544054788
+        },
+        {
+          "task_id": 186,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            4.79,
+            5.43
+          ],
+          "arrival_time_min": 71.95759625126102
+        },
+        {
+          "task_id": 190,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            7.3,
+            7.12
+          ],
+          "arrival_time_min": 75.31973108158594
+        },
+        {
+          "task_id": 108,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.61,
+            6.95
+          ],
+          "arrival_time_min": 75.71256818224514
+        },
+        {
+          "task_id": 182,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            7.25,
+            6.72
+          ],
+          "arrival_time_min": 76.187235056985
+        },
+        {
+          "task_id": 108,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            2.73,
+            4.15
+          ],
+          "arrival_time_min": 81.96451067618882
+        },
+        {
+          "task_id": 182,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            3.39,
+            2.82
+          ],
+          "arrival_time_min": 83.6142394230656
+        },
+        {
+          "task_id": 63,
+          "leg_id": null,
+          "action": "pickup",
+          "kind": "PICKUP",
+          "relay_id": null,
+          "location_km": [
+            4.07,
+            1.55
+          ],
+          "arrival_time_min": 85.21489515289387
+        },
+        {
+          "task_id": 63,
+          "leg_id": null,
+          "action": "delivery",
+          "kind": "DELIVERY",
+          "relay_id": null,
+          "location_km": [
+            1.18,
+            7.74
+          ],
+          "arrival_time_min": 92.80535375092305
+        }
+      ]
+    }
+  ]
+}

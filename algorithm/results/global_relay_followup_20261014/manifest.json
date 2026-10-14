@@ -1,0 +1,112 @@
+{
+  "kind": "global_relay_followup",
+  "schema_version": 1,
+  "baseline_commit": "194ca132f66a2727d067280532ab5a7635ff86c3",
+  "input_path": "algorithm/命题1-低空经济场景下的物流无人机调度算法数据.csv",
+  "input_sha256": "386d3fbaa9009aeed947493782d657ed0b30b25d369c8187bfc9619fc7e31d25",
+  "source_snapshots": {
+    "baseline": {
+      "path": "sources/baseline.zip",
+      "sha256": "4fb0638df9e4af5138b3add0171b709ac9bb24c71f75714e8a35eff795b92723",
+      "config": {},
+      "source_ref": "194ca132f66a2727d067280532ab5a7635ff86c3"
+    },
+    "terminal": {
+      "path": "sources/candidate.zip",
+      "sha256": "d06ef9df1472be3d9b1b79c20ab92b13e7744e4e32790649791f014ef4d6375b",
+      "config": {
+        "enable_terminal_polish": true
+      },
+      "source_ref": "working_tree"
+    },
+    "rebalanced": {
+      "path": "sources/candidate.zip",
+      "sha256": "d06ef9df1472be3d9b1b79c20ab92b13e7744e4e32790649791f014ef4d6375b",
+      "config": {
+        "enable_terminal_polish": true,
+        "enable_relay_budget_rebalance": true,
+        "enable_relay_seed_checkpoint": true
+      },
+      "source_ref": "working_tree"
+    }
+  },
+  "execution_sources": {
+    "run_optimization_experiments": {
+      "path": "sources/run_optimization_experiments.py",
+      "sha256": "8431df7578301b4ea875d32c6d97250698fc626696f9b79f522a2dd2a0a3e26a"
+    },
+    "run_scenario_comparison": {
+      "path": "sources/run_scenario_comparison.py",
+      "sha256": "5566709d474ac03e9e3a6118a0b947098d785281f65f2c8bcc0074b8eb34ca1c"
+    },
+    "run_global_relay_followup": {
+      "path": "sources/run_global_relay_followup.py",
+      "sha256": "9d31f3fbf51fcf63384f1e69a9548fa68241def9d18f33c3a78ba0548a03a890"
+    }
+  },
+  "runner_sha256": "8431df7578301b4ea875d32c6d97250698fc626696f9b79f522a2dd2a0a3e26a",
+  "protocol": {
+    "tasks": 200,
+    "drones": 8,
+    "max_tasks_per_drone": 25,
+    "capacity": 2,
+    "speed_km_per_min": 0.9,
+    "relay_count": 4,
+    "relay_location_seed": 42,
+    "relay_direct_warmup_fraction": 0.8,
+    "safety_margin_seconds": 1.0,
+    "stage_budgets_seconds": {
+      "compatibility": 15,
+      "screen": 30,
+      "validate": 60
+    },
+    "cases": [
+      "fleet200",
+      "fleet200__direct_relay",
+      "fleet200__direct_stations",
+      "fleet200__direct_relay_stations"
+    ],
+    "relay_cases": [
+      "fleet200__direct_relay",
+      "fleet200__direct_relay_stations"
+    ],
+    "total_experiment_seconds": 2500,
+    "compatibility_iterations": 100,
+    "comparison": "同实例、场景、种子、构造初解、总墙钟预算；逐种子三级词典序；保留全部退化",
+    "terminal_budget": "仅DIRECT已核验最优解，预留至多0.1秒且至多该阶段启动后剩余时间1%，最多两轮共56路线对；不改主循环RNG和奖励",
+    "relay_budget": "rebalanced实际DIRECT比例0.95，并启用已核验播种checkpoint；terminal仍为0.80",
+    "screen_gate": "先按relay_selection选中继版本；组合候选四场景12对至少7胜且累计逾期不增，或预部署中继主场景至少2/3胜且该场景累计逾期不增",
+    "relay_selection": "rebalanced对terminal的两个中继场景6对至少4胜且累计逾期不增才入选；否则中继也选terminal。无中继场景固定terminal，不重复求解同配置",
+    "validation": "仅组合候选通过初筛才执行60秒四场景三个新种子；所有已计划配对跑完，不因首个退化提前停止，不换种子或重复择优",
+    "promotion": "验证12对至少8胜，各场景至少2/3胜，所有配对逾期任务数不增；否则新开关默认关闭",
+    "K_interpretation": "中继扩展沿用最终交付责任计入K，前半程转运不占K；原题直送每机最多25项",
+    "objectives": "题目首要尽量按时且航程短；项目沿用逾期任务数/总逾期分钟/航程三级词典序",
+    "timing": "CSV读取前至核验和完整解写出后，含网络构造和预部署；不含Python启动导入",
+    "order": "同一场景三种子轮换版本顺序；所有求解顺序执行，计时期间不并行pytest/诊断求解",
+    "user_direction": "2026-10-14用户要求自主分析退化、结合文献再试一轮、四策略配对做完后结论并更新HTML提交main"
+  },
+  "seeds": {
+    "compatibility": [
+      2026102430
+    ],
+    "screen": [
+      2026102431,
+      2026102432,
+      2026102433
+    ],
+    "validate": [
+      2026102441,
+      2026102442,
+      2026102443
+    ]
+  },
+  "labels": {
+    "baseline": "本轮 main 基线",
+    "terminal": "最优解末端强化",
+    "rebalanced": "末端强化 + 95%直送预热"
+  },
+  "environment": {
+    "python": "3.14.5",
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O"
+  }
+}

@@ -1,0 +1,48 @@
+--- a/algorithm/src/uav_dispatch/alns.py
++++ b/algorithm/src/uav_dispatch/alns.py
+@@ -109,17 +109,18 @@
+     # strings and per-UAV task counts instead of sequentially repairing them.
+     enable_tail_exchange: bool = False
+     enable_home_reassignment: bool = False
+-    # Experimental terminal descent on the verified DIRECT incumbent only.
++    # Terminal descent promoted after the complete paired follow-up validation.
++    # Operates on the verified DIRECT incumbent only.
+     # Reserve at most 0.1 s (and at most 1% of the remaining phase budget),
+     # without changing candidates, RNG draws or operator rewards in the loop.
+-    enable_terminal_polish: bool = False
++    enable_terminal_polish: bool = True
+     relay_enabled: bool = True
+     # A relay-aware search has a much larger neighbourhood than DIRECT.
+     # Spend most of a fixed budget building a strong DIRECT incumbent, then
+     # let the relay phase improve (and never worsen) that incumbent.
+-    relay_direct_warmup_fraction: float = 0.80
+-    # Follow-up experiment: allocate 95% to DIRECT and retain a short relay
+-    # tail. Kept separate from terminal polish for paired ablation.
++    relay_direct_warmup_fraction: float = 0.95
++    # Retain the frozen experiment's explicit override for reproducibility.
++    # Public defaults use the numeric fraction above so custom ratios win.
+     enable_relay_budget_rebalance: bool = False
+     relay_candidates_per_task: int = 2
+     relay_plan_beam: int = 4
+@@ -138,7 +139,7 @@
+     enable_relay_downstream_refine: bool = False
+     # Preserve only seed moves already independently checked before the
+     # deadline; an unfinished or over-budget candidate is never adopted.
+-    enable_relay_seed_checkpoint: bool = False
++    enable_relay_seed_checkpoint: bool = True
+     # The seed pass converts strictly-better DIRECT tasks to relay right
+     # after construction; the refine pass then moves relay legs between UAVs.
+     enable_relay_seed: bool = True
+--- a/algorithm/src/uav_dispatch/cli.py
++++ b/algorithm/src/uav_dispatch/cli.py
+@@ -430,8 +430,8 @@
+     solve.add_argument(
+         "--relay-direct-warmup",
+         type=float,
+-        default=0.80,
+-        help="中继搜索前用于 DIRECT 预热的总预算比例；0 表示纯中继搜索",
++        default=0.95,
++        help="中继搜索前用于 DIRECT 预热的总预算比例（默认 0.95）；0 表示纯中继搜索",
+     )
+     solve.add_argument("--relay-detour-ratio", type=float, default=2.0)
+     solve.add_argument("--relay-plan-beam", type=int, default=4)

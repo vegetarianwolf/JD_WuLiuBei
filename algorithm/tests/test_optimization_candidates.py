@@ -58,6 +58,7 @@ def test_lazy_repair_preserves_the_entire_fixed_iteration_search(
         min_destroy_fraction=0.2, max_destroy_fraction=0.35,
         enable_deadline_risk=deadline_risk,
         repair_rank_candidate_limit=8, repair_exact_candidate_limit=12,
+        enable_terminal_polish=False,
     )
     baseline = solve_alns(problem, config=config, initial_routes=initial.routes)
     lazy = solve_alns(
@@ -101,9 +102,9 @@ def test_lazy_repair_handles_shortlists_zero_deadlines_and_different_homes(
 
 def test_candidate_flags_leave_initial_construction_unchanged_and_are_reported():
     problem = _fleet_problem()
-    baseline = solve_alns(problem, config=ALNSConfig(max_iterations=0))
+    baseline = solve_alns(problem, config=ALNSConfig(max_iterations=0, enable_terminal_polish=False))
     candidates = solve_alns(problem, config=ALNSConfig(
-        max_iterations=0, enable_lazy_repair=True,
+        max_iterations=0, enable_lazy_repair=True, enable_terminal_polish=False,
         enable_route_distinct_regret=True,
     ))
     _assert_same_search(baseline, candidates)

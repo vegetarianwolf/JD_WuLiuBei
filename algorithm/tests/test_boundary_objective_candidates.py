@@ -125,9 +125,9 @@ def test_equal_score_acceptance_is_preserved_but_does_not_earn_reward(monkeypatc
 @pytest.mark.parametrize("boundary,rewards", [(True, False), (False, True), (True, True)])
 def test_new_flags_never_change_initial_construction(boundary, rewards):
     problem = _fleet()
-    baseline = solve_alns(problem, config=ALNSConfig(max_iterations=0))
+    baseline = solve_alns(problem, config=ALNSConfig(max_iterations=0, enable_terminal_polish=False))
     candidate = solve_alns(problem, config=ALNSConfig(
-        max_iterations=0, enable_boundary_destroy=boundary,
+        max_iterations=0, enable_boundary_destroy=boundary, enable_terminal_polish=False,
         enable_objective_rewards=rewards,
     ))
     assert candidate.routes == baseline.routes
