@@ -1147,3 +1147,48 @@ selected交付未提前而native延误增加，两条R第二步最优均回到�
 截至036共63个官方200任务诊断cell，实际累计844.213006秒；当前最强仍为025
 纯DIRECT。后续[多组中继设计](../../../papers/notes/proactive_relay_20261014/multi_relay_accumulation_design_v1.md)
 已进入实现交叉校验，尚未最终冻结、注册新预算或运行，不当作已获运输收益。
+
+## 037：多组完整状态已真正累积，仍未超强DIRECT
+
+[协议](../../../papers/notes/proactive_relay_20261014/multi_relay_accumulation_protocol_v1.json)
+先于执行固定一个随机种子2026101522、两臂各120秒上限。ROOT86项tiny通过1.67s，
+98项执行源码冻结；DIRECT独立用自己的加权ALNS/周期交换/036完整交换，不付R目录；
+R从同一025纯DIRECT guard付费构造当前目录，非单调完整beam保已有组再新增，
+全局重算旧新交接等待与环。首次R版本固定普通任务owner及相对序，不含native修复。
+
+实际DIRECT116.068937s（7341个ALNS迭代、61次周期passes及3步20,412个完整交换），
+R60.698953s，总176.767890s。R三层都完成：432/1728/1728个完整候选，共3888次
+标准full+global检查，3843通过、45全局或full拒绝，9个父目录/12个保留状态，
+真实最大3组、6条跨机任务。无期限中止、无结果相关重跑；有限搜索完成就返回。
+
+| 方案/当前层最低J保留状态 | 按时数 | L/min | D/km | J |
+|---|---:|---:|---:|---:|
+| 原strongguard、两臂最终输出 | 141 | 1790.632129 | 578.534685 | .434215789 |
+| 一组，state28 | 139 | 1834.283422 | 577.412687 | .441298743 |
+| 两组，state691 | 136 | 1827.601010 | 578.878127 | .448896771 |
+| 三组，state2833 | 130 | 1861.411312 | 581.325819 | .466578982 |
+
+两臂原guard采用数均0。state28少飞1.121998km，却新增native105/160迟到；真实多组
+交互并未消除整体损失。不同层最低状态不必组成父链：2833来自763，不能拿691
+当父方案；selected138在763已迟到，不能归给第三次加组。[独立4代表诊断](batch037_search_diagnosis_v1.md)
+分解当前source/C/wait/cache/shared及selected/native，全部原始事件与得分吻合，
+没有追加优化或重复全批审计。三个真实组本身不是运输优势。
+
+原冻结批审在protocol.scales的200.0与manifest的200严格整数类型检查处终止，
+数值完全一致。[原失败收据](batch037/audit_attempt_001.json)保留；没有修改98源码、
+协议、manifest或保存路线。另建[事后审计v2](../../experiments/audit_multi_relay_batch_v2.py)，
+只在该字段允许finite非bool、逐值精确相等的整数/浮点表示，其他物理/配置/采用
+检查复用冻结v1不变。15项修订测试通过0.50s，并保留[事后测试凭证](batch037/post_run_audit_revision_tests_v2.json)
+及修订源副本；不冒称它在求解前冻结或原v1通过。
+
+[修订版独立审计](batch037/audit.json)通过：R17个保存完整实体引用、16条亲子边、
+9个当前目录、5个checkpoint；DIRECT真实ALNS、61条周期统计、2个wrapper完整候选，
+尾部16个完整实体/15边/9目录/3checkpoint均核验。3888个R原子提案逐项重建结构/
+布局/摘要，未保存probe不称全DAG实体重放；DIRECT20,412次生产full计数同样不冒
+独立实体重放。源码/hash、全phasecanonical、原guard链、CF及真实wall均核。
+
+截至037共65个官方诊断cell，实际累计1020.980896秒。当前强解仍为025纯DIRECT；
+新强fresh公平多种子性能试验仍未开始，远胜目标未达到。下一[generic多组/native
+联合重构设计](../../../papers/notes/proactive_relay_20261014/multi_relay_native_polish_design_v1.md)
+正在新模块实现与独立post审计适配中，不把旧025/028的native ALNS能力重命名为创新，
+也不保证接入后必然获得收益。下一官方seed/budget尚未注册。

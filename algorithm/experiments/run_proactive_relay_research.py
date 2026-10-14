@@ -59,7 +59,8 @@ METHODS = {"batch": "batch_relay_refinement", "reciprocal": "reciprocal_relay_re
            "carry_price_direct": "split_feeder_refinement_v3", "carry_price_relay": "split_feeder_refinement_v3",
            "separated_delivery_direct": "split_feeder_refinement_v4", "separated_delivery_relay": "split_feeder_refinement_v4",
            "critical_prefix_direct": "critical_prefix_refinement_v1", "critical_prefix_relay": "critical_prefix_refinement_v1",
-           "conditional_donor_direct": "conditional_donor_refinement_v1", "conditional_donor_relay": "conditional_donor_refinement_v1"}
+           "conditional_donor_direct": "conditional_donor_refinement_v1", "conditional_donor_relay": "conditional_donor_refinement_v1",
+           "accumulation_direct": "multi_relay_direct_control_v1", "accumulation_relay": "multi_relay_accumulation_v1"}
 DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct", "repool_direct", "repool_polish_direct", "mobile_repool_direct", "joint_mobile_direct", "frontier_mobile_direct", "bundle_cached_direct", "full_credit_direct", "full_credit_pin_direct", "cold_pin_direct", "pair_pin_direct", "six_sort_direct", "wide_six_direct", "six_pin_direct", "window_direct")
 WINDOW_PAIR = ("window_direct", "window_relay")
 DAMAGE_PAIR = ("damage_direct", "damage_relay")
@@ -74,6 +75,8 @@ SEPARATED_DELIVERY_PAIR = ("separated_delivery_direct", "separated_delivery_rela
 DIRECT_ARMS = (*DIRECT_ARMS, "separated_delivery_direct")
 CONDITIONAL_DONOR_PAIR = ("conditional_donor_direct", "conditional_donor_relay")
 DIRECT_ARMS = (*DIRECT_ARMS, "conditional_donor_direct")
+ACCUMULATION_PAIR = ("accumulation_direct", "accumulation_relay")
+DIRECT_ARMS = (*DIRECT_ARMS, "accumulation_direct")
 CRITICAL_PREFIX_PAIR = ("critical_prefix_direct", "critical_prefix_relay")
 DIRECT_ARMS = (*DIRECT_ARMS, "critical_prefix_direct")
 SIX_SORT_PAIR = ("six_sort_direct", "six_sort_relay")
@@ -140,6 +143,9 @@ EXECUTION = (
     "audit_critical_prefix_joint_repair_v1.py", "audit_critical_prefix_batch_v1.py",
     "conditional_donor_catalogue_v1.py", "conditional_donor_repair_v1.py", "conditional_donor_refinement_v1.py",
     "audit_conditional_donor_repair_v1.py", "audit_conditional_donor_batch_v1.py",
+    "multi_relay_structure_v1.py", "multi_relay_accumulation_v1.py", "multi_relay_direct_control_v1.py",
+    "audit_multi_relay_accumulation_v1.py", "audit_conditional_donor_metadata_v2.py",
+    "audit_multi_relay_direct_control_v1.py", "audit_multi_relay_batch_v1.py",
     "directed_bundle_insertion.py",
     "run_weighted_relay_ablation.py", "run_weighted_direct_pair.py", "weighted_direct_objective.py",
     "weighted_relay_objective.py", "weighted_periodic_exchange.py", "run_scenario_comparison.py",
@@ -717,6 +723,41 @@ def prepare(args):
             "is not a bound/optimality proof. Only one conditional-donor probe is "
             "declared here; local twoR success cannot replace far superiority or "
             "future compatible multi-relay accumulation and fair fresh paired evidence.")
+    if set(arms) & set(ACCUMULATION_PAIR):
+        for field, name in (
+                ("multi_relay_design", "multi_relay_accumulation_design_v1.md"),
+                ("multi_relay_implementation", "multi_relay_accumulation_implementation_v1.md")):
+            note = ROOT / "papers/notes/proactive_relay_20261014" / name
+            manifest[field] = dict(path=str(note.relative_to(ROOT)), sha256=sha(note))
+        protocol_path = ROOT / "papers/notes/proactive_relay_20261014/multi_relay_accumulation_protocol_v1.json"
+        protocol = read(protocol_path)
+        assert arms == protocol["arms"] and args.seed == protocol["seed"]
+        assert args.budget_seconds == protocol["budget_seconds_per_arm"] and args.homes == protocol["homes"]
+        assert checkpoint and checkpoint["sha256"] == protocol["checkpoint_sha256"]
+        assert manifest["input_sha256"] == protocol["input_sha256"]
+        assert manifest["weights"] == protocol["weights"] and manifest["scales"] == protocol["scales"]
+        assert parameters == protocol["method_parameters"]
+        manifest["accumulation_fixed_catalogue_parameters"] = protocol["fixed_catalogue_parameters"]
+        manifest["accumulation_direct_periodic_parameters"] = protocol["direct_periodic_parameters"]
+        manifest["multi_relay_protocol"] = dict(path=str(protocol_path.relative_to(ROOT)), sha256=sha(protocol_path))
+        assert protocol["artifact_json_indent"] == 0
+        manifest["artifact_json_indent"] = 0
+        manifest["protocol"] += (
+            " Multi-group accumulation starts from the same complete historical DIRECT guard. "
+            "It pays for current-state pair/source/receiver proposal catalogues, preserves every old "
+            "actual relay group, and recomputes all old and new global waits and cycles. "
+            "A finite canonical-group-family beam can retain worse complete states through three "
+            "new groups, while adoption must strictly beat the original complete guard before deadline. "
+            "Native final owners and unselected signed event order are preserved in this first R version; "
+            "ordinary native repair is not implemented by this arm. DIRECT instead spends its own budget "
+            "on independent weighted ALNS, periodic whole-task exchange and complete conditional-donor "
+            "repair with empty pins, all200 native tasks free and no unused relay catalogue. "
+            "The saved R catalogue omits duplicated fleet routes but keeps actual layouts and route SHA "
+            "for independent reconstruction; retained checkpoints keep full routes and current clocks. "
+            "Discarded atomic proposals are not claimed as independent full-DAG replays. "
+            "This single source-frozen historical-checkpoint mechanism pair is not fresh end-to-end "
+            "multi-seed performance evidence or proof of far relay superiority. No resource/model/weight "
+            "changes, free historical R seed, result-conditioned retries, or post-result pool adjustment.")
     write(output / "manifest.json", manifest)
     write(output / "runs.json", [])
     print(json.dumps({"prepared": str(output), "purpose": manifest["purpose"], "arms": arms,
@@ -752,7 +793,7 @@ def verify(output, manifest, *, current_execution=True):
     if "six_task_pinned_polish_design" in manifest:
         note = manifest["six_task_pinned_polish_design"]
         assert sha(ROOT / note["path"]) == note["sha256"], "Changed declared six-task pinned polish design"
-    for field in ("deadline_rescue_window_design", "fixed_h_rescue_selector_review", "relay_damage_closure_repair_design", "window_damage_repair_protocol", "split_feeder_design", "split_feeder_protocol", "exact_suffix_delay_design", "native_price_design", "native_price_protocol", "noncontiguous_in_design", "carry_price_design", "carry_price_protocol", "separated_delivery_design", "separated_delivery_implementation", "separated_delivery_protocol", "critical_prefix_design", "critical_prefix_implementation", "critical_prefix_protocol", "conditional_donor_design", "conditional_donor_implementation", "conditional_donor_protocol"):
+    for field in ("deadline_rescue_window_design", "fixed_h_rescue_selector_review", "relay_damage_closure_repair_design", "window_damage_repair_protocol", "split_feeder_design", "split_feeder_protocol", "exact_suffix_delay_design", "native_price_design", "native_price_protocol", "noncontiguous_in_design", "carry_price_design", "carry_price_protocol", "separated_delivery_design", "separated_delivery_implementation", "separated_delivery_protocol", "critical_prefix_design", "critical_prefix_implementation", "critical_prefix_protocol", "conditional_donor_design", "conditional_donor_implementation", "conditional_donor_protocol", "multi_relay_design", "multi_relay_implementation", "multi_relay_protocol"):
         if field in manifest:
             note = manifest[field]
             assert sha(ROOT / note["path"]) == note["sha256"], "Changed declared fixed-window design/review"
@@ -839,7 +880,7 @@ def worker(request):
                 controls = {"relay_enabled": method == "quota_relay"}
             if method.startswith("repool_"):
                 controls = {"relay_enabled": method.endswith("_relay")}
-            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_", "full_credit_", "cold_pin_", "pair_pin_", "six_sort_", "wide_six_", "six_pin_", "window_", "damage_", "split_feeder_", "native_price_", "carry_price_", "separated_delivery_", "critical_prefix_", "conditional_donor_")):
+            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_", "full_credit_", "cold_pin_", "pair_pin_", "six_sort_", "wide_six_", "six_pin_", "window_", "damage_", "split_feeder_", "native_price_", "carry_price_", "separated_delivery_", "critical_prefix_", "conditional_donor_", "accumulation_")):
                 controls = {"relay_enabled": method.endswith("_relay")}
             controls = {**controls, **manifest.get("method_parameters", {}).get(method, {})}
             outcome = modules[method].refine(full, routes, deadline=sub_deadline,
@@ -856,8 +897,10 @@ def worker(request):
             # prevents a final checked phase from worsening its full incumbent.
             assert key(candidate.score, manifest) <= key(checked.score, manifest)
             routes, checked = outcome["routes"], candidate
+            ended = perf_counter()
             save(routes, checked, method, start_offset_seconds=begin-started,
-                 solve_wall_seconds=perf_counter()-begin, iterations=outcome["iterations"], metadata=outcome["metadata"])
+                 solve_wall_seconds=ended-begin, started_at_perf_counter=begin,
+                 ended_at_perf_counter=ended, iterations=outcome["iterations"], metadata=outcome["metadata"])
         final = save(routes, checked, "final", metadata=dict(periodic_task_exchange=periodic_stats,
                                                             mobile_meetings=mobile_meetings))
         counter_routes = tuple(tuple(v if abs(v) not in full.leg_registry else
@@ -919,6 +962,13 @@ def run(output):
 
 def audit(output):
     schedule = read(output / "manifest.json")["schedule"]
+    if any(row["arm"] in ACCUMULATION_PAIR for row in schedule):
+        assert all(row["arm"] in ACCUMULATION_PAIR for row in schedule), "Accumulation batches use their own independent-arm audit"
+        try:
+            from .audit_multi_relay_batch_v1 import audit as accumulation_audit
+        except ImportError:
+            from audit_multi_relay_batch_v1 import audit as accumulation_audit
+        return accumulation_audit(output)
     if any(row["arm"] in CONDITIONAL_DONOR_PAIR for row in schedule):
         assert all(row["arm"] in CONDITIONAL_DONOR_PAIR for row in schedule), "Conditional-donor batches use their own paired audit"
         try:

@@ -1,0 +1,37 @@
+# 多个真实交接组与普通任务联合重构：结构扩展设计 v1
+
+本设计回应037已完成求解、尚待修订版独立审计的保存证据，不是成功报告或下一次运行协议。037原冻结审计在协议尺度200与200.0的严格JSON类型检查处终止；数值相同，原数据/98源码/协议保留，另建只修该表示检查的事后审计版本。不得把原冻结审计写成通过。
+
+037两臂最终均回025强DIRECT。R完整完成三层、9个父目录、3888个标准full/global检查；3843个通过、45个全局拒绝，没有因期限停在单组。各层最低J依次约.441299/.448897/.466579，原guard为.434216。最低J的单组8/15虽少飞约1.122km，却让普通任务105/160新增迟到；最大三组也已实际保留。完整独立归因及事后审计通过后再绑定精确凭证。这些有限候选不能证明整个中继模型无收益。
+
+## 已有覆盖与真正的适配对象
+
+025的`relay_pair_preserving_polish.py`已允许198项普通whole-DIRECT换机和改序，028的`six_task_preserving_polish.py`也允许特定六pin方案之外194项自由。多pin、ALNS、允许暂差、原强guard均非新原理。旧025入口与shape硬认两pin/一组/两source；028硬认同三机同H及每机ownIN-beforeOUT。删除一个数量判断无法支持037的不同H、共享飞机和相互等待的真实多组。
+
+未接通的是：由付费的当前完整多组构造器形成异构group集合之后，保存所有实际交接身份和次序，同时让其余普通任务跨机改序，完整重算所有组之间的时钟。037虽已能累积暂差组，仍锁住所有普通任务owner及相对顺序；本扩展应解除这两项普通任务锁。它仍保每个selected任务的原group角色/H/leg/mode/逐机selected子序列，不暗中撤掉中继来获取DIRECT收益。
+
+## 新helper边界
+
+新增模块，不改025/028/037冻结文件。可复用旧五个进程内钩子的结构：destroy过滤、禁普通任务生成新relay、DIRECT exact走当前全局delta、完整repair校验和invalid回退/零接受奖励。必须只补丁实际运行solve/repair的同一个冻结加权ALNS模块，核adapter身份/实际系数，finally恢复五钩子和目标状态，禁止嵌套。
+
+输入为真实完整macro routes、全部groups、绝对deadline、固定weights/scales/seed、实际frozen weighted ALNS模块与配置。pins为所有group的i/j并集，真实relay集合必须完全等于pins。多组可共享飞机、可多H，所有旧新交接必须保留。用generic signature锁pin的完整计划/角色/H/leg、各机所有selected的有序子序列及最终责任数量；完整候选用generic shape检查每组空载连续双take、正共载和C2，并标准force_full及当前完整DAG一致后才比较。普通任务必须仍为完整DIRECT，owner/order可变，不调用037原子新增动作的全native owner/strip守卫。
+
+partial不能冒完整证书：只whole删除普通任务，pins始终全部完整保留；普通present任务不得半取送。target counts取真实初始macro每机最终责任，q=target-currentfinalcount逐机非负，q总和等于真实缺失普通任务数。只有q>0的目的机才能恢复一个whole任务。partial的完整组结构可用require_complete=False加只比pin身份/子序列，不拿full final-count signature错误拒绝所有合法删除；同coverage partial全局分数只用于有限候选排序，绝不作为完整J证书。全部恢复、q=0、全task coverage后再核完整counts。所有DIRECT exact选择应使用当前global delta，不能恢复忽略旧R等待的生产local捷径；有限local/top_k提案不是完备最优或下界。
+
+任何不完整、旧group损坏、改变pin计划、引入新relay或跨组环的complete candidate回退到已完整检查的pre-destroy incumbent，拒SA接受与算子奖励。两个OUT take之间禁插入只是一项前门保护，不能替代逐完整候选shape检查。完整快照要保存当前所有组的source availability、C到站/等待/cache、真实双载航程、event/delivery clocks、全owner、selected/native变化及真实结构签名。
+
+入口或初始化中途过期应诚实返回原macro及未发布新checkpoint状态。所有新快照及采用须在绝对期限内完成；ALNS报告清理越过期限时只能返回已经缓存的预期限完整checkpoint，不在期限后重新制造“已校验”的快照。只有严格好于本helper输入才算内部改善；是否可超原strong-DIRECT guard由外层独立按真实完整key判断。
+
+## 付费来源与未来wrapper
+
+未来wrapper必须从与DIRECT相同的纯DIRECT strong输入，在同一总wall内重新付费运行多组构造，再依据真实完成的各group-count层选有限完整种子，不能免费载入037历史解。可预先规定每个实际完成层的最低J不同路线作为channel，固定去重/最大channel数和总时间分配；具体seed/budget/raw比例/温度/迭代及snapshot上限留待实现、tiny和交叉读审之后单独冻结，当前文件不注册官方运行。
+
+DIRECT继续自己的全预算加权ALNS及普通完整交换、空pins/all200free，不付无用R目录，不锁R角色或必须照R路径操作。R的所有构造、初始化、各层channel选择、generic native polish、全局/full校验、快照与保存均计入同一总预算。需要在native自由之后重新记录selected与native的变化，不能把普通重构的全部改进归因于运输。
+
+## 独立证据与tiny最低范围
+
+旧两pin后处理审计不适用；037审计则保护所有native原owner/原序，不能直接套到新post。新增独立post审计，分别绑定付费raw多组来源和其后仅pin身份固定的自由native实体，重建全部当前DAG/任务覆盖/最终counts/每组形状与source/cross/wait/shared，保存摘要而不重复大拓扑。记录完整checked checkpoint、亲子来源、真正预期限采用链及finally补丁恢复。未保存的ALNS探测不能称独立逐项实体重放。
+
+tiny至少包含两个不同组/可不同H/共享飞机、新组等待与native重排互相影响、至少一个普通任务真实换owner、pins未动；真实partial q与销毁过滤，禁止pin半删除/新relay/双take夹入native/循环；invalid回退不奖励、实际weighted adapter及同module五钩子、异常/期限恢复；初始化过期和solve清理后只返回早先缓存checkpoint。必须使用真实归档加权runtime的小例跨端验证，而非仅伪造分数。设计、实现、测试、官方表现分开记录。
+
+这仍是向最终目标推进的构件。即使一个多组检查点小幅改善，也不等于中继远胜；最终仍需强fresh DIRECT的同资源/同尺度/同端到端预算、运行前固定多种子配对，按时数/航程/时间/L同时清楚胜出。当前没有这种证据，不预先保证此扩展成功。
