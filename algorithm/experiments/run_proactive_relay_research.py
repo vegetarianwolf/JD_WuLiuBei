@@ -38,8 +38,10 @@ METHODS = {"batch": "batch_relay_refinement", "reciprocal": "reciprocal_relay_re
            "mobile_v3": "mobile_relay_refinement_v3", "directed": "directed_bundle_insertion",
            "delivery_direct": "mobile_delivery_reconstruction", "delivery_relay": "mobile_delivery_reconstruction",
            "anticipatory": "anticipatory_mobile_handoff",
-           "quota_direct": "quota_balanced_relay_exchange", "quota_relay": "quota_balanced_relay_exchange"}
-DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct")
+           "quota_direct": "quota_balanced_relay_exchange", "quota_relay": "quota_balanced_relay_exchange",
+           "repool_direct": "relay_repooling_exchange", "repool_relay": "relay_repooling_exchange"}
+DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct", "repool_direct")
+REPOOL_ARMS = ("repool_direct", "repool_relay")
 ANTICIPATORY_ARMS = ("anticipatory",)
 MOBILE_ARMS = ("mobile", "mobile_v2", "mobile_v3", "delivery_relay", *ANTICIPATORY_ARMS)
 EXECUTION = (
@@ -55,6 +57,7 @@ EXECUTION = (
     "mobile_delivery_reconstruction.py",
     "anticipatory_mobile_handoff.py", "audit_anticipatory_mobile.py",
     "quota_balanced_relay_exchange.py",
+    "relay_repooling_exchange.py", "audit_repooling.py",
     "directed_bundle_insertion.py",
     "run_weighted_relay_ablation.py", "run_weighted_direct_pair.py", "weighted_direct_objective.py",
     "weighted_relay_objective.py", "weighted_periodic_exchange.py", "run_scenario_comparison.py",
@@ -231,6 +234,15 @@ def prepare(args):
             "The relay arm may carry one request through an existing station while the compensating request "
             "travels directly; the matched DIRECT arm disables only that relay option. "
             "Both use the same declared pair selector, insertion bounds and rebuilding orders.")
+    if set(arms) & set(REPOOL_ARMS):
+        manifest["protocol"] += (
+            " Repooling arms assign two requests from different source aircraft to one third delivery aircraft; "
+            "two whole DIRECT requests compensate its delivery quotas on the two source aircraft. "
+            "The relay arm requires both original sources to use the same existing station and the third aircraft "
+            "to take both parcels consecutively while empty, then carry them together for a positive flight distance. "
+            "The DIRECT arm collects both complete requests itself. The final responsibility map, selected macros, "
+            "insertion bounds and rebuilding pipelines are matched; all other task ownership and event order stay fixed. "
+            "Only complete four-task plans are compared to the checked incumbent, and the physical macro is independently replayed.")
     write(output / "manifest.json", manifest)
     write(output / "runs.json", [])
     print(json.dumps({"prepared": str(output), "purpose": manifest["purpose"], "arms": arms,
@@ -332,6 +344,8 @@ def worker(request):
                 controls = {"relay_enabled": method == "delivery_relay"}
             if method.startswith("quota_"):
                 controls = {"relay_enabled": method == "quota_relay"}
+            if method.startswith("repool_"):
+                controls = {"relay_enabled": method == "repool_relay"}
             controls = {**controls, **manifest.get("method_parameters", {}).get(method, {})}
             outcome = modules[method].refine(full, routes, deadline=sub_deadline,
                         weights=manifest["weights"], scales=manifest["scales"], seed=req["seed"], **controls)
@@ -424,6 +438,9 @@ def audit(output):
     if any(r["arm"] in ANTICIPATORY_ARMS for r in manifest["schedule"]):
         from algorithm.experiments.audit_anticipatory_mobile import audit_anticipatory_payload, audit_anticipatory_routes
         assert sha(EXPERIMENTS / "audit_anticipatory_mobile.py") == manifest["execution_sources"]["audit_anticipatory_mobile.py"]["sha256"]
+    if any(r["arm"] in REPOOL_ARMS for r in manifest["schedule"]):
+        from algorithm.experiments.audit_repooling import audit_repooling_proposal
+        assert sha(EXPERIMENTS / "audit_repooling.py") == manifest["execution_sources"]["audit_repooling.py"]["sha256"]
     tasks = load_official_csv(ROOT / manifest["input_path"])
     rows = read(output / "runs.json")
     assert len(rows) == len(manifest["schedule"]) > 0, "Cannot pass an empty or incomplete research batch"
@@ -441,6 +458,7 @@ def audit(output):
                 if row["arm"] in ANTICIPATORY_ARMS else (audit_mobile_payload, audit_mobile_routes))
         preceding_key = None
         preceding_routes_hash = manifest["initial_routes_sha256"]
+        preceding_routes = manifest["initial_routes"]
         proposal_references = []
         for phase in row["phases"]:
             assert sha(output / phase["solution_path"]) == phase["solution_sha256"]
@@ -452,6 +470,8 @@ def audit(output):
             if row["arm"] in MOBILE_ARMS:
                 physical_payload_audit(tasks, manifest["topology"], phase_topology, phase_payload)
             phase_routes = [r["encoded_visits"] for r in phase_payload["routes"]]
+            phase_input_routes = preceding_routes
+            preceding_routes = phase_routes
             assert digest(phase_routes) == phase["routes_sha256"]
             assert phase["input_routes_sha256"] == preceding_routes_hash
             preceding_routes_hash = phase["routes_sha256"]
@@ -476,7 +496,7 @@ def audit(output):
                         proposals.append((f"cluster_{cluster_record['cluster_index']}__candidate_{number}__{stage}",
                                           candidate_record.get(stage)))
             for group_index, group_record in enumerate(metadata.get("group_records", [])):
-                for number, candidate_record in enumerate(group_record["proposals"]):
+                for number, candidate_record in enumerate(group_record.get("proposals", [])):
                     for stage in ("full_proposal", "post_geometry", "post_polish"):
                         proposals.append((f"group_{group_index}__candidate_{number}__{stage}",
                                           candidate_record.get(stage)))
@@ -487,6 +507,11 @@ def audit(output):
                 proposal_topology = {**phase_topology, **proposal.get("topology", {}),
                                      "relay_allowed": phase_topology["relay_allowed"]}
                 proposal_reference = reference_schedule(tasks, proposal["routes"], proposal_topology)
+                repooling_reference = None
+                if row["arm"] in REPOOL_ARMS and proposal.get("move") is not None:
+                    repooling_reference = audit_repooling_proposal(
+                        tasks, proposal_topology, phase_input_routes, proposal["routes"], proposal["move"],
+                        relay_enabled=row["arm"] == "repool_relay")
                 if row["arm"] in MOBILE_ARMS:
                     mobile_reference = physical_routes_audit(tasks, manifest["topology"], proposal_topology, proposal["routes"])
                     from algorithm.experiments.audit_mobile_relay import _bind_meetings
@@ -502,7 +527,15 @@ def audit(output):
                 if proposal_name == "input_snapshot":
                     assert digest(proposal["routes"]) == phase["input_routes_sha256"]
                 proposal_references.append(dict(phase=phase["phase"], proposal=proposal_name,
-                    routes_sha256=digest(proposal["routes"]), reference=proposal_reference))
+                    routes_sha256=digest(proposal["routes"]), reference=proposal_reference,
+                    **({"repooling_physical_reference": repooling_reference} if repooling_reference is not None else {})))
+            if row["arm"] in REPOOL_ARMS and phase["phase"] == row["arm"]:
+                assert digest(metadata["selected_groups"]) == metadata["selector_sha256"]
+                if phase_routes != phase_input_routes:
+                    accepted = metadata["accepted_moves"][-1]
+                    assert accepted["full_snapshot"]["routes"] == phase_routes
+                    audit_repooling_proposal(tasks, phase_topology, phase_input_routes, phase_routes, accepted,
+                                            relay_enabled=row["arm"] == "repool_relay")
         assert sha(output / row["solution_path"]) == row["solution_sha256"]
         final_payload = read(output / row["solution_path"])
         final_topology = {**row["phases"][-1].get("topology", actual_topology), "relay_allowed": actual_topology["relay_allowed"]}
@@ -524,8 +557,19 @@ def audit(output):
         results.append(dict(run_id=row["run_id"], passed=True, reference=reference, fixed_structure_direct=cf,
                             non_adopted_or_constructed_proposals=proposal_references,
                             synchronous_mobile_physical_reference=physical_mobile))
+    selector_comparisons = []
+    for seed in sorted({row["seed"] for row in rows}):
+        paired = {row["arm"]: next(phase["metadata"] for phase in row["phases"] if phase["phase"] == row["arm"])
+                  for row in rows if row["seed"] == seed and row["arm"] in REPOOL_ARMS}
+        if set(paired) == set(REPOOL_ARMS):
+            assert paired["repool_direct"]["selector_sha256"] == paired["repool_relay"]["selector_sha256"]
+            assert paired["repool_direct"]["selected_groups"] == paired["repool_relay"]["selected_groups"]
+            selector_comparisons.append(dict(seed=seed, same_selected_macros=True,
+                selector_sha256=paired["repool_direct"]["selector_sha256"]))
     record = dict(passed=True, purpose=manifest["purpose"], source_manifest_sha256=sha(output / "manifest.json"),
                   source_runs_sha256=sha(output / "runs.json"), results=results)
+    if selector_comparisons:
+        record["matched_repooling_selectors"] = selector_comparisons
     write(output / "audit.json", record)
     print(json.dumps({"audit_passed": True, "run_count": len(results), "purpose": manifest["purpose"]}))
 
