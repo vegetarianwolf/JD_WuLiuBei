@@ -123,27 +123,40 @@
       ],
       "all_adopted_scores_equal_to_checkpoint": true,
       "actual_seconds": 8.378953626030125
+    },
+    {
+      "batch": "batch015",
+      "purpose": "checkpoint_mechanism_diagnostic",
+      "arms": [
+        "anticipatory",
+        "quota_direct",
+        "quota_relay"
+      ],
+      "all_adopted_scores_equal_to_checkpoint": false,
+      "same_improvement_with_and_without_relay": true,
+      "actual_seconds": 26.92968195694266
     }
   ],
   "rejected_before_start": "batch002",
   "latest_checked_incumbent": {
     "on_time_tasks": 141,
-    "distance_km": 579.015763766405,
-    "total_lateness_min": 1792.9661164796667,
-    "weighted_J": 0.4345015271643733,
-    "model": "synchronous_mobile_rendezvous_extension",
-    "source_batch": "batch009",
+    "distance_km": 578.6780963215664,
+    "total_lateness_min": 1789.9485874741067,
+    "weighted_J": 0.43422372524949104,
+    "model": "fixed_predeployment_DIRECT",
+    "actual_cross_uav_count": 0,
+    "source_batch": "batch015",
     "comparison": "240s historical DIRECT checkpoint plus extra20s mechanism diagnostic, NOT fair performance"
   },
   "fair_performance_screen_started": false,
   "next_hypotheses": [
-    "anticipatory empty receiver mobile handoff constrained to arrive before sender",
-    "quota-neutral single relay with whole DIRECT task compensation or third-task cycle"
+    "three-aircraft/four-task repooling of parcels from different sources into a common final-delivery bundle with two whole DIRECT quota compensations",
+    "matched DIRECT repooling control on exactly the same final responsibility map and bounded macro shortlist"
   ],
   "production_defaults_unchanged": true,
   "old_raw_results_unchanged": true,
-  "completed_optimizer_cells": 18,
-  "actual_diagnostic_seconds": 103.88665975205367,
+  "completed_optimizer_cells": 21,
+  "actual_diagnostic_seconds": 130.81634170899633,
   "parallel_request": "Independent review of teammate submission in Downloads; current metrics and constraints compared before attributing improvement.",
   "teammate_review": {
     "path": "papers/notes/teammate_submission_review_20261014/README.md",
@@ -152,5 +165,15 @@
     "latest_cross_count": 0,
     "latest_solution_dominated_by_current_same_predeployment_checkpoint": true,
     "no_general_algorithm_superiority_claim": true
-  }
+  },
+  "best_verified_relay_diagnostic": {
+    "on_time_tasks": 141,
+    "distance_km": 579.015763766405,
+    "total_lateness_min": 1792.9661164796667,
+    "weighted_J": 0.4345015271643733,
+    "model": "synchronous_mobile_rendezvous_extension",
+    "source_batch": "batch009",
+    "comparison": "240s historical DIRECT checkpoint plus extra20s mechanism diagnostic, NOT fair performance"
+  },
+  "last_review": "batch015 independent replay passed, anticipatory no gain; quota-enabled and disabled arms adopt identical DIRECT routes, no relay attribution"
 }

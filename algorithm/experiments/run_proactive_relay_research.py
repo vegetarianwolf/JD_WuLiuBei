@@ -36,9 +36,12 @@ METHODS = {"batch": "batch_relay_refinement", "reciprocal": "reciprocal_relay_re
            "cluster_direct": "relay_cluster_beam", "cluster_relay": "relay_cluster_beam",
            "mobile": "mobile_relay_refinement", "mobile_v2": "mobile_relay_refinement_v2",
            "mobile_v3": "mobile_relay_refinement_v3", "directed": "directed_bundle_insertion",
-           "delivery_direct": "mobile_delivery_reconstruction", "delivery_relay": "mobile_delivery_reconstruction"}
-DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct")
-MOBILE_ARMS = ("mobile", "mobile_v2", "mobile_v3", "delivery_relay")
+           "delivery_direct": "mobile_delivery_reconstruction", "delivery_relay": "mobile_delivery_reconstruction",
+           "anticipatory": "anticipatory_mobile_handoff",
+           "quota_direct": "quota_balanced_relay_exchange", "quota_relay": "quota_balanced_relay_exchange"}
+DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct")
+ANTICIPATORY_ARMS = ("anticipatory",)
+MOBILE_ARMS = ("mobile", "mobile_v2", "mobile_v3", "delivery_relay", *ANTICIPATORY_ARMS)
 EXECUTION = (
     "run_proactive_relay_research.py", "batch_relay_refinement.py", "reciprocal_relay_refinement.py",
     "relay_tail_crossover.py",
@@ -50,6 +53,8 @@ EXECUTION = (
     "mobile_relay_refinement_v2.py",
     "mobile_relay_refinement_v3.py", "mobile_geometry_bound.py", "mobile_deadline_geometry.py",
     "mobile_delivery_reconstruction.py",
+    "anticipatory_mobile_handoff.py", "audit_anticipatory_mobile.py",
+    "quota_balanced_relay_exchange.py",
     "directed_bundle_insertion.py",
     "run_weighted_relay_ablation.py", "run_weighted_direct_pair.py", "weighted_direct_objective.py",
     "weighted_relay_objective.py", "weighted_periodic_exchange.py", "run_scenario_comparison.py",
@@ -209,10 +214,23 @@ def prepare(args):
         manifest["protocol"] = (
             "Official full 200 tasks, 8 UAVs, C2, final K25, same fixed physical homes, weights, scales and deadlines. "
             "New rendezvous coordinates are selected during search and used once by one UAV pair. "
-            "Equal-sized onboard cargo groups are exchanged only when both aircraft are present; early aircraft waits holding cargo. "
+            "Reciprocal arms exchange equal-sized onboard cargo groups only when both aircraft are present; early aircraft waits holding cargo. "
             "Every flight and synchronization wait is charged; no mobile ground cache, new vehicle or free initial relocation. "
             "This changes the prior fixed-four-site relay extension and is labelled separately. "
             "Sequential source-bound exploratory batch, no significance claim or seed replacement.")
+        if set(arms) & set(ANTICIPATORY_ARMS):
+            manifest["protocol"] += (
+                " Anticipatory arms instead transfer one or two parcels in one direction: the empty receiver "
+                "must arrive before the sender and wait until contact. The sender retains cargo until contact; "
+                "all receiver travel and waiting are charged. This conservative branch starts from pure DIRECT "
+                "routes, preserves final owners, and allows at most one new meeting per call. "
+                "It is independently audited by the separate receiver-first physical auditor.")
+    if any(arm.startswith("quota_") for arm in arms):
+        manifest["protocol"] += (
+            " Quota arms trade two whole delivery responsibilities between two aircraft. "
+            "The relay arm may carry one request through an existing station while the compensating request "
+            "travels directly; the matched DIRECT arm disables only that relay option. "
+            "Both use the same declared pair selector, insertion bounds and rebuilding orders.")
     write(output / "manifest.json", manifest)
     write(output / "runs.json", [])
     print(json.dumps({"prepared": str(output), "purpose": manifest["purpose"], "arms": arms,
@@ -312,6 +330,8 @@ def worker(request):
                 controls = {"relay_enabled": method == "cluster_relay"}
             if method.startswith("delivery_"):
                 controls = {"relay_enabled": method == "delivery_relay"}
+            if method.startswith("quota_"):
+                controls = {"relay_enabled": method == "quota_relay"}
             controls = {**controls, **manifest.get("method_parameters", {}).get(method, {})}
             outcome = modules[method].refine(full, routes, deadline=sub_deadline,
                         weights=manifest["weights"], scales=manifest["scales"], seed=req["seed"], **controls)
@@ -401,6 +421,9 @@ def audit(output):
     if mobile:
         from algorithm.experiments.audit_mobile_relay import audit_mobile_payload, audit_mobile_routes
         assert sha(EXPERIMENTS / "audit_mobile_relay.py") == manifest["execution_sources"]["audit_mobile_relay.py"]["sha256"]
+    if any(r["arm"] in ANTICIPATORY_ARMS for r in manifest["schedule"]):
+        from algorithm.experiments.audit_anticipatory_mobile import audit_anticipatory_payload, audit_anticipatory_routes
+        assert sha(EXPERIMENTS / "audit_anticipatory_mobile.py") == manifest["execution_sources"]["audit_anticipatory_mobile.py"]["sha256"]
     tasks = load_official_csv(ROOT / manifest["input_path"])
     rows = read(output / "runs.json")
     assert len(rows) == len(manifest["schedule"]) > 0, "Cannot pass an empty or incomplete research batch"
@@ -412,6 +435,10 @@ def audit(output):
         assert row["initial_routes_sha256"] == manifest["initial_routes_sha256"]
         assert row["source_sha256"] == manifest["source_archive"]["sha256"]
         actual_topology = {**manifest["topology"], "relay_allowed": row["arm"] not in DIRECT_ARMS}
+        if row["arm"] in MOBILE_ARMS:
+            physical_payload_audit, physical_routes_audit = (
+                (audit_anticipatory_payload, audit_anticipatory_routes)
+                if row["arm"] in ANTICIPATORY_ARMS else (audit_mobile_payload, audit_mobile_routes))
         preceding_key = None
         preceding_routes_hash = manifest["initial_routes_sha256"]
         proposal_references = []
@@ -423,7 +450,7 @@ def audit(output):
                 assert phase_topology == actual_topology, "Fixed-site experiment changed its frozen topology"
             reference = audit_payload(tasks, phase_topology, phase_payload)
             if row["arm"] in MOBILE_ARMS:
-                audit_mobile_payload(tasks, manifest["topology"], phase_topology, phase_payload)
+                physical_payload_audit(tasks, manifest["topology"], phase_topology, phase_payload)
             phase_routes = [r["encoded_visits"] for r in phase_payload["routes"]]
             assert digest(phase_routes) == phase["routes_sha256"]
             assert phase["input_routes_sha256"] == preceding_routes_hash
@@ -461,9 +488,11 @@ def audit(output):
                                      "relay_allowed": phase_topology["relay_allowed"]}
                 proposal_reference = reference_schedule(tasks, proposal["routes"], proposal_topology)
                 if row["arm"] in MOBILE_ARMS:
-                    mobile_reference = audit_mobile_routes(tasks, manifest["topology"], proposal_topology, proposal["routes"])
+                    mobile_reference = physical_routes_audit(tasks, manifest["topology"], proposal_topology, proposal["routes"])
                     from algorithm.experiments.audit_mobile_relay import _bind_meetings
                     _bind_meetings(proposal["mobile_meetings"], mobile_reference["meetings"])
+                    if row["arm"] in ANTICIPATORY_ARMS:
+                        assert all(m.get("meeting_type") == "receiver_arrives_first" for m in proposal["mobile_meetings"])
                 assert all(abs(proposal_reference["score"][k]-proposal["score"][k]) < 1e-8 for k in FIELDS)
                 proposal_values = [proposal_reference["score"][k] for k in FIELDS]
                 expected_key = (sum(w*v/s for w,v,s in zip(manifest["weights"],proposal_values,manifest["scales"])), *proposal_values)
@@ -478,7 +507,7 @@ def audit(output):
         final_payload = read(output / row["solution_path"])
         final_topology = {**row["phases"][-1].get("topology", actual_topology), "relay_allowed": actual_topology["relay_allowed"]}
         reference = audit_payload(tasks, final_topology, final_payload)
-        physical_mobile = (audit_mobile_payload(tasks, manifest["topology"], final_topology, final_payload)
+        physical_mobile = (physical_payload_audit(tasks, manifest["topology"], final_topology, final_payload)
                            if row["arm"] in MOBILE_ARMS else None)
         assert all(abs(reference["score"][k]-row[k]) < 1e-8 for k in FIELDS)
         assert abs(preceding_key[0] - row["weighted_score"]) < 1e-10
