@@ -53,11 +53,14 @@ METHODS = {"batch": "batch_relay_refinement", "reciprocal": "reciprocal_relay_re
            "wide_six_direct": "expanded_six_task_sorting", "wide_six_relay": "expanded_six_task_sorting",
            "six_pin_direct": "six_task_with_pinned_polish", "six_pin_relay": "six_task_with_pinned_polish",
            "window_direct": "deadline_window_repooling", "window_relay": "deadline_window_repooling",
-           "damage_direct": "window_damage_repair", "damage_relay": "window_damage_repair"}
+           "damage_direct": "window_damage_repair", "damage_relay": "window_damage_repair",
+           "split_feeder_direct": "split_feeder_refinement", "split_feeder_relay": "split_feeder_refinement"}
 DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct", "repool_direct", "repool_polish_direct", "mobile_repool_direct", "joint_mobile_direct", "frontier_mobile_direct", "bundle_cached_direct", "full_credit_direct", "full_credit_pin_direct", "cold_pin_direct", "pair_pin_direct", "six_sort_direct", "wide_six_direct", "six_pin_direct", "window_direct")
 WINDOW_PAIR = ("window_direct", "window_relay")
 DAMAGE_PAIR = ("damage_direct", "damage_relay")
 DIRECT_ARMS = (*DIRECT_ARMS, "damage_direct")
+SPLIT_FEEDER_PAIR = ("split_feeder_direct", "split_feeder_relay")
+DIRECT_ARMS = (*DIRECT_ARMS, "split_feeder_direct")
 SIX_SORT_PAIR = ("six_sort_direct", "six_sort_relay")
 WIDE_SIX_PAIR = ("wide_six_direct", "wide_six_relay")
 SIX_PIN_PAIR = ("six_pin_direct", "six_pin_relay")
@@ -111,6 +114,7 @@ EXECUTION = (
     "deadline_window_costs.py", "deadline_window_repooling.py", "audit_deadline_window_repooling.py",
     "relay_damage_closure.py", "damage_closure_repair.py", "window_damage_repair.py",
     "audit_window_damage_repair.py", "audit_window_damage_batch.py",
+    "split_feeder_catalogue.py", "split_feeder_refinement.py", "audit_split_feeder.py", "audit_split_feeder_batch.py",
     "directed_bundle_insertion.py",
     "run_weighted_relay_ablation.py", "run_weighted_direct_pair.py", "weighted_direct_objective.py",
     "weighted_relay_objective.py", "weighted_periodic_exchange.py", "run_scenario_comparison.py",
@@ -491,6 +495,32 @@ def prepare(args):
             "All clocks, owners and rescue classifications are rebuilt after repair, and raw table "
             "scores or raw suffix windows cannot certify post snapshots. Bounded closures do not mean "
             "all198 tasks or all positions have been exhaustively reoptimized.")
+    if set(arms) & set(SPLIT_FEEDER_PAIR):
+        note = ROOT / "papers/notes/proactive_relay_20261014/split_feeder_quota_neutral_design_v1.md"
+        manifest["split_feeder_design"] = dict(path=str(note.relative_to(ROOT)), sha256=sha(note))
+        protocol_path = ROOT / "papers/notes/proactive_relay_20261014/split_feeder_protocol_v1.json"
+        protocol = read(protocol_path)
+        assert arms == protocol["arms"] and args.seed == protocol["seed"]
+        assert args.budget_seconds == protocol["budget_seconds_per_arm"]
+        assert checkpoint and checkpoint["sha256"] == protocol["checkpoint_sha256"]
+        assert manifest["input_sha256"] == protocol["input_sha256"]
+        assert manifest["weights"] == protocol["weights"] and manifest["scales"] == protocol["scales"]
+        assert all(parameters[arm] == protocol["method_parameters"] for arm in arms)
+        manifest["split_feeder_protocol"] = dict(path=str(protocol_path.relative_to(ROOT)), sha256=sha(protocol_path))
+        manifest["protocol"] += (
+            " Split-feeder variants select two requests originally delivered by the same C, and "
+            "distinct A/B each transport one IN to one existing eligible H. C retains both final "
+            "deliveries; original final quotas and all198 other owners/subsequences are preserved "
+            "without compensation. All source native delay, empty flight, actual availability and "
+            "receiver waiting are included. Receiver takes enter empty, are consecutive, and yield "
+            "positive double-loaded flight. Shared catalogue witnesses are complete conditional "
+            "RELAY plans; in DIRECT they are ranking evidence, not admissible DIRECT candidates. "
+            "DIRECT includes original-C pair reconstruction plus independent12 balanced A1/B1/C2 "
+            "maps after actual A/B donor removal, and never inherits a relay arrival window or "
+            "mandatory final map. Source/position/pair/family catalogues remain explicitly bounded. "
+            "Only original-input strict weighted improvements with complete physical validation "
+            "and saved current clocks before the common deadline may replace the guard. "
+            "No ordinary-task polish or new resources are introduced in this diagnostic.")
     write(output / "manifest.json", manifest)
     write(output / "runs.json", [])
     print(json.dumps({"prepared": str(output), "purpose": manifest["purpose"], "arms": arms,
@@ -526,7 +556,7 @@ def verify(output, manifest, *, current_execution=True):
     if "six_task_pinned_polish_design" in manifest:
         note = manifest["six_task_pinned_polish_design"]
         assert sha(ROOT / note["path"]) == note["sha256"], "Changed declared six-task pinned polish design"
-    for field in ("deadline_rescue_window_design", "fixed_h_rescue_selector_review", "relay_damage_closure_repair_design", "window_damage_repair_protocol"):
+    for field in ("deadline_rescue_window_design", "fixed_h_rescue_selector_review", "relay_damage_closure_repair_design", "window_damage_repair_protocol", "split_feeder_design", "split_feeder_protocol"):
         if field in manifest:
             note = manifest[field]
             assert sha(ROOT / note["path"]) == note["sha256"], "Changed declared fixed-window design/review"
@@ -613,7 +643,7 @@ def worker(request):
                 controls = {"relay_enabled": method == "quota_relay"}
             if method.startswith("repool_"):
                 controls = {"relay_enabled": method.endswith("_relay")}
-            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_", "full_credit_", "cold_pin_", "pair_pin_", "six_sort_", "wide_six_", "six_pin_", "window_", "damage_")):
+            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_", "full_credit_", "cold_pin_", "pair_pin_", "six_sort_", "wide_six_", "six_pin_", "window_", "damage_", "split_feeder_")):
                 controls = {"relay_enabled": method.endswith("_relay")}
             controls = {**controls, **manifest.get("method_parameters", {}).get(method, {})}
             outcome = modules[method].refine(full, routes, deadline=sub_deadline,
@@ -693,6 +723,13 @@ def run(output):
 
 def audit(output):
     schedule = read(output / "manifest.json")["schedule"]
+    if any(row["arm"] in SPLIT_FEEDER_PAIR for row in schedule):
+        assert all(row["arm"] in SPLIT_FEEDER_PAIR for row in schedule), "Split-feeder batches use their own paired audit"
+        try:
+            from .audit_split_feeder_batch import audit as split_feeder_audit
+        except ImportError:
+            from audit_split_feeder_batch import audit as split_feeder_audit
+        return split_feeder_audit(output)
     if any(row["arm"] in DAMAGE_PAIR for row in schedule):
         assert all(row["arm"] in DAMAGE_PAIR for row in schedule), "Damage batches use their own paired audit"
         try:
