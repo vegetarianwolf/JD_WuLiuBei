@@ -641,3 +641,69 @@ RELAY最佳raw J=.437288227355，N59/L1814.298546570/D583.956063443，
 下一步的[六任务固定与194任务联合重排设计](../../../papers/notes/proactive_relay_20261014/six_task_pinned_polish_design_v1.md)
 已审阅保存，含允许native合法穿插的两个解析正例、raw/post独立证据及拟议40秒
 配对短试。仅是设计，代码与新正式单元尚未开始，当前性能结论不变。
+
+
+## batch028：保留六单结构、194普通任务重新分配与排序
+
+NEW helper、facade与独立post auditor已实现冻结；ROOT最终70项新增tiny在
+0.81秒通过，覆盖真实九任务weighted双臂循环、普通任务换owner、合法IN/OUT
+事件穿插、真实来源raw→post全局时钟，以及完整校验/快照/采用跨deadline拒收。
+旧027全部1024个raw完整提案和引用在内存重审，与原audit逐字段一致，未改旧文件。
+
+同025强DIRECT输入，事前固定seed2026101513、两臂各40秒总上限；raw份额.4，
+每H前64组/四H交错256组、原pairpool4、IN2/各gap4/full2不变；各自最佳两个完整
+宏在J差不超过.015时进入普通任务修复。实际worker冷却T0=.0025、Tmin=.00001、
+cooling=.97、maxiter1000000，两臂相同且不增加wall预算；leaf末保留.03秒完整检查。
+
+post保留六单全部模式/legs/site/来源和最终责任/selected有符号事件子序列，
+各机最终K25、C2和真实6次cross不变；其余194项必须whole DIRECT，可跨机和重排。
+不再要求raw的完整四事件块在post中连续，只保留ownINdrop先于ownOUT、空载连续
+双OUT取货与正距离共载。所有当前owner/clock/drop/shared/J重算；历史raw有限表
+分数只留原提案，post.move仅标明post语义，不能冒用raw物理值或合成原输入。
+
+两臂selector完整且记录/SHA一致，各512个raw完整提案均来源重放。两臂合计1096个
+保存提案/引用重放，其中60个post/helper引用使用新的真实raw→post规则；所有
+全局score/key/C2/K25/DAG、current clock与availability通过，五个ALNS hooks、
+selector和weighted objective状态均恢复。compact证据在完整校验后保存digest，
+完整路线/时钟保存在runs，未跳过任何保存快照的校验。
+
+DIRECT实际39.208344秒、2023次ALNS迭代、36471次精确全局评价；RELAY实际
+39.217901秒、2092次迭代、37756次精确评价。四个leaf均在保留guard内完成最终
+检查；helper搜到自己的时限不代表wrapper超时。两臂wrapper无invalid/timeout拒收。
+DIRECT第二叶恢复到原输入，未严格胜出；RELAY两叶均未找到优于各自raw的固定六单
+解。因此“普通任务完全无法修复”并非接口问题，但该冻结邻域没有产生可采用收益。
+
+| 方案 | Nlate | L/min | D/km | J | 最终采用cross |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 原025强输入/两臂最终解 | 59 | 1790.632129 | 578.534685 | .434215788788 | 0 |
+| DIRECT最佳post | 59 | 1790.632129 | 578.534685 | .434215788788 | 0 |
+| RELAY最佳post（未采用，真实6cross） | 59 | 1814.298547 | 583.956063 | .437288227355 | — |
+
+两臂各512个raw提案中，均有100个N58、412个N59；所有N58仅救回未选native65，
+没有选中六单被救回，也无其他任务新变晚。65从53.768639变为52.303852分钟，
+deadline52.7；DIRECT也能实现，不能归因于中继独有。最佳N58的DIRECT为
+J.438291343662/L1853.329597/D588.043853，RELAY为
+J.441032688862/L1887.425762/D590.625366，均输原输入J；这些没有进入按J选择的
+两个polish宏。不得把“最佳加权宏N不变”外推成所有候选都没有N改善。
+
+[manifest](batch028/manifest.json)、[runs](batch028/runs.json)、
+[audit](batch028/audit.json)、[70项测试凭证](batch028/new_method_test_receipt.json)。
+这仍是历史checkpoint追加诊断，不是从零相同累计预算的公平算法胜负；不能将
+真实cross次数或共载长度当作性能收益。当前最强保存解仍为025 DIRECT，远胜目标
+未达到。下一步先核查旧非对称repooling已覆盖范围，再针对能救回截止期的真实早
+窗口设计候选选择；不能把已有早期代表/几何或full-removal排名换个名字重做。
+
+截至028共47个官方完整200任务诊断cell，实际累计439.852568秒，新的公平性能
+扩大试验仍未开始。
+
+[028逐任务与修复诊断](batch028_search_diagnosis_v1.md)已核实普通任务换机的完整见证，
+以及两臂N58都仅救回native65的归因；没有进一步polish这些N58候选，不能声称
+已测这种后续可能性。[固定H联合救期选择器源码复核](../../../papers/notes/proactive_relay_20261014/fixed_h_rescue_selector_review_v1.md)
+确认非对称接力、早IN/早C代表和移动点deadline种子均为旧实现，新假设只定位于
+旧近邻/receiver/前16组截断之前的联合固定H时间窗口family生成，尚未实现。
+
+下一步[固定H联合救期窗口设计](../../../papers/notes/proactive_relay_20261014/deadline_rescue_window_design_v1.md)
+已交叉审阅；它明确早期代表和移动deadline方法为旧工作，新机制只改前置联合窗口
+入池。主DIRECT对照须独立开放四任务A1/B1/C2的12种最终分配，不强迫去H或沿用
+中继finalmap；同map仅作消融。预声明安全余量的失败仅排安全channel，官方EPS
+准时性另由真实完整评分判定。此处仅设计，尚未实现或测试，不构成性能证据。
