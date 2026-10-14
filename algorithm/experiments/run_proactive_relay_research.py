@@ -54,13 +54,16 @@ METHODS = {"batch": "batch_relay_refinement", "reciprocal": "reciprocal_relay_re
            "six_pin_direct": "six_task_with_pinned_polish", "six_pin_relay": "six_task_with_pinned_polish",
            "window_direct": "deadline_window_repooling", "window_relay": "deadline_window_repooling",
            "damage_direct": "window_damage_repair", "damage_relay": "window_damage_repair",
-           "split_feeder_direct": "split_feeder_refinement", "split_feeder_relay": "split_feeder_refinement"}
+           "split_feeder_direct": "split_feeder_refinement", "split_feeder_relay": "split_feeder_refinement",
+           "native_price_direct": "split_feeder_refinement_v2", "native_price_relay": "split_feeder_refinement_v2"}
 DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct", "repool_direct", "repool_polish_direct", "mobile_repool_direct", "joint_mobile_direct", "frontier_mobile_direct", "bundle_cached_direct", "full_credit_direct", "full_credit_pin_direct", "cold_pin_direct", "pair_pin_direct", "six_sort_direct", "wide_six_direct", "six_pin_direct", "window_direct")
 WINDOW_PAIR = ("window_direct", "window_relay")
 DAMAGE_PAIR = ("damage_direct", "damage_relay")
 DIRECT_ARMS = (*DIRECT_ARMS, "damage_direct")
 SPLIT_FEEDER_PAIR = ("split_feeder_direct", "split_feeder_relay")
 DIRECT_ARMS = (*DIRECT_ARMS, "split_feeder_direct")
+NATIVE_PRICE_PAIR = ("native_price_direct", "native_price_relay")
+DIRECT_ARMS = (*DIRECT_ARMS, "native_price_direct")
 SIX_SORT_PAIR = ("six_sort_direct", "six_sort_relay")
 WIDE_SIX_PAIR = ("wide_six_direct", "wide_six_relay")
 SIX_PIN_PAIR = ("six_pin_direct", "six_pin_relay")
@@ -115,6 +118,8 @@ EXECUTION = (
     "relay_damage_closure.py", "damage_closure_repair.py", "window_damage_repair.py",
     "audit_window_damage_repair.py", "audit_window_damage_batch.py",
     "split_feeder_catalogue.py", "split_feeder_refinement.py", "audit_split_feeder.py", "audit_split_feeder_batch.py",
+    "exact_suffix_delay.py", "split_feeder_catalogue_v2.py", "split_feeder_refinement_v2.py",
+    "audit_split_feeder_v2.py", "audit_split_feeder_batch_v2.py",
     "directed_bundle_insertion.py",
     "run_weighted_relay_ablation.py", "run_weighted_direct_pair.py", "weighted_direct_objective.py",
     "weighted_relay_objective.py", "weighted_periodic_exchange.py", "run_scenario_comparison.py",
@@ -521,6 +526,37 @@ def prepare(args):
             "Only original-input strict weighted improvements with complete physical validation "
             "and saved current clocks before the common deadline may replace the guard. "
             "No ordinary-task polish or new resources are introduced in this diagnostic.")
+    if set(arms) & set(NATIVE_PRICE_PAIR):
+        for field, name in (
+                ("split_feeder_design", "split_feeder_quota_neutral_design_v1.md"),
+                ("exact_suffix_delay_design", "exact_suffix_delay_catalogue_design_v1.md"),
+                ("native_price_design", "exact_native_catalogue_implementation_v2.md")):
+            note = ROOT / "papers/notes/proactive_relay_20261014" / name
+            manifest[field] = dict(path=str(note.relative_to(ROOT)), sha256=sha(note))
+        protocol_path = ROOT / "papers/notes/proactive_relay_20261014/native_price_protocol_v1.json"
+        protocol = read(protocol_path)
+        assert arms == protocol["arms"] and args.seed == protocol["seed"]
+        assert args.budget_seconds == protocol["budget_seconds_per_arm"]
+        assert checkpoint and checkpoint["sha256"] == protocol["checkpoint_sha256"]
+        assert manifest["input_sha256"] == protocol["input_sha256"]
+        assert manifest["weights"] == protocol["weights"] and manifest["scales"] == protocol["scales"]
+        assert all(parameters[arm] == protocol["method_parameters"] for arm in arms)
+        manifest["native_price_protocol"] = dict(path=str(protocol_path.relative_to(ROOT)), sha256=sha(protocol_path))
+        manifest["protocol"] += (
+            " Native-price variants keep the original-C pair and distinct A/B split-feeder structure, "
+            "all final responsibilities and original resources unchanged. Contiguous source-IN "
+            "native deadline costs are priced before the feeder shortlist; receiver native suffix "
+            "costs use the actual deleted-pair skeleton, availability and wait before receiver-gap "
+            "and base-family retention. Unsupported or floating-boundary-sensitive prices require "
+            "actual route replay. Saved early restricted-layout prices are independently auditable "
+            "ranking evidence, not DIRECT candidates, global lower bounds or complete adoption "
+            "certificates. Retained early layouts remain available in the declared finite family "
+            "source surfaces and complete witnesses. Complete current global checks still decide "
+            "adoption. DIRECT retains original-C all-empty-gap/six-order reconstruction and all12 "
+            "independent balanced donor maps, without a relay time window or mandatory final map. "
+            "Both arms pay for the same catalogue and all checks inside equal wall ceilings. "
+            "Only strict complete weighted improvement over the common strong input is adopted; "
+            "no ordinary polish, free repositioning, new resources or score-conditioned retry.")
     write(output / "manifest.json", manifest)
     write(output / "runs.json", [])
     print(json.dumps({"prepared": str(output), "purpose": manifest["purpose"], "arms": arms,
@@ -556,7 +592,7 @@ def verify(output, manifest, *, current_execution=True):
     if "six_task_pinned_polish_design" in manifest:
         note = manifest["six_task_pinned_polish_design"]
         assert sha(ROOT / note["path"]) == note["sha256"], "Changed declared six-task pinned polish design"
-    for field in ("deadline_rescue_window_design", "fixed_h_rescue_selector_review", "relay_damage_closure_repair_design", "window_damage_repair_protocol", "split_feeder_design", "split_feeder_protocol"):
+    for field in ("deadline_rescue_window_design", "fixed_h_rescue_selector_review", "relay_damage_closure_repair_design", "window_damage_repair_protocol", "split_feeder_design", "split_feeder_protocol", "exact_suffix_delay_design", "native_price_design", "native_price_protocol"):
         if field in manifest:
             note = manifest[field]
             assert sha(ROOT / note["path"]) == note["sha256"], "Changed declared fixed-window design/review"
@@ -643,7 +679,7 @@ def worker(request):
                 controls = {"relay_enabled": method == "quota_relay"}
             if method.startswith("repool_"):
                 controls = {"relay_enabled": method.endswith("_relay")}
-            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_", "full_credit_", "cold_pin_", "pair_pin_", "six_sort_", "wide_six_", "six_pin_", "window_", "damage_", "split_feeder_")):
+            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_", "full_credit_", "cold_pin_", "pair_pin_", "six_sort_", "wide_six_", "six_pin_", "window_", "damage_", "split_feeder_", "native_price_")):
                 controls = {"relay_enabled": method.endswith("_relay")}
             controls = {**controls, **manifest.get("method_parameters", {}).get(method, {})}
             outcome = modules[method].refine(full, routes, deadline=sub_deadline,
@@ -723,6 +759,13 @@ def run(output):
 
 def audit(output):
     schedule = read(output / "manifest.json")["schedule"]
+    if any(row["arm"] in NATIVE_PRICE_PAIR for row in schedule):
+        assert all(row["arm"] in NATIVE_PRICE_PAIR for row in schedule), "Native-price batches use their own paired audit"
+        try:
+            from .audit_split_feeder_batch_v2 import audit as native_price_audit
+        except ImportError:
+            from audit_split_feeder_batch_v2 import audit as native_price_audit
+        return native_price_audit(output)
     if any(row["arm"] in SPLIT_FEEDER_PAIR for row in schedule):
         assert all(row["arm"] in SPLIT_FEEDER_PAIR for row in schedule), "Split-feeder batches use their own paired audit"
         try:

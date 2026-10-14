@@ -866,3 +866,51 @@ feeder3、廉价gap和前64截断，不能把未进入前池的71424个family判
 [runs](batch031/runs.json)及[严格独立审计](batch031/audit.json)保留原样；031审计通过，
 不需要030那种辅助字段例外。截至031共53个官方200任务诊断cell，实际累计
 480.102196秒。当前最强仍为025纯DIRECT；尚未开始fresh公平性能扩大实验，远胜目标未达成。
+
+## 032：真实native代价已前置，发现沿途捎带的下一处截断缺口
+
+上节“未集成/未跑032”描述截至031。本轮已实现并冻结
+[v2实现合同](../../../papers/notes/proactive_relay_20261014/exact_native_catalogue_implementation_v2.md)
+和[032协议](../../../papers/notes/proactive_relay_20261014/native_price_protocol_v1.json)。
+源机按相对各自原路线的真实ΔN/ΔL/ΔD筛选，C先删i/j重计时，再将native后缀延误、
+实际等待和selected交付全部放到gap/base64截断前；不沿用旧ready/ΔD二维proxy支配。
+两条early布局的source路线在family cap3内保留，实际进入完整评分池，再由真J/
+最小N/pooled三渠道保留至多3见证。字面布局被更好代表替代与从未入池分开记录。
+family源表和顶层inspection union分别核验，DIRECT仍有原C重构及独立12map自由。
+
+临界期限、求和误差及64ulp带内的小负几何差均触发实际路线重放；source到站与
+selected交付逐航段累加，边界缓存区分两份实际availability。66项最终新小测试通过。
+初次集成测试只有ROOT篡改用例的预期异常类型写错；审计正确抛ValueError，修正
+该测试断言后全过，没有放松审计或启动任何官方重跑。
+
+预定seed2026101517、两臂各40s上限，实际DIRECT10.040131s、RELAY9.504861s。
+5600个源profile的176400个连续IN位置先定价；C执行2154812次全gap/顺序条件价，
+922719次有限组合价格形成73077个early family，再进入64个一般表/16个最终family。
+两臂共享同目录，四H各4个family，DIRECT完成192map，两臂各48完整快照；没有超时。
+最终family有15/16与031不同，确实改变了筛选；32份family-owner源表的96条记录中
+只有7条非连续IN，其他一般源路线仍受后置位置渠道与两个early连续槽的影响。
+
+| 完整方案（候选均未采用） | N | L/min | D/km | J |
+|---|---:|---:|---:|---:|
+| 原强输入及两臂最终输出 | 59 | 1790.632129 | 578.534685 | .434215789 |
+| RELAY最低J候选 | 59 | 1786.348155 | 585.952824 | .436366444 |
+| DIRECT最低N候选 | 58 | 1869.247706 | 587.475331 | .438999567 |
+| RELAY最低N候选 | 58 | 1849.495813 | 593.436580 | .439814503 |
+
+新最低J接力候选比031更接近强输入，但仍多飞7.418139km，冻结J更差，未采用。
+两臂各16份N58候选均只救回native65，未救回pooled任务；不能称为中继独有收益。
+RELAY真正救回两件pooled的16份候选，最低J那份仍为N73/.478276600。
+
+[独立诊断](batch032_search_diagnosis_v1.md)区分了源机、接收机、selected与其他native损益。
+16组weighted early布局中15组把两源IN都放在原50事件之后、C块也在删单后46事件
+之后；这避免原任务损伤，却使接力过晚。下一步的
+[非连续IN分段定价设计](../../../papers/notes/proactive_relay_20261014/noncontiguous_in_native_price_design_v1.md)
+将检查沿原路线取货、服务少量native后再入H。现有general source已有这种物理
+结构，但它在feeder3/base64之后才以position8计真价，尚未进入早期筛选。
+真实输入载荷序列另有134个合法g<h区间，可映射93800个task/H位置；只是静态
+覆盖计数，尚未实现或运行033，也不证明更好接力实际存在。
+
+[manifest](batch032/manifest.json)、[测试凭证](batch032/new_method_test_receipt.json)、
+[runs](batch032/runs.json)、[严格独立审计](batch032/audit.json)原样保留；102个proposal
+引用、两通道early价格、真实源表和完整快照审计通过，无字段例外。
+截至032共55个官方200任务诊断cell，累计499.647188秒；当前最强仍为025纯DIRECT，远胜目标未达成。
