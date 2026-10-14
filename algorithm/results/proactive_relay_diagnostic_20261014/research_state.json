@@ -554,6 +554,66 @@
         }
       ],
       "adopted_cross_uav_count": 0
+    },
+    {
+      "batch": "batch026",
+      "purpose": "checkpoint_mechanism_diagnostic",
+      "arms": [
+        "six_sort_direct",
+        "six_sort_relay"
+      ],
+      "actual_seconds": 0.9838656680076383,
+      "budget_ceiling_each_seconds": 20.0,
+      "finite_family_range_exhausted": true,
+      "selectors_completed_both_arms": true,
+      "same_selected_families": true,
+      "selector_pair_removal_evaluations_each": 2400,
+      "selector_six_task_sets_ranked_each": 14336,
+      "selector_geometry_maps_each": 114688,
+      "method_evidence": [
+        {
+          "arm": "six_sort_direct",
+          "actual_seconds": 0.5078182090073824,
+          "families_examined": 4,
+          "table_candidates": 8,
+          "full_proposals": 8,
+          "best_proposal_key": [
+            0.4345427662257834,
+            59,
+            1792.1155179198443,
+            579.291547003493
+          ],
+          "complete_route_costs": 6736,
+          "in_combinations": 0,
+          "relay_final_maps": 0,
+          "direct_pair_tables": 180,
+          "accepted_improvements": 0,
+          "adopted_cross_uav_count": 0,
+          "time_exhausted": false
+        },
+        {
+          "arm": "six_sort_relay",
+          "actual_seconds": 0.4760474590002559,
+          "families_examined": 4,
+          "table_candidates": 256,
+          "full_proposals": 8,
+          "best_proposal_key": [
+            0.43829308538278144,
+            59,
+            1841.81370540243,
+            582.2927246787365
+          ],
+          "complete_route_costs": 4880,
+          "in_combinations": 32,
+          "relay_final_maps": 256,
+          "direct_pair_tables": 0,
+          "accepted_improvements": 0,
+          "adopted_cross_uav_count": 0,
+          "time_exhausted": false
+        }
+      ],
+      "all_adopted_scores_equal_to_checkpoint": true,
+      "adopted_cross_uav_count": 0
     }
   ],
   "rejected_before_start": "batch002",
@@ -572,14 +632,14 @@
   },
   "fair_performance_screen_started": false,
   "next_hypotheses": [
-    "Implement the reviewed three-aircraft six-task same-station sorting macro: every source IN batch before its own OUT, two parcels from different sources repooled by destination, exact final K25 and unchanged four-site physics.",
-    "Use the same six-task families/homes/weights/total deadline in DIRECT, with independent 15 pair costs per aircraft and bitmask allocation (90 final maps), not relay-selected ownership; retain strong current DIRECT input.",
-    "All native delay and true cache waits must be counted, full200 canonical and independent replay before adoption. The finite tables are exact only under the declared IN-before-ownOUT restriction. No official far-superiority result is guaranteed by the analytic example."
+    "Expand from one to64 ranked six-task families per existing station with a frozen round-robin order over four stations; same original pairpool4, geometry/removal ranking, IN2/gap4/full2 and all physical/score guards.",
+    "The expansion tests finite coverage within the unused20s ceiling, not a prediction or guarantee of improvement. Same strong025 input and predeclared seed1512 in both DIRECT and RELAY; no new orders/homes/resources/weights.",
+    "Only if a real cross-UAV improvement survives independent source/full replay consider a new fresh equal-budget performance screen. Goal far superiority remains unachieved."
   ],
   "production_defaults_unchanged": true,
   "old_raw_results_unchanged": true,
-  "completed_optimizer_cells": 41,
-  "actual_diagnostic_seconds": 340.36708654492395,
+  "completed_optimizer_cells": 43,
+  "actual_diagnostic_seconds": 341.3509522129316,
   "parallel_request": "Independent review of teammate submission in Downloads; current metrics and constraints compared before attributing improvement.",
   "teammate_review": {
     "path": "papers/notes/teammate_submission_review_20261014/README.md",
@@ -598,7 +658,7 @@
     "source_batch": "batch009",
     "comparison": "240s historical DIRECT checkpoint plus extra20s mechanism diagnostic, NOT fair performance"
   },
-  "last_review": "025 true two-pin relaxation passed independent source/raw/post/all saved helper replay and telemetry binding. Released compensation owners actually changed with K25; relay post proposals improved but neither beat the original strong input. Only DIRECT adopted a tiny weighted tradeoff, not relay benefit. Saved raw routes match024 with same predeclared seed and all other finite parameters.",
+  "last_review": "026 all reported six-task complete proposals passed independent source/physical/table/eventclock/availability/key replay; both selectors completed and matched. Four-family finite coverage exhausted in~0.5s; no adopted benefit, current strongest weighted checkpoint remains025 DIRECT.",
   "mathematical_partial_completion_review": {
     "path": "algorithm/results/proactive_relay_diagnostic_20261014/mobile_partial_completion_bound_v1.md",
     "status": "proven_only_under_explicit_restricted_insertions_and_metric_conditions; not implemented as pruning",
@@ -614,8 +674,8 @@
     "not_used_in_batch021": true
   },
   "previous_goal_turn_classification": "progress",
-  "previous_goal_turn_evidence": "Implemented and independently audited early-source and exact memo mechanisms; official full200 diagnostics narrowed the next action, without a far-superiority claim.",
-  "current_goal_turn_progress": "Completed023/024/025 source-bound diagnostics. New2pin structure allows compensation reallocation and produces a DIRECT-only tiny improvement; no adopted relay gain or far-superiority claim. Reviewed new six-task sorting macro is a different next structural direction, not implemented yet.",
+  "previous_goal_turn_evidence": "023/024/025 implemented and independently audited;025 produced a tiny DIRECT-only weighted improvement and established a different six-task sorting design.",
+  "current_goal_turn_progress": "Implemented and independently audited finite six-task same-station sorting, true all-six-cross flow with independent90-map DIRECT. Official026 exhausted four families in<0.6s per arm, no adoption. Next step expands predeclared same-station family coverage within the unused20s ceiling.",
   "raw_clock_diagnosis": {
     "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch022_raw_clock_diagnosis_v1.md",
     "six_native_lateness_increases_from_source_detours": true,
@@ -640,7 +700,7 @@
   "six_task_sorting_design": {
     "path": "papers/notes/proactive_relay_20261014/six_task_sorting_macro_design_v1.md",
     "sha256": "425d96b7ea81178f99030de2da1630f07dcc53aab5a28f4ae7c48a7e245f2857",
-    "status": "reviewed_design_not_implemented_or_run",
+    "status": "implemented_as_six_task_sorting_and_official026_audited_no_adoption",
     "analytic_example_not_official_performance": true
   }
 }
