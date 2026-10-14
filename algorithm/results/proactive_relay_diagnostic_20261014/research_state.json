@@ -211,6 +211,31 @@
       "safe_lower_bound_pruned_layouts": 4,
       "mobile_points_examined": 0,
       "adopted_cross_uav_count": 0
+    },
+    {
+      "batch": "batch020",
+      "purpose": "checkpoint_mechanism_diagnostic",
+      "arms": [
+        "frontier_mobile_direct",
+        "frontier_mobile_relay"
+      ],
+      "all_adopted_scores_equal_to_checkpoint": true,
+      "same_selected_macros": true,
+      "actual_seconds": 13.12984404200688,
+      "selected_macros_each_arm": 8,
+      "direct_complete_proposals": 64,
+      "relay_complete_proposals": 8,
+      "relay_rebuild_calls": 2,
+      "relay_raw_deadline_reached": true,
+      "receiver_first_impossible_layouts": 4,
+      "safe_lower_bound_pruned_layouts": 4,
+      "mobile_points_examined": 0,
+      "relay_partial_actual_global_calls": 3845,
+      "relay_partial_memo_hits": 2652,
+      "relay_receiver_rank_actual_calls": 8,
+      "relay_receiver_rank_memo_hits": 89,
+      "source_frontiers_are_real_prefix_times": true,
+      "adopted_cross_uav_count": 0
     }
   ],
   "rejected_before_start": "batch002",
@@ -226,14 +251,13 @@
   },
   "fair_performance_screen_started": false,
   "next_hypotheses": [
-    "preserve early source IN-drop and pickup-frontier options while retaining true physical local-best and original full-score adoption guards",
-    "memoize exactly repeated partial evaluations and receiver rankings with full problem/routes/present/objective keys and bounded memory to improve macro coverage within unchanged total budget",
-    "independently prove or reject monotonic-completion geometry bounds before any use to prune missing-compensation partials against full incumbent"
+    "memoize entire receiver DIRECT/relay bundle generation before repeated expensive C-route candidate enumeration, retaining exact candidate order/results and local deadline guards",
+    "prove cache equivalence with only full actual C-route/function inputs, retain object identities and bounded memory, same enablement in both arms; no new partial pruning in next diagnostic"
   ],
   "production_defaults_unchanged": true,
   "old_raw_results_unchanged": true,
-  "completed_optimizer_cells": 29,
-  "actual_diagnostic_seconds": 190.37240096001187,
+  "completed_optimizer_cells": 31,
+  "actual_diagnostic_seconds": 203.50224500201875,
   "parallel_request": "Independent review of teammate submission in Downloads; current metrics and constraints compared before attributing improvement.",
   "teammate_review": {
     "path": "papers/notes/teammate_submission_review_20261014/README.md",
@@ -252,5 +276,11 @@
     "source_batch": "batch009",
     "comparison": "240s historical DIRECT checkpoint plus extra20s mechanism diagnostic, NOT fair performance"
   },
-  "last_review": "batch019 independent full/raw/source/mobile audits passed; 8 selected groups matched, DIRECT64 proposals, relay8 after raw-budget cutoff during second group; 2576 mobile bounds and 76 early receiver calls did not improve first group. No continuous point reached, no adopted relay. New source-frontier retention and exact memoization proposed, old sources frozen."
+  "last_review": "batch020 all source-bound/raw/mobile/full audits passed; real earlier IN options retained and exact memo hits counted separately, but only first relay group completed before raw cutoff and no complete layout beats input. Ranking-cache hits occur after expensive receiver bundle enumeration; next hypothesis caches whole pure-C bundle generation without changing selected candidates.",
+  "mathematical_partial_completion_review": {
+    "path": "algorithm/results/proactive_relay_diagnostic_20261014/mobile_partial_completion_bound_v1.md",
+    "status": "proven_only_under_explicit_restricted_insertions_and_metric_conditions; not implemented as pruning",
+    "cannot_prune_from_partial_receiver_first_impossible": true,
+    "cannot_prune_fixed_station_cache_baselines_with_mobile_receiver_first_bounds": true
+  }
 }
