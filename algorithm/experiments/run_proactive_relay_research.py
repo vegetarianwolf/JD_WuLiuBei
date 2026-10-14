@@ -41,13 +41,15 @@ METHODS = {"batch": "batch_relay_refinement", "reciprocal": "reciprocal_relay_re
            "quota_direct": "quota_balanced_relay_exchange", "quota_relay": "quota_balanced_relay_exchange",
            "repool_direct": "relay_repooling_exchange", "repool_relay": "relay_repooling_exchange",
            "repool_polish_direct": "repooling_with_pinned_polish", "repool_polish_relay": "repooling_with_pinned_polish",
-           "mobile_repool_direct": "mobile_repooling_refinement", "mobile_repool_relay": "mobile_repooling_refinement"}
-DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct", "repool_direct", "repool_polish_direct", "mobile_repool_direct")
+           "mobile_repool_direct": "mobile_repooling_refinement", "mobile_repool_relay": "mobile_repooling_refinement",
+           "joint_mobile_direct": "joint_mobile_repooling", "joint_mobile_relay": "joint_mobile_repooling"}
+DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct", "repool_direct", "repool_polish_direct", "mobile_repool_direct", "joint_mobile_direct")
 REPOOL_ARMS = ("repool_direct", "repool_relay")
 PIN_REPOOL_ARMS = ("repool_polish_direct", "repool_polish_relay")
 MOBILE_REPOOL_PAIR = ("mobile_repool_direct", "mobile_repool_relay")
-THREE_PARTY_MOBILE_ARMS = ("mobile_repool_relay",)
-ALL_REPOOL_ARMS = (*REPOOL_ARMS, *PIN_REPOOL_ARMS, *MOBILE_REPOOL_PAIR)
+JOINT_MOBILE_PAIR = ("joint_mobile_direct", "joint_mobile_relay")
+THREE_PARTY_MOBILE_ARMS = ("mobile_repool_relay", "joint_mobile_relay")
+ALL_REPOOL_ARMS = (*REPOOL_ARMS, *PIN_REPOOL_ARMS, *MOBILE_REPOOL_PAIR, *JOINT_MOBILE_PAIR)
 ANTICIPATORY_ARMS = ("anticipatory",)
 MOBILE_ARMS = ("mobile", "mobile_v2", "mobile_v3", "delivery_relay", *ANTICIPATORY_ARMS, *THREE_PARTY_MOBILE_ARMS)
 EXECUTION = (
@@ -66,6 +68,7 @@ EXECUTION = (
     "relay_repooling_exchange.py", "audit_repooling.py",
     "repooling_with_pinned_polish.py", "relay_preserving_polish.py", "audit_pinned_repooling.py",
     "mobile_repooling_refinement.py", "mobile_repooling_geometry.py", "audit_mobile_repooling.py",
+    "joint_mobile_layouts.py", "joint_mobile_repooling.py",
     "directed_bundle_insertion.py",
     "run_weighted_relay_ablation.py", "run_weighted_direct_pair.py", "weighted_direct_objective.py",
     "weighted_relay_objective.py", "weighted_periodic_exchange.py", "run_scenario_comparison.py",
@@ -271,6 +274,14 @@ def prepare(args):
             "proposals by the same rule, so the chosen best macro identities are not necessarily paired across arms. "
             "All proposal generation, polish, full checks and leaf guard reserves share the same total wall budget. "
             "Both original macros and all reported full polish checkpoints are independently audited with distinct shape rules.")
+    if set(arms) & set(JOINT_MOBILE_PAIR):
+        manifest["protocol"] += (
+            " Joint-mobile variants preserve physical best representatives for the four existing station families, "
+            "and use additional beam slots for receiver-first mobile geometry and earlier contact cuts. "
+            "Same-taskset partial geometry bounds rank layouts only, without replacing real fixed-network scores "
+            "or proving a complete incumbent inferior. Actual continuous contact timing and all full adoption guards "
+            "remain under the source-bound mobile model contract. DIRECT uses the same macro selector and declared "
+            "finite limits, with mobile-specific ranking disabled.")
     write(output / "manifest.json", manifest)
     write(output / "runs.json", [])
     print(json.dumps({"prepared": str(output), "purpose": manifest["purpose"], "arms": arms,
@@ -377,7 +388,7 @@ def worker(request):
                 controls = {"relay_enabled": method == "quota_relay"}
             if method.startswith("repool_"):
                 controls = {"relay_enabled": method.endswith("_relay")}
-            if method.startswith("mobile_repool_"):
+            if method.startswith(("mobile_repool_", "joint_mobile_")):
                 controls = {"relay_enabled": method.endswith("_relay")}
             controls = {**controls, **manifest.get("method_parameters", {}).get(method, {})}
             outcome = modules[method].refine(full, routes, deadline=sub_deadline,
@@ -659,7 +670,7 @@ def audit(output):
                             synchronous_mobile_physical_reference=physical_mobile))
     selector_comparisons = []
     for seed in sorted({row["seed"] for row in rows}):
-        for arm_pair in (REPOOL_ARMS, PIN_REPOOL_ARMS, MOBILE_REPOOL_PAIR):
+        for arm_pair in (REPOOL_ARMS, PIN_REPOOL_ARMS, MOBILE_REPOOL_PAIR, JOINT_MOBILE_PAIR):
             paired = {row["arm"]: next(phase["metadata"] for phase in row["phases"] if phase["phase"] == row["arm"])
                       for row in rows if row["seed"] == seed and row["arm"] in arm_pair}
             if set(paired) == set(arm_pair):
@@ -670,7 +681,7 @@ def audit(output):
                     selector_sha256=paired[direct_arm]["selector_sha256"])
                 if arm_pair == PIN_REPOOL_ARMS:
                     comparison.update(arms=list(arm_pair), best_polish_candidates_not_necessarily_paired=True)
-                elif arm_pair == MOBILE_REPOOL_PAIR:
+                elif arm_pair in (MOBILE_REPOOL_PAIR, JOINT_MOBILE_PAIR):
                     comparison.update(arms=list(arm_pair), continuous_mobile_geometry_separately_declared=True)
                 selector_comparisons.append(comparison)
     record = dict(passed=True, purpose=manifest["purpose"], source_manifest_sha256=sha(output / "manifest.json"),
