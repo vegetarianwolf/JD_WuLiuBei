@@ -593,3 +593,51 @@ N59/L1841.813705402/D582.292724679。均未胜输入J.434215788788。
 下一步只扩大已有拼单机制的候选覆盖：每H保64组，四H按轮次交错遍历，
 其余pairpool/排序规则/物理与评分/完整采用guard不变；仍同20秒上限。
 尚无新的公平性能扩大试验，远胜目标保持未完成。
+
+## batch027：每站前64组，四站交错覆盖256组
+
+新wrapper只替换shared selector的保留数量与顺序。原pairpool4、代理rank、
+IN2、各gap4、每组full2、完整原home/C2/最终K25/物理采用检查保持026冻结值。
+公开max_stations4、families_per_station64→最多256family，旧内部max_families4
+仅代表station数量，metadata明确区分。每站真top64后轮流遍历，不把代理值
+当gain或剪枝下界；1个进程内hook完整核恢复。ROOT事前11项新tiny0.17秒通过，
+包括N1记录与原方法全等、toy全catalog独立排序检验、真实双臂快照和超时。
+
+同025强输入、seed2026101512、各20秒上限；两臂都完整穷尽256组，无超时。
+DIRECT实耗11.413085秒，建立11520个pair表、276480个有限路线候选，
+完整核验512个提案；RELAY实耗8.662286秒，检查2048个IN组合/16384交叉map，
+完整核验512个六次truecross提案。两臂selector记录与SHA完全一致。
+全部1024个保存完整提案及first/best引用通过独立来源/194native固定/C2/K25/
+全部时钟/卸货availability/table score/weighted key重放。
+
+DIRECT最佳raw J=.434350636557，N59/L1791.299558541/D578.837145944；
+RELAY最佳raw J=.437288227355，N59/L1814.298546570/D583.956063443，
+比026的最佳raw J更低，但仍未超过输入J=.434215788788。两臂均0采用，
+终局保持025 DIRECT，141按时、D578.534684859、L1790.632128866，采用跨机0。
+扩大覆盖本身不足以产生中继净收益，不能将实际6次交接或共载长度当性能收益。
+
+[manifest](batch027/manifest.json)、[runs](batch027/runs.json)、
+[audit](batch027/audit.json)、[11项新测试凭证](batch027/new_method_test_receipt.json)。
+原完整路线/事件时钟全保存在runs；审计先完整重放每个提案，再保存主要事实
+与完整replay输出SHA，避免把相同时钟在1024处反复展开。此紧凑表示没有
+跳过完整检查，独立auditor和runner均由manifest绑定。
+
+[026独立诊断](batch026_search_diagnosis_v1.md)显示此前六件全已迟到，等待传播
+与多走距离抵消了共载。其“扣除等待”的算术情形不当作可行解或全局下界。
+
+下一步先设计让194普通任务与固定六单接力联合重排：保留真6cross与原来源
+证据、H/legs/roles/selected顺序/最终K25；只有普通任务可变。post放宽raw块
+生成边界时仍须保持空载连续双OUT取货和正距离共载，全部post时钟/availability
+与分数重新全局验证，不能挪用raw有限表得分。尚未实现/正式测试。
+
+截至027共45个官方完整200任务诊断cell，实际累计361.426秒。目标仍未达到，
+未开展新的公平性能扩大实验；现有当前最佳仍是025 DIRECT。
+
+[027独立逐任务诊断](batch027_search_diagnosis_v1.md)：最佳六件仍全原迟到，
+选6逾期增加25.246677min、194native合计反而减少1.580260min。
+三机真实等待7.801219min、OUT共同载货4.654077km，均不足抵消航程
+比输入多5.421379km；不能据此推断所有中继方案无益。
+
+下一步的[六任务固定与194任务联合重排设计](../../../papers/notes/proactive_relay_20261014/six_task_pinned_polish_design_v1.md)
+已审阅保存，含允许native合法穿插的两个解析正例、raw/post独立证据及拟议40秒
+配对短试。仅是设计，代码与新正式单元尚未开始，当前性能结论不变。
