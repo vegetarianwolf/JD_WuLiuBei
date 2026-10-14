@@ -39,9 +39,12 @@ METHODS = {"batch": "batch_relay_refinement", "reciprocal": "reciprocal_relay_re
            "delivery_direct": "mobile_delivery_reconstruction", "delivery_relay": "mobile_delivery_reconstruction",
            "anticipatory": "anticipatory_mobile_handoff",
            "quota_direct": "quota_balanced_relay_exchange", "quota_relay": "quota_balanced_relay_exchange",
-           "repool_direct": "relay_repooling_exchange", "repool_relay": "relay_repooling_exchange"}
-DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct", "repool_direct")
+           "repool_direct": "relay_repooling_exchange", "repool_relay": "relay_repooling_exchange",
+           "repool_polish_direct": "repooling_with_pinned_polish", "repool_polish_relay": "repooling_with_pinned_polish"}
+DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct", "repool_direct", "repool_polish_direct")
 REPOOL_ARMS = ("repool_direct", "repool_relay")
+PIN_REPOOL_ARMS = ("repool_polish_direct", "repool_polish_relay")
+ALL_REPOOL_ARMS = (*REPOOL_ARMS, *PIN_REPOOL_ARMS)
 ANTICIPATORY_ARMS = ("anticipatory",)
 MOBILE_ARMS = ("mobile", "mobile_v2", "mobile_v3", "delivery_relay", *ANTICIPATORY_ARMS)
 EXECUTION = (
@@ -58,6 +61,7 @@ EXECUTION = (
     "anticipatory_mobile_handoff.py", "audit_anticipatory_mobile.py",
     "quota_balanced_relay_exchange.py",
     "relay_repooling_exchange.py", "audit_repooling.py",
+    "repooling_with_pinned_polish.py", "relay_preserving_polish.py", "audit_pinned_repooling.py",
     "directed_bundle_insertion.py",
     "run_weighted_relay_ablation.py", "run_weighted_direct_pair.py", "weighted_direct_objective.py",
     "weighted_relay_objective.py", "weighted_periodic_exchange.py", "run_scenario_comparison.py",
@@ -234,7 +238,7 @@ def prepare(args):
             "The relay arm may carry one request through an existing station while the compensating request "
             "travels directly; the matched DIRECT arm disables only that relay option. "
             "Both use the same declared pair selector, insertion bounds and rebuilding orders.")
-    if set(arms) & set(REPOOL_ARMS):
+    if set(arms) & set(ALL_REPOOL_ARMS):
         manifest["protocol"] += (
             " Repooling arms assign two requests from different source aircraft to one third delivery aircraft; "
             "two whole DIRECT requests compensate its delivery quotas on the two source aircraft. "
@@ -243,6 +247,16 @@ def prepare(args):
             "The DIRECT arm collects both complete requests itself. The final responsibility map, selected macros, "
             "insertion bounds and rebuilding pipelines are matched; all other task ownership and event order stay fixed. "
             "Only complete four-task plans are compared to the checked incumbent, and the physical macro is independently replayed.")
+    if set(arms) & set(PIN_REPOOL_ARMS):
+        manifest["protocol"] += (
+            " Pinned-polish variants then allow other DIRECT tasks to change ownership and route order while preserving "
+            "the four complete macro identities, exact transport modes, aircraft roles, station, pin-event subsequences "
+            "and per-aircraft final-delivery counts. True relay identities cannot be cancelled or replaced by ordinary DIRECT gain. "
+            "The predeclared margin only admits a complete proposal for attempted polish; final adoption still requires "
+            "a strict pre-deadline improvement over the original checked input. Each arm ranks its own bounded complete "
+            "proposals by the same rule, so the chosen best macro identities are not necessarily paired across arms. "
+            "All proposal generation, polish, full checks and leaf guard reserves share the same total wall budget. "
+            "Both original macros and all reported full polish checkpoints are independently audited with distinct shape rules.")
     write(output / "manifest.json", manifest)
     write(output / "runs.json", [])
     print(json.dumps({"prepared": str(output), "purpose": manifest["purpose"], "arms": arms,
@@ -345,7 +359,7 @@ def worker(request):
             if method.startswith("quota_"):
                 controls = {"relay_enabled": method == "quota_relay"}
             if method.startswith("repool_"):
-                controls = {"relay_enabled": method == "repool_relay"}
+                controls = {"relay_enabled": method.endswith("_relay")}
             controls = {**controls, **manifest.get("method_parameters", {}).get(method, {})}
             outcome = modules[method].refine(full, routes, deadline=sub_deadline,
                         weights=manifest["weights"], scales=manifest["scales"], seed=req["seed"], **controls)
@@ -438,9 +452,12 @@ def audit(output):
     if any(r["arm"] in ANTICIPATORY_ARMS for r in manifest["schedule"]):
         from algorithm.experiments.audit_anticipatory_mobile import audit_anticipatory_payload, audit_anticipatory_routes
         assert sha(EXPERIMENTS / "audit_anticipatory_mobile.py") == manifest["execution_sources"]["audit_anticipatory_mobile.py"]["sha256"]
-    if any(r["arm"] in REPOOL_ARMS for r in manifest["schedule"]):
+    if any(r["arm"] in ALL_REPOOL_ARMS for r in manifest["schedule"]):
         from algorithm.experiments.audit_repooling import audit_repooling_proposal
         assert sha(EXPERIMENTS / "audit_repooling.py") == manifest["execution_sources"]["audit_repooling.py"]["sha256"]
+    if any(r["arm"] in PIN_REPOOL_ARMS for r in manifest["schedule"]):
+        from algorithm.experiments.audit_pinned_repooling import audit_pinned_repooling_proposal
+        assert sha(EXPERIMENTS / "audit_pinned_repooling.py") == manifest["execution_sources"]["audit_pinned_repooling.py"]["sha256"]
     tasks = load_official_csv(ROOT / manifest["input_path"])
     rows = read(output / "runs.json")
     assert len(rows) == len(manifest["schedule"]) > 0, "Cannot pass an empty or incomplete research batch"
@@ -490,6 +507,31 @@ def audit(output):
                          ("first_complete_candidate", "best_constructed_candidate", "input_snapshot")]
             proposals.extend((f"full_candidate_{i}", snapshot) for i, snapshot in
                              enumerate(metadata.get("full_candidate_snapshots", [])))
+            pinned_macro_routes = {}
+            for polish_index, polish_record in enumerate(metadata.get("polish_records", [])):
+                macro_routes = polish_record["macro_routes"]
+                macro = polish_record["full_proposal"]
+                assert macro_routes == macro["routes"]
+                proposals.append((f"pinned_{polish_index}__full_proposal", macro))
+                post_name = f"pinned_{polish_index}__post_polish"
+                proposals.append((post_name, polish_record.get("post_polish")))
+                pinned_macro_routes[post_name] = macro_routes
+                helper = polish_record["helper_metadata"]
+                assert helper["patches_restored"]
+                helper_snapshots = [(name, helper.get(name)) for name in
+                    ("input_snapshot", "first_complete_candidate", "best_constructed_candidate", "post_pin_snapshot")]
+                helper_snapshots.extend((f"full_candidate_{i}", snapshot) for i, snapshot in
+                                         enumerate(helper.get("full_candidate_snapshots", [])))
+                for helper_name, snapshot in helper_snapshots:
+                    if snapshot is None:
+                        continue
+                    name = f"pinned_{polish_index}__helper__{helper_name}"
+                    proposals.append((name, {**snapshot, "move": snapshot.get("move") or polish_record["move"]}))
+                    pinned_macro_routes[name] = macro_routes
+                if polish_record.get("adopted"):
+                    assert polish_record["finished_within_leaf_deadline"]
+                    assert helper["returned_checkpoint_checked_within_deadline"]
+                    assert polish_record["full_verified_at_perf_counter"] < polish_record["leaf_deadline_perf_counter"]
             for cluster_record in metadata.get("cluster_records", []):
                 for number, candidate_record in enumerate(cluster_record["complete_candidates"]):
                     for stage in ("full_proposal", "post_polish"):
@@ -508,10 +550,15 @@ def audit(output):
                                      "relay_allowed": phase_topology["relay_allowed"]}
                 proposal_reference = reference_schedule(tasks, proposal["routes"], proposal_topology)
                 repooling_reference = None
-                if row["arm"] in REPOOL_ARMS and proposal.get("move") is not None:
-                    repooling_reference = audit_repooling_proposal(
-                        tasks, proposal_topology, phase_input_routes, proposal["routes"], proposal["move"],
-                        relay_enabled=row["arm"] == "repool_relay")
+                if row["arm"] in ALL_REPOOL_ARMS and proposal.get("move") is not None:
+                    if proposal_name in pinned_macro_routes:
+                        repooling_reference = audit_pinned_repooling_proposal(
+                            tasks, proposal_topology, phase_input_routes, pinned_macro_routes[proposal_name],
+                            proposal["routes"], proposal["move"], relay_enabled=row["arm"].endswith("_relay"))
+                    else:
+                        repooling_reference = audit_repooling_proposal(
+                            tasks, proposal_topology, phase_input_routes, proposal["routes"], proposal["move"],
+                            relay_enabled=row["arm"].endswith("_relay"))
                 if row["arm"] in MOBILE_ARMS:
                     mobile_reference = physical_routes_audit(tasks, manifest["topology"], proposal_topology, proposal["routes"])
                     from algorithm.experiments.audit_mobile_relay import _bind_meetings
@@ -529,13 +576,17 @@ def audit(output):
                 proposal_references.append(dict(phase=phase["phase"], proposal=proposal_name,
                     routes_sha256=digest(proposal["routes"]), reference=proposal_reference,
                     **({"repooling_physical_reference": repooling_reference} if repooling_reference is not None else {})))
-            if row["arm"] in REPOOL_ARMS and phase["phase"] == row["arm"]:
+            if row["arm"] in ALL_REPOOL_ARMS and phase["phase"] == row["arm"]:
                 assert digest(metadata["selected_groups"]) == metadata["selector_sha256"]
                 if phase_routes != phase_input_routes:
                     accepted = metadata["accepted_moves"][-1]
                     assert accepted["full_snapshot"]["routes"] == phase_routes
-                    audit_repooling_proposal(tasks, phase_topology, phase_input_routes, phase_routes, accepted,
-                                            relay_enabled=row["arm"] == "repool_relay")
+                    if row["arm"] in PIN_REPOOL_ARMS:
+                        audit_pinned_repooling_proposal(tasks, phase_topology, phase_input_routes,
+                            accepted["macro_routes"], phase_routes, accepted, relay_enabled=row["arm"].endswith("_relay"))
+                    else:
+                        audit_repooling_proposal(tasks, phase_topology, phase_input_routes, phase_routes, accepted,
+                                                relay_enabled=row["arm"].endswith("_relay"))
         assert sha(output / row["solution_path"]) == row["solution_sha256"]
         final_payload = read(output / row["solution_path"])
         final_topology = {**row["phases"][-1].get("topology", actual_topology), "relay_allowed": actual_topology["relay_allowed"]}
@@ -559,13 +610,18 @@ def audit(output):
                             synchronous_mobile_physical_reference=physical_mobile))
     selector_comparisons = []
     for seed in sorted({row["seed"] for row in rows}):
-        paired = {row["arm"]: next(phase["metadata"] for phase in row["phases"] if phase["phase"] == row["arm"])
-                  for row in rows if row["seed"] == seed and row["arm"] in REPOOL_ARMS}
-        if set(paired) == set(REPOOL_ARMS):
-            assert paired["repool_direct"]["selector_sha256"] == paired["repool_relay"]["selector_sha256"]
-            assert paired["repool_direct"]["selected_groups"] == paired["repool_relay"]["selected_groups"]
-            selector_comparisons.append(dict(seed=seed, same_selected_macros=True,
-                selector_sha256=paired["repool_direct"]["selector_sha256"]))
+        for arm_pair in (REPOOL_ARMS, PIN_REPOOL_ARMS):
+            paired = {row["arm"]: next(phase["metadata"] for phase in row["phases"] if phase["phase"] == row["arm"])
+                      for row in rows if row["seed"] == seed and row["arm"] in arm_pair}
+            if set(paired) == set(arm_pair):
+                direct_arm, relay_arm = arm_pair
+                assert paired[direct_arm]["selector_sha256"] == paired[relay_arm]["selector_sha256"]
+                assert paired[direct_arm]["selected_groups"] == paired[relay_arm]["selected_groups"]
+                comparison = dict(seed=seed, same_selected_macros=True,
+                    selector_sha256=paired[direct_arm]["selector_sha256"])
+                if arm_pair == PIN_REPOOL_ARMS:
+                    comparison.update(arms=list(arm_pair), best_polish_candidates_not_necessarily_paired=True)
+                selector_comparisons.append(comparison)
     record = dict(passed=True, purpose=manifest["purpose"], source_manifest_sha256=sha(output / "manifest.json"),
                   source_runs_sha256=sha(output / "runs.json"), results=results)
     if selector_comparisons:

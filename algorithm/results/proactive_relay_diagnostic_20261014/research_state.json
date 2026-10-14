@@ -148,6 +148,33 @@
       "actual_seconds": 4.335047667031176,
       "best_relay_proposal_J_increase": 0.007674372184148515,
       "adopted_cross_uav_count": 0
+    },
+    {
+      "batch": "batch017",
+      "purpose": "checkpoint_mechanism_diagnostic",
+      "arms": [
+        "repool_polish_direct",
+        "repool_polish_relay"
+      ],
+      "all_adopted_scores_equal_to_checkpoint": true,
+      "same_selected_macros": true,
+      "actual_seconds": 38.29378745902795,
+      "methods": [
+        {
+          "arm": "repool_polish_direct",
+          "polish_candidates": 2,
+          "real_ALNS_iterations": 756,
+          "adopted_improvements": 0
+        },
+        {
+          "arm": "repool_polish_relay",
+          "polish_candidates": 2,
+          "real_ALNS_iterations": 599,
+          "adopted_improvements": 0
+        }
+      ],
+      "proposal_margin": 0.015,
+      "adopted_cross_uav_count": 0
     }
   ],
   "rejected_before_start": "batch002",
@@ -163,13 +190,13 @@
   },
   "fair_performance_screen_started": false,
   "next_hypotheses": [
-    "preserve four complete macro identities and the true two-source relay, while weighted ALNS repairs remaining DIRECT tasks",
-    "declare .015 J proposal margin before new START; at most two complete candidates share remaining total budget; compare matched no-relay arm"
+    "two-source mobile repooling with a third aircraft arriving empty before both sources and taking parcels in actual source-arrival order",
+    "optimize continuous rendezvous while retaining original homes, all flight and empty/load-one waiting, zero mobile ground cache; new geometry and independent physical audit before START"
   ],
   "production_defaults_unchanged": true,
   "old_raw_results_unchanged": true,
-  "completed_optimizer_cells": 23,
-  "actual_diagnostic_seconds": 135.1513893760275,
+  "completed_optimizer_cells": 25,
+  "actual_diagnostic_seconds": 173.44517683505546,
   "parallel_request": "Independent review of teammate submission in Downloads; current metrics and constraints compared before attributing improvement.",
   "teammate_review": {
     "path": "papers/notes/teammate_submission_review_20261014/README.md",
@@ -188,5 +215,5 @@
     "source_batch": "batch009",
     "comparison": "240s historical DIRECT checkpoint plus extra20s mechanism diagnostic, NOT fair performance"
   },
-  "last_review": "batch016 complete independent and physical macro audit passed, both arms same 12 selected macros and 48 full proposals; all relay proposals have two real cross transfers but none improves strong DIRECT input"
+  "last_review": "batch017 complete independent raw and pinned-native-reordering audits passed; real ALNS 756 DIRECT and 599 relay iterations, neither arm improves strong DIRECT input; fixed-station pin-polish alone did not bridge macro loss"
 }
