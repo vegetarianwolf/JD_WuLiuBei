@@ -60,7 +60,8 @@ METHODS = {"batch": "batch_relay_refinement", "reciprocal": "reciprocal_relay_re
            "separated_delivery_direct": "split_feeder_refinement_v4", "separated_delivery_relay": "split_feeder_refinement_v4",
            "critical_prefix_direct": "critical_prefix_refinement_v1", "critical_prefix_relay": "critical_prefix_refinement_v1",
            "conditional_donor_direct": "conditional_donor_refinement_v1", "conditional_donor_relay": "conditional_donor_refinement_v1",
-           "accumulation_direct": "multi_relay_direct_control_v1", "accumulation_relay": "multi_relay_accumulation_v1"}
+           "accumulation_direct": "multi_relay_direct_control_v1", "accumulation_relay": "multi_relay_accumulation_v1",
+           "multi_native_direct": "multi_relay_direct_control_v1", "multi_native_relay": "multi_relay_native_refinement_v1"}
 DIRECT_ARMS = ("direct", "tail_direct", "construct_direct", "cluster_direct", "delivery_direct", "quota_direct", "repool_direct", "repool_polish_direct", "mobile_repool_direct", "joint_mobile_direct", "frontier_mobile_direct", "bundle_cached_direct", "full_credit_direct", "full_credit_pin_direct", "cold_pin_direct", "pair_pin_direct", "six_sort_direct", "wide_six_direct", "six_pin_direct", "window_direct")
 WINDOW_PAIR = ("window_direct", "window_relay")
 DAMAGE_PAIR = ("damage_direct", "damage_relay")
@@ -77,6 +78,8 @@ CONDITIONAL_DONOR_PAIR = ("conditional_donor_direct", "conditional_donor_relay")
 DIRECT_ARMS = (*DIRECT_ARMS, "conditional_donor_direct")
 ACCUMULATION_PAIR = ("accumulation_direct", "accumulation_relay")
 DIRECT_ARMS = (*DIRECT_ARMS, "accumulation_direct")
+MULTI_NATIVE_PAIR = ("multi_native_direct", "multi_native_relay")
+DIRECT_ARMS = (*DIRECT_ARMS, "multi_native_direct")
 CRITICAL_PREFIX_PAIR = ("critical_prefix_direct", "critical_prefix_relay")
 DIRECT_ARMS = (*DIRECT_ARMS, "critical_prefix_direct")
 SIX_SORT_PAIR = ("six_sort_direct", "six_sort_relay")
@@ -146,6 +149,8 @@ EXECUTION = (
     "multi_relay_structure_v1.py", "multi_relay_accumulation_v1.py", "multi_relay_direct_control_v1.py",
     "audit_multi_relay_accumulation_v1.py", "audit_conditional_donor_metadata_v2.py",
     "audit_multi_relay_direct_control_v1.py", "audit_multi_relay_batch_v1.py",
+    "multi_relay_native_polish_v1.py", "multi_relay_native_refinement_v1.py",
+    "audit_multi_relay_native_polish_v1.py", "audit_multi_relay_native_batch_v1.py",
     "directed_bundle_insertion.py",
     "run_weighted_relay_ablation.py", "run_weighted_direct_pair.py", "weighted_direct_objective.py",
     "weighted_relay_objective.py", "weighted_periodic_exchange.py", "run_scenario_comparison.py",
@@ -275,7 +280,7 @@ def prepare(args):
     parameters = args.method_parameters
     assert isinstance(parameters, dict) and set(parameters) <= set(arms)
     import inspect
-    reserved = {"problem", "routes", "deadline", "weights", "scales", "seed", "enable_transfers", "relay_enabled"}
+    reserved = {"problem", "routes", "deadline", "weights", "scales", "seed", "enable_transfers", "relay_enabled", "alns_module"}
     for method, values in parameters.items():
         assert method in METHODS and isinstance(values, dict) and not (set(values) & reserved)
         signature = inspect.signature(importlib.import_module(METHODS[method]).refine)
@@ -758,10 +763,58 @@ def prepare(args):
             "This single source-frozen historical-checkpoint mechanism pair is not fresh end-to-end "
             "multi-seed performance evidence or proof of far relay superiority. No resource/model/weight "
             "changes, free historical R seed, result-conditioned retries, or post-result pool adjustment.")
+    if set(arms) & set(MULTI_NATIVE_PAIR):
+        protocol_path = ROOT / "papers/notes/proactive_relay_20261014/multi_relay_native_protocol_v1.json"
+        protocol = read(protocol_path)
+        note = ROOT / "papers/notes/proactive_relay_20261014/multi_relay_native_polish_design_v1.md"
+        manifest["multi_relay_native_design"] = dict(path=str(note.relative_to(ROOT)), sha256=sha(note))
+        manifest["multi_relay_native_protocol"] = dict(path=str(protocol_path.relative_to(ROOT)), sha256=sha(protocol_path))
+        manifest["accumulation_fixed_catalogue_parameters"] = protocol["fixed_catalogue_parameters"]
+        manifest["artifact_json_indent"] = 0
+        _verify_multi_native_protocol(output, manifest)
+        manifest["protocol"] += (
+            " Paid multi-native RELAY first rebuilds complete multi-group seeds under raw_fraction of its own wall. "
+            "One minimum full-key saved complete state per actual group count is selected by fixed paths and hashes, "
+            "including checked states from unfinished layers. Remaining time is divided across those channels. "
+            "Actual weighted ALNS pins all real group plans, roles, legs, stations and selected subsequences while "
+            "ordinary whole DIRECT tasks may change aircraft and order. Every complete checkpoint recomputes all "
+            "old/new waits, cycles, load, group shape and exact final counts. Only cached predeadline complete "
+            "returns may enter the outer full guard, which must strictly beat the original strong pure DIRECT input. "
+            "DIRECT keeps its independent full-wall weighted ALNS and empty-pin native repair, all200 tasks free; "
+            "it pays no relay catalogue. No free historical relay seed, cancelled relay identity, extra resource, "
+            "relocation, score bonus or result-conditioned retry. This historical-checkpoint single-seed pair "
+            "tests native repair of actual accumulated relay groups, not fresh multi-seed far superiority.")
     write(output / "manifest.json", manifest)
     write(output / "runs.json", [])
     print(json.dumps({"prepared": str(output), "purpose": manifest["purpose"], "arms": arms,
                       "initial_score": manifest["initial_score"]}, ensure_ascii=False))
+
+
+def _verify_multi_native_protocol(output, manifest):
+    """Bind the new pair to one pre-run protocol; keep the established ledger."""
+    from algorithm.experiments.audit_deadline_window_repooling import _bind
+    from algorithm.experiments.audit_multi_relay_batch_v1 import FIXED_CATALOGUE, PERIODIC
+    spec = manifest["multi_relay_native_protocol"]
+    assert sha(ROOT / spec["path"]) == spec["sha256"]
+    protocol = read(ROOT / spec["path"])
+    assert protocol["kind"] == "predeclared_independent_arm_multi_group_native_historical_checkpoint_diagnostic"
+    assert manifest["purpose"] == "checkpoint_mechanism_diagnostic" and manifest["checkpoint"]
+    assert protocol["batch"] == output.name
+    _bind(protocol["arms"], list(MULTI_NATIVE_PAIR), "predeclared native pair")
+    for field, value in (("budget_seconds_per_arm", manifest["budget_seconds"]), ("homes", manifest["homes"]),
+        ("checkpoint_path", manifest["checkpoint"]["path"]), ("checkpoint_sha256", manifest["checkpoint"]["sha256"]),
+        ("input_sha256", manifest["input_sha256"]), ("weights", manifest["weights"]), ("scales", manifest["scales"]),
+        ("method_parameters", manifest["method_parameters"]), ("fixed_catalogue_parameters", FIXED_CATALOGUE),
+        ("direct_periodic_parameters", PERIODIC), ("artifact_json_indent", manifest["artifact_json_indent"])):
+        _bind(protocol[field], value, "predeclared native protocol " + field)
+    _bind(manifest["accumulation_fixed_catalogue_parameters"], FIXED_CATALOGUE, "actual paid catalogue")
+    _bind(manifest["periodic_parameters"], PERIODIC, "actual DIRECT periodic policy")
+    assert manifest["schedule"] == [dict(arm=arm, seed=protocol["seed"], run_id=f"{arm}__seed_{protocol['seed']}")
+                                     for arm in MULTI_NATIVE_PAIR]
+    graph = manifest["topology"]
+    assert (graph["drone_count"], graph["capacity"], graph["max_tasks_per_drone"], graph["speed_km_per_min"]) == (8, 2, 25, .9)
+    assert len(graph["stations"]) == 4 and manifest["homes"] == "stations"
+    assert 0 < manifest["finalization_reserve_seconds"] < manifest["budget_seconds"]
 
 
 def verify(output, manifest, *, current_execution=True):
@@ -793,10 +846,12 @@ def verify(output, manifest, *, current_execution=True):
     if "six_task_pinned_polish_design" in manifest:
         note = manifest["six_task_pinned_polish_design"]
         assert sha(ROOT / note["path"]) == note["sha256"], "Changed declared six-task pinned polish design"
-    for field in ("deadline_rescue_window_design", "fixed_h_rescue_selector_review", "relay_damage_closure_repair_design", "window_damage_repair_protocol", "split_feeder_design", "split_feeder_protocol", "exact_suffix_delay_design", "native_price_design", "native_price_protocol", "noncontiguous_in_design", "carry_price_design", "carry_price_protocol", "separated_delivery_design", "separated_delivery_implementation", "separated_delivery_protocol", "critical_prefix_design", "critical_prefix_implementation", "critical_prefix_protocol", "conditional_donor_design", "conditional_donor_implementation", "conditional_donor_protocol", "multi_relay_design", "multi_relay_implementation", "multi_relay_protocol"):
+    for field in ("deadline_rescue_window_design", "fixed_h_rescue_selector_review", "relay_damage_closure_repair_design", "window_damage_repair_protocol", "split_feeder_design", "split_feeder_protocol", "exact_suffix_delay_design", "native_price_design", "native_price_protocol", "noncontiguous_in_design", "carry_price_design", "carry_price_protocol", "separated_delivery_design", "separated_delivery_implementation", "separated_delivery_protocol", "critical_prefix_design", "critical_prefix_implementation", "critical_prefix_protocol", "conditional_donor_design", "conditional_donor_implementation", "conditional_donor_protocol", "multi_relay_design", "multi_relay_implementation", "multi_relay_protocol", "multi_relay_native_design", "multi_relay_native_protocol"):
         if field in manifest:
             note = manifest[field]
             assert sha(ROOT / note["path"]) == note["sha256"], "Changed declared fixed-window design/review"
+    if any(cell["arm"] in MULTI_NATIVE_PAIR for cell in manifest["schedule"]):
+        _verify_multi_native_protocol(output, manifest)
 
 
 def worker(request):
@@ -880,7 +935,7 @@ def worker(request):
                 controls = {"relay_enabled": method == "quota_relay"}
             if method.startswith("repool_"):
                 controls = {"relay_enabled": method.endswith("_relay")}
-            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_", "full_credit_", "cold_pin_", "pair_pin_", "six_sort_", "wide_six_", "six_pin_", "window_", "damage_", "split_feeder_", "native_price_", "carry_price_", "separated_delivery_", "critical_prefix_", "conditional_donor_", "accumulation_")):
+            if method.startswith(("mobile_repool_", "joint_mobile_", "frontier_mobile_", "bundle_cached_", "full_credit_", "cold_pin_", "pair_pin_", "six_sort_", "wide_six_", "six_pin_", "window_", "damage_", "split_feeder_", "native_price_", "carry_price_", "separated_delivery_", "critical_prefix_", "conditional_donor_", "accumulation_", "multi_native_")):
                 controls = {"relay_enabled": method.endswith("_relay")}
             controls = {**controls, **manifest.get("method_parameters", {}).get(method, {})}
             outcome = modules[method].refine(full, routes, deadline=sub_deadline,
@@ -1022,6 +1077,11 @@ def audit(output):
     from algorithm.experiments.audit_weighted_relay_ablation import audit_payload, direct_counterfactual, reference_schedule
     manifest = read(output / "manifest.json")
     verify(output, manifest, current_execution=False)
+    multi_native = any(cell["arm"] in MULTI_NATIVE_PAIR for cell in manifest["schedule"])
+    if multi_native:
+        assert not (output / "audit.json").exists(), "Never overwrite a completed native-pair audit"
+        verify(output, manifest, current_execution=True)
+        from algorithm.experiments.audit_multi_relay_native_batch_v1 import _audit_metadata as audit_native_metadata
     # The independent geometry/DAG auditors are immutable across research
     # iterations; newer orchestration does not change historical evidence.
     for name in ("audit_weighted_relay_ablation.py", "audit_weighted_direct_pair.py"):
@@ -1058,15 +1118,30 @@ def audit(output):
         from algorithm.experiments.audit_weighted_relay_ablation import _geometry
         assert sha(EXPERIMENTS / "audit_mobile_repooling.py") == manifest["execution_sources"]["audit_mobile_repooling.py"]["sha256"]
     tasks = load_official_csv(ROOT / manifest["input_path"])
+    if multi_native:
+        assert len(tasks) == 200
+        checkpoint = read(ROOT / manifest["checkpoint"]["path"])
+        guard = audit_payload(tasks, {**manifest["topology"], "relay_allowed": False}, checkpoint)
+        assert [r["encoded_visits"] for r in checkpoint["routes"]] == manifest["initial_routes"]
+        assert all(abs(guard["score"][field] - manifest["initial_score"][field]) < 1e-8 for field in FIELDS)
     rows = read(output / "runs.json")
     assert len(rows) == len(manifest["schedule"]) > 0, "Cannot pass an empty or incomplete research batch"
     assert [r["run_id"] for r in rows] == [c["run_id"] for c in manifest["schedule"]]
+    assert len({r["run_id"] for r in rows}) == len(rows)
     results = []
     for row, cell in zip(rows, manifest["schedule"]):
         assert all(row[k] == cell[k] for k in ("run_id", "arm", "seed"))
         assert row["valid"] and row["budget_compliant"] and 0 <= row["end_to_end_seconds"] <= manifest["budget_seconds"]
         assert row["initial_routes_sha256"] == manifest["initial_routes_sha256"]
         assert row["source_sha256"] == manifest["source_archive"]["sha256"]
+        if multi_native:
+            assert row["purpose"] == manifest["purpose"] and row["budget_seconds"] == manifest["budget_seconds"]
+            assert 0 <= row["construction_seconds"] <= row["end_to_end_seconds"]
+            assert [p["phase"] for p in row["phases"]] == ["initial", row["arm"], "final"]
+            response = output / "receipts" / (row["run_id"] + "__response.json")
+            receipt = read(output / "receipts" / (row["run_id"] + ".json"))
+            assert receipt["status"] == "completed" and receipt["manifest_sha256"] == sha(output / "manifest.json")
+            assert receipt["response_sha256"] == sha(response) and read(response) == row
         actual_topology = {**manifest["topology"], "relay_allowed": row["arm"] not in DIRECT_ARMS}
         if row["arm"] in MOBILE_ARMS:
             if row["arm"] in THREE_PARTY_MOBILE_ARMS:
@@ -1080,6 +1155,7 @@ def audit(output):
         preceding_routes = manifest["initial_routes"]
         proposal_references = []
         window_family_references = []
+        method_evidence = None
         for phase in row["phases"]:
             assert sha(output / phase["solution_path"]) == phase["solution_sha256"]
             phase_payload = read(output / phase["solution_path"])
@@ -1106,6 +1182,17 @@ def audit(output):
                 assert phase_key <= preceding_key, "Saved complete phase worsens its verified incumbent"
             preceding_key = phase_key
             metadata = phase.get("metadata", {})
+            if multi_native:
+                if phase["phase"] == row["arm"]:
+                    assert metadata["seed"] == row["seed"]
+                    method_evidence = audit_native_metadata(tasks, phase_topology, phase_input_routes, metadata,
+                        relay=row["arm"] == MULTI_NATIVE_PAIR[1], manifest=manifest, phase=phase)
+                    assert method_evidence["passed"] and method_evidence["final_routes_sha256"] == phase["routes_sha256"]
+                    assert all(abs(method_evidence["final_reference"]["score"][field] - reference["score"][field]) < 1e-8
+                               for field in FIELDS)
+                elif phase["phase"] == "final":
+                    assert method_evidence is not None and phase["routes_sha256"] == method_evidence["final_routes_sha256"]
+                continue  # The native callback proves its own saved raw/post schema.
             proposals = [(name, metadata.get(name)) for name in
                          ("first_complete_candidate", "best_constructed_candidate", "input_snapshot")]
             proposals.extend((f"full_candidate_{i}", snapshot) for i, snapshot in
@@ -1380,6 +1467,10 @@ def audit(output):
         assert sha(output / row["counterfactual_path"]) == row["counterfactual_sha256"]
         cf_payload = read(output / row["counterfactual_path"])
         final_routes = [route["encoded_visits"] for route in final_payload["routes"]]
+        if multi_native:
+            assert digest(final_routes) == row["phases"][-1]["routes_sha256"] == method_evidence["final_routes_sha256"]
+            assert row["solution_path"] == row["phases"][-1]["solution_path"]
+            assert row["solution_sha256"] == row["phases"][-1]["solution_sha256"]
         expected_cf = direct_counterfactual(final_routes, final_topology)
         assert [list(r) for r in expected_cf] == [r["encoded_visits"] for r in cf_payload["routes"]]
         cf = audit_payload(tasks, cf_topology, cf_payload)
@@ -1388,6 +1479,7 @@ def audit(output):
         results.append(dict(run_id=row["run_id"], passed=True, reference=reference, fixed_structure_direct=cf,
                             non_adopted_or_constructed_proposals=proposal_references,
                             synchronous_mobile_physical_reference=physical_mobile,
+                            **({"method_evidence": method_evidence} if multi_native else {}),
                             **({"deadline_window_family_references": window_family_references}
                                if row["arm"] in WINDOW_PAIR else {})))
     selector_comparisons = []
@@ -1491,6 +1583,11 @@ def audit(output):
         record["proposal_evidence_format"] = "All original full snapshots replayed; compact per-proposal metrics plus digests of complete independent replay outputs; full routes/clocks remain in source runs.json"
     if selector_comparisons:
         record["matched_repooling_selectors"] = selector_comparisons
+    if multi_native:
+        assert not (output / "audit.json").exists(), "Never overwrite a completed native-pair audit"
+        record["independent_native_pair"] = dict(arms=list(MULTI_NATIVE_PAIR), same_total_wall_ceiling=True,
+            direct_all_tasks_free=True, no_shared_raw_directory=True, historical_checkpoint_only=True,
+            strongest_fresh_comparison=False, unrecorded_probes_entity_replayed=False)
     write(output / "audit.json", record)
     print(json.dumps({"audit_passed": True, "run_count": len(results), "purpose": manifest["purpose"]}))
 
