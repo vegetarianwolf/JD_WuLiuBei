@@ -1,0 +1,84 @@
+{
+  "kind": "predeclared_independent_arm_multi_group_native_historical_checkpoint_diagnostic",
+  "arms": [
+    "multi_native_direct",
+    "multi_native_relay"
+  ],
+  "budget_seconds_per_arm": 240.0,
+  "homes": "stations",
+  "input_sha256": "386d3fbaa9009aeed947493782d657ed0b30b25d369c8187bfc9619fc7e31d25",
+  "weights": [
+    0.5,
+    0.25,
+    0.25
+  ],
+  "scales": [
+    200,
+    4464.183540734935,
+    775.7731679286865
+  ],
+  "fixed_catalogue_parameters": {
+    "feeder_limit": 3,
+    "base_pool_limit": 64
+  },
+  "direct_periodic_parameters": {
+    "interval": 120,
+    "max_candidates": 16,
+    "anchors_per_route": 4,
+    "pair_budget_seconds": 0.008
+  },
+  "artifact_json_indent": 0,
+  "batch": "batch040",
+  "seed": 2026101527,
+  "checkpoint_path": "algorithm/results/proactive_relay_diagnostic_20261014/batch039/phase_solutions/multi_native_direct__seed_2026101526__final.json",
+  "checkpoint_sha256": "05cb94a4415556d2cb54e90386378b0732cb0278fb0eea6c7870fa3dcc3d7b62",
+  "method_modules": {
+    "multi_native_direct": "multi_relay_direct_control_v1",
+    "multi_native_relay": "new_late_set_native_refinement_v1"
+  },
+  "metadata_auditor": "audit_new_late_set_native_v1",
+  "design_path": "papers/notes/proactive_relay_20261014/new_late_set_joint_repair_design_v1.md",
+  "method_parameters": {
+    "multi_native_direct": {
+      "alns_fraction": 0.65,
+      "critical_limit": 6,
+      "donor_limit": 3,
+      "position_limit": 12,
+      "option_count": 3,
+      "beam_width": 4,
+      "max_steps": 3,
+      "snapshot_limit": 6
+    },
+    "multi_native_relay": {
+      "raw_fraction": 0.4,
+      "max_groups": 3,
+      "beam_width": 4,
+      "max_families": 16,
+      "source_option_limit": 3,
+      "receiver_option_limit": 3,
+      "position_limit": 12,
+      "snapshot_limit": 6,
+      "polish_max_iterations": 1000000,
+      "polish_initial_temperature": 0.0025,
+      "polish_minimum_temperature": 1e-05,
+      "polish_cooling_rate": 0.97,
+      "focus_fraction": 0.4,
+      "focus_max_seconds": 20.0,
+      "focus_donor_limit": 4,
+      "focus_max_donors": 2,
+      "focus_position_limit": 12,
+      "focus_option_count": 3,
+      "focus_max_damage": 4
+    }
+  },
+  "hypothesis": "039 proved real two-ended co-load and net shorter relay routes, but its saved relay channels newly delayed native105/160. Generic repair never guarantees the whole original-on-time/current-late set D enters one complete transaction, forbids one-owner-only destroys and locally caps before global exact. Test compulsory all-native-D removal, same-owner complete reconstruction and optional one/two real donors, comparing full J only after the entire selected set is restored. Whole deletion, donor exchange and joint repair are existing primitives, not a new physical principle or guaranteed improvement.",
+  "common_strong_guard": "Use the current frozen039 weighted DIRECT incumbent for BOTH arms: N60/on-time140,L1718.9527607496136,D580.382954085779,J0.43329727396822226. Original025 N59/on-time141 remains a separate non-dominated reference; it is not silently discarded or used as an easier sole target. No free historical R seed. New D is recomputed from this actual common guard rather than hardcoding105/160.",
+  "resources": "Unchanged official200,8UAV,C2,finalK25,.9km/min,all original four fixed sites and exact homes,soft deadlines/open routes/current J. Every flight/empty flight/ground cache and actual cross-group wait charged. No free idle relocation, stochastic future demand, extra resource/site, changed deadline or relay-count bonus.",
+  "joint_source_scope": "New group uses explicit source_type=joint_pair,i<j,a=b!=c and both tasks current wholeDIRECT finalC. One actual source route inserts firstP atg, preserves originalg..h whose loads<=1, secondP at original emptyh, thenH and adjacent dropi/dropj; both pickup orders considered and actual two-IN shared distance>1e-10km. C keeps empty adjacent doubleOUT and actual positive co-load, with native interval allowed between deliveries. Existing split/joint parents supported and old plans/roles/H/legs/selected subsequences preserved. New catalogues are joint-only, not a hidden union or forced final output.",
+  "focused_stage": "Inside each actual paid raw group-count channel, before the unchanged native ALNS, focus deadline=min(leaf_deadline,start+min(20seconds,.4*max(0,leaf_deadline-start))); the outer min only tightens an already-expired leaf, never extends it. Rebuild original and current full clocks; classify all original-on-time/current-late D. Protected damage is reported separately. All ordinary whole-DIRECT D_native must be removed jointly; if more than4, report skip without truncating. No partial-J pruning. Same-owner control first, then finite fixed assignments for actual one/two donor swaps, all final quota slots released by real whole removal. Every insertion uses actual current GlobalRelayEvaluator and typed group checks; every complete candidate also uses force_full. Only cached strict complete improvements are retained.",
+  "finite_focused_catalogue": "Eligible ordinary non-D/non-pin donors must have a current owner different from at least one D task. Rank by min_D(distance(Pd,Pt)+distance(Dd,Dt)), then owner/task, retain4; this is a geometric proposal, not a current global J bound. Single donor: each compatible D target swaps owners with donor; all other D keep owners. Two donors: every compatible pair of D targets and two donor pool members, two pairings, donors return to target original owners. Control preserves all D owners. For each selected set U, <=3 tasks enumerate all permutations; >=4 uses sortedU,reverse,sortedD+sortedDonors,sortedDonors+sortedD with duplicates removed. Actual capacity-legal PD gaps cannot split any protected doubletake/joint doubledrop; finite geometry/early-P/early-D channels plus real original-position reconstruction. Control geometric/early frontiers cap12, donor frontiers cap3, each with at most one additional deduplicated actual original-owner seed-anchor reconstruction branch; total retained insertion positions are bounded by13/4 respectively. Every branch completes all D and donors before full-key comparison; no partial scores across missing sets or first-job gates. Absolute expiry may leave a catalogue/order incomplete, recorded honestly. Omitted candidates are not globally bounded or all independently entity-replayed.",
+  "integration": "Thin nonnested scoped adapter replaces only polish.polish_groups temporarily, then invokes the existing joint typed paid pipeline. It captures the real original common guard. The focused complete return becomes the actual unchanged native helper input. Native metadata clocks/input/history are not rewritten; focused_stage is additional truthful evidence. Original native initialization expiry returns raw macro/evaluationNone/old skip, never labels a focused cache as native certificate. Finally restores actual helper identity; core joint structure context still restores three aliases. Same ledger/arms/receipt/CF/final adoption loop, selected protocol modules and independent callback.",
+  "independent_proof": "Bind new focus parameters separately, pass an explicit stripped core manifest view to the unchanged joint paid proof without changing the real manifest. Scoped native-metadata auditor first independently reconstructs exact D, donor pool/assignments/orders, whole removal/current q, saved insertion traces and full/partial typed schedules, strict cache and stage deadline; then proves original native metadata against the actual focused input. Outer full proof remains relative to actual raw seed. Source, original current clocks, native input, teardown and whole worker wall are bound; no producer-generated expected geometry/score used as proof. Discarded unsaved branches are not claimed as independent replays.",
+  "direct_control": "Unchanged independent037/038 DIRECT: own weightedALNS65percent+periodic exchange then complete conditional-donor repair, empty pins/all200 free, no R catalogue or forced map/H/source. Archived defaulttemperature .03/.0005/.995 differs from R native .0025/.00001/.97; this is explicitly a checkpoint mechanism comparison, not a final strongest tuned fresh performance claim. Same240second total ceiling, physical resources, weighted preference and original strong guard.",
+  "interpretation": "One immutable sequential source-frozen historical039-checkpoint pair with seed2026101527, same240second ceiling/resources/current research weightedJ, no official timing probe/retry/seed replacement or result-conditioned parameter/pool change. Report actual ontime/N,L,D,J/wall/relay count; separate native internal improvements and original guard adoption. A positive mechanism result still requires strongest tuned fresh paired independent seeds/equal end-to-end budgets before claiming far relay superiority. No proof of goal completion from this protocol or tiny tests."
+}

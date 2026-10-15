@@ -181,13 +181,17 @@ def test_native_protocol_cannot_pair_transport_with_another_auditor_or_missing_s
         with pytest.raises(AssertionError): ledger._native_implementation(changed)
 
 
-def test_same_saved_ledger_selects_declared_typed_auditor(tmp_path, monkeypatch):
+@pytest.mark.parametrize('relay_module,auditor', [
+    ('joint_source_native_refinement_v1', 'audit_joint_source_native_v1'),
+    ('new_late_set_native_refinement_v1', 'audit_new_late_set_native_v1'),
+])
+def test_same_saved_ledger_selects_declared_typed_auditor(tmp_path, monkeypatch, relay_module, auditor):
     rows, manifest, calls = make_saved_pair(tmp_path, monkeypatch)
     manifest.update(method_modules=dict(multi_native_direct='multi_relay_direct_control_v1',
-        multi_native_relay='joint_source_native_refinement_v1'), metadata_auditor='audit_joint_source_native_v1')
+        multi_native_relay=relay_module), metadata_auditor=auditor)
     ledger.write(tmp_path/'manifest.json', manifest, indent=0);refresh(tmp_path, rows)
     selected = []
-    module = ModuleType('algorithm.experiments.audit_joint_source_native_v1')
+    module = ModuleType('algorithm.experiments.' + auditor)
     old = callback._audit_metadata
     def typed(*args, **kwargs):
         selected.append(kwargs['relay']);return old(*args, **kwargs)

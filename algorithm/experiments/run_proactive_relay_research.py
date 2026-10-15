@@ -83,6 +83,7 @@ DIRECT_ARMS = (*DIRECT_ARMS, "multi_native_direct")
 NATIVE_IMPLEMENTATIONS = {
     "multi_relay_native_refinement_v1": "audit_multi_relay_native_batch_v1",
     "joint_source_native_refinement_v1": "audit_joint_source_native_v1",
+    "new_late_set_native_refinement_v1": "audit_new_late_set_native_v1",
 }
 CRITICAL_PREFIX_PAIR = ("critical_prefix_direct", "critical_prefix_relay")
 DIRECT_ARMS = (*DIRECT_ARMS, "critical_prefix_direct")
@@ -156,6 +157,7 @@ EXECUTION = (
     "multi_relay_native_polish_v1.py", "multi_relay_native_refinement_v1.py",
     "audit_multi_relay_native_polish_v1.py", "audit_multi_relay_native_batch_v1.py",
     "joint_source_relay_structure_v1.py", "joint_source_native_refinement_v1.py", "audit_joint_source_native_v1.py",
+    "new_late_set_repair_v1.py", "new_late_set_native_refinement_v1.py", "audit_new_late_set_native_v1.py",
     "directed_bundle_insertion.py",
     "run_weighted_relay_ablation.py", "run_weighted_direct_pair.py", "weighted_direct_objective.py",
     "weighted_relay_objective.py", "weighted_periodic_exchange.py", "run_scenario_comparison.py",
