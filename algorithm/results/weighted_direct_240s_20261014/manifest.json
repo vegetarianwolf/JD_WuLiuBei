@@ -1,0 +1,231 @@
+{
+  "seed": 2026101401,
+  "budget_seconds": 240,
+  "weights": [
+    0.5,
+    0.25,
+    0.25
+  ],
+  "scales": [
+    200,
+    4464.183540734935,
+    775.7731679286865
+  ],
+  "initial_score": {
+    "late_count": 108,
+    "total_lateness_min": 4464.183540734935,
+    "distance_km": 775.7731679286865
+  },
+  "initial_routes_sha256": "0aa05645d9ca61227c51c1d69993de896ecca045136165dec06a4bd1636288b6",
+  "input_sha256": "386d3fbaa9009aeed947493782d657ed0b30b25d369c8187bfc9619fc7e31d25",
+  "variants": {
+    "original": {
+      "label": "最初 ALNS 基线",
+      "archive": "algorithm/results/optimization_20261013/sources/baseline.zip",
+      "sha256": "17b13ea7468127f0d5fe0a2c0803f6ca231e07500cce51c0aadb1eb67714e12c",
+      "config": {},
+      "historical_manifest": "algorithm/results/optimization_20261013/manifest.json",
+      "historical_variant": "baseline",
+      "objective": "weighted"
+    },
+    "lazy": {
+      "label": "惰性修复提速",
+      "archive": "algorithm/results/optimization_20261013/sources/candidate.zip",
+      "sha256": "a934207f3823992aa94439c4e9451f5ace937f53f152922aedc05ddebac80af1",
+      "config": {
+        "enable_lazy_repair": true,
+        "enable_route_distinct_regret": false
+      },
+      "historical_manifest": "algorithm/results/optimization_20261013/manifest.json",
+      "historical_variant": "fast",
+      "objective": "weighted"
+    },
+    "allocation": {
+      "label": "跨机 regret",
+      "archive": "algorithm/results/optimization_20261013/sources/candidate.zip",
+      "sha256": "a934207f3823992aa94439c4e9451f5ace937f53f152922aedc05ddebac80af1",
+      "config": {
+        "enable_lazy_repair": true,
+        "enable_route_distinct_regret": true
+      },
+      "historical_manifest": "algorithm/results/optimization_20261013/manifest.json",
+      "historical_variant": "allocation",
+      "objective": "weighted"
+    },
+    "fallback": {
+      "label": "regret 位置回退",
+      "archive": "algorithm/results/regret_followup_20261013/sources/candidate.zip",
+      "sha256": "4f4670fba20f90ac72a559646bb9cf820b9310bddb983fb6cad8ba4d41a0dc38",
+      "config": {
+        "enable_lazy_repair": true,
+        "enable_route_distinct_regret": true,
+        "enable_regret_position_fallback": true
+      },
+      "historical_manifest": "algorithm/results/regret_followup_20261013/manifest.json",
+      "historical_variant": "fallback",
+      "objective": "weighted"
+    },
+    "portfolio": {
+      "label": "自适应 regret 组合",
+      "archive": "algorithm/results/regret_followup_20261013/sources/candidate.zip",
+      "sha256": "4f4670fba20f90ac72a559646bb9cf820b9310bddb983fb6cad8ba4d41a0dc38",
+      "config": {
+        "enable_lazy_repair": true,
+        "enable_route_distinct_regret": false,
+        "enable_regret_position_fallback": true,
+        "enable_regret_portfolio": true
+      },
+      "historical_manifest": "algorithm/results/regret_followup_20261013/manifest.json",
+      "historical_variant": "portfolio",
+      "objective": "weighted"
+    },
+    "boundary": {
+      "label": "截止期边界邻域",
+      "archive": "algorithm/results/objective_trials_20261013/sources/candidate.zip",
+      "sha256": "d6cf641abb189c01599ccee478b011d94e83c0712fce0e267f3bb450a640b7fc",
+      "config": {
+        "enable_boundary_destroy": true
+      },
+      "historical_manifest": "algorithm/results/objective_trials_20261013/manifest.json",
+      "historical_variant": "boundary",
+      "objective": "weighted"
+    },
+    "reward": {
+      "label": "第一目标奖励",
+      "archive": "algorithm/results/objective_trials_20261013/sources/candidate.zip",
+      "sha256": "d6cf641abb189c01599ccee478b011d94e83c0712fce0e267f3bb450a640b7fc",
+      "config": {
+        "enable_objective_rewards": true
+      },
+      "historical_manifest": "algorithm/results/objective_trials_20261013/manifest.json",
+      "historical_variant": "objective",
+      "objective": "weighted"
+    },
+    "compact": {
+      "label": "缩小移除邻域",
+      "archive": "algorithm/results/objective_trials_20261013/compact_trial/sources/baseline.zip",
+      "sha256": "4f4670fba20f90ac72a559646bb9cf820b9310bddb983fb6cad8ba4d41a0dc38",
+      "config": {
+        "min_destroy_fraction": 0.02,
+        "max_destroy_fraction": 0.05
+      },
+      "historical_manifest": "algorithm/results/objective_trials_20261013/compact_trial/manifest.json",
+      "historical_variant": "compact",
+      "objective": "weighted"
+    },
+    "memo": {
+      "label": "DIRECT 选项缓存",
+      "archive": "algorithm/results/method_trials_20261013/sources/candidate.zip",
+      "sha256": "790e0254ff38933944c6027f8ef5cfe7f7a225929f8837e6d055359348bf9c23",
+      "config": {
+        "enable_direct_option_cache": true
+      },
+      "historical_manifest": "algorithm/results/method_trials_20261013/manifest.json",
+      "historical_variant": "memo",
+      "objective": "weighted"
+    },
+    "cooling": {
+      "label": "按预算降温",
+      "archive": "algorithm/results/method_trials_20261013/sources/candidate.zip",
+      "sha256": "790e0254ff38933944c6027f8ef5cfe7f7a225929f8837e6d055359348bf9c23",
+      "config": {
+        "enable_budget_cooling": true
+      },
+      "historical_manifest": "algorithm/results/method_trials_20261013/manifest.json",
+      "historical_variant": "cooling",
+      "objective": "weighted"
+    },
+    "strings": {
+      "label": "跨路线相邻串移除",
+      "archive": "algorithm/results/method_trials_20261013/iteration2/sources/strings.zip",
+      "sha256": "e1f64c96e6937d66587f6d56c3fc76d339f64a2b0d71cc4bcb32705ad936b048",
+      "config": {
+        "enable_multiroute_string_destroy": true
+      },
+      "historical_manifest": "algorithm/results/method_trials_20261013/iteration2/manifest.json",
+      "historical_variant": "strings",
+      "objective": "weighted"
+    },
+    "adjacent": {
+      "label": "相邻访问微调",
+      "archive": "algorithm/results/method_trials_20261013/iteration3/sources/polish.zip",
+      "sha256": "3d3e2ffb0239abef548c9553e2f94e8a7aab833975f2a8cd4c21b436a9db8eee",
+      "config": {
+        "enable_adjacent_polish": true
+      },
+      "historical_manifest": "algorithm/results/method_trials_20261013/iteration3/manifest.json",
+      "historical_variant": "polish",
+      "objective": "weighted"
+    },
+    "joint": {
+      "label": "联合 VNS（禁用中继）",
+      "archive": "algorithm/results/joint_relay_trials_20261014/batch1/sources/joint.zip",
+      "sha256": "359d3e9c8d5e370978aebe9e441feafb4d54698155af67a8b2915c9f4277de1a",
+      "config": {
+        "solver": "joint"
+      },
+      "historical_manifest": "algorithm/results/joint_relay_trials_20261014/batch1/manifest.json",
+      "historical_variant": "joint",
+      "objective": "weighted"
+    },
+    "global": {
+      "label": "周期性全局尾段交换",
+      "archive": "algorithm/results/global_relay_trials_20261014/sources/candidate.zip",
+      "sha256": "13b8d6bfddebeefa180598dd1735b0d6296286b57c5c4105033304748d415c2f",
+      "config": {
+        "enable_tail_exchange": true,
+        "enable_home_reassignment": true
+      },
+      "historical_manifest": "algorithm/results/global_relay_trials_20261014/manifest.json",
+      "historical_variant": "global",
+      "objective": "weighted"
+    },
+    "current_weighted": {
+      "label": "当前算法加权",
+      "archive": "algorithm/results/weighted_direct_240s_20261014/sources/current.zip",
+      "sha256": "f3a97714510ba410ba31b96c5880ec9adacfadc7a9d6f5828177e64f743b62b6",
+      "config": {},
+      "objective": "weighted"
+    },
+    "current_lex": {
+      "label": "当前算法原词典序",
+      "archive": "algorithm/results/weighted_direct_240s_20261014/sources/current.zip",
+      "sha256": "f3a97714510ba410ba31b96c5880ec9adacfadc7a9d6f5828177e64f743b62b6",
+      "config": {},
+      "objective": "lexicographic"
+    }
+  },
+  "order": [
+    "current_lex",
+    "original",
+    "lazy",
+    "allocation",
+    "fallback",
+    "portfolio",
+    "boundary",
+    "reward",
+    "compact",
+    "memo",
+    "cooling",
+    "strings",
+    "adjacent",
+    "joint",
+    "global",
+    "current_weighted"
+  ],
+  "source_commit": "61488fe2967afa7ed7bf5afad8ff9ef4ad8ad0c9",
+  "runner_sha256": "b9a0eda1ba1bd3d53b7eac42410a4683ca7aa4230ab85d9650c37d1bdc54bfac",
+  "adapter_sha256": "3b7954b98bdcd6e5d63a484a44948e477a8bbed05d28dc0db6dab670af4d4ea0",
+  "environment": {
+    "python": "3.14.5 (v3.14.5:5607950ef23, May 10 2026, 07:38:09) [Clang 21.0.0 (clang-2100.0.123.102)]",
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O"
+  },
+  "protocol": "完整200任务/8机/原点/容量2/K25/无中继/无预部署。每版本一个共同种子；240秒端到端含构造、完整核验、写出解，不含导入；预留1秒收尾。加权仅实验进程启用。共同初解由每版原词典序构造并比对哈希；加权为0.5*逾期数/200+0.25*逾期分钟/共同初解逾期分钟+0.25*航程/共同初解航程；不择优重跑。",
+  "scope_notes": [
+    "中继 checkpoint/diversity/risk、下游中继修整、95%预热在纯DIRECT无作用，未重复运行。",
+    "原点下起点重分配无作用；全局版本仍包含尾段交换。",
+    "当前加权版本代表 terminal/rebalanced 在纯DIRECT下的最终实现。",
+    "加权修改整体解比较、插入排序、greedy/regret修复排序、模拟退火接受；保留各历史方法本身的破坏启发式、第一目标奖励、VNS扰动逾期上限。",
+    "这是加权适配后的历史方法，不等同于历史原目标结果；另跑当前原目标作同预算控制。"
+  ]
+}

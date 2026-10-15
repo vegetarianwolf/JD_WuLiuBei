@@ -2,6 +2,17 @@
 
 本仓库用于小组协作完成“低空经济场景下的物流无人机调度算法”选题，代码统一使用 Python。
 
+## 当前最好算法与结果（2026-10-15）
+
+统一入口：[当前最好目录](algorithm/best_current/README.md)。
+[最佳算法核心源码](algorithm/best_current/BEST_ALGORITHM.py)、
+[最佳完整结果](algorithm/best_current/BEST_RESULT.json)和
+[参数、冻结依赖与审计清单](algorithm/best_current/BEST_ALGORITHM_MANIFEST.json)均已标注。
+当前加权 J 最低为 **0.431089741253357**：按时140/200单、总逾期1716.285265分钟、
+航程573.996325公里，实际中继0单；另保留[141单按时参考](algorithm/best_current/REFERENCE_141_ON_TIME.json)。
+“最好”指本会话同场景已审计正式终解的当前加权最佳，不是全局最优证明；它来自历史强解追加搜索。
+研究 `/goal` 已暂停，未宣称中继远胜目标达成。原始实验、报告和证据继续保留。
+
 ## 目录分工
 
 ```text

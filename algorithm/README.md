@@ -10,11 +10,17 @@
 
 ## 当前方法
 
-正在进行[跨机中继机制优化研究](results/proactive_relay_diagnostic_20261014/README.md)：
+[当前最好算法与结果](best_current/README.md)已单独标注：
+核心源码为 `best_current/BEST_ALGORITHM.py`，完整解为 `best_current/BEST_RESULT.json`，
+完整冻结运行时、参数和审计绑定见 `best_current/BEST_ALGORITHM_MANIFEST.json`。
+当前加权最佳 J=0.431089741253357，按时140单、总逾期1716.285265分钟、航程573.996325公里；
+实际为预部署纯直送，中继0单。另保留141单按时参考，不能将加权最佳等同于逐项最佳。
+
+[跨机中继机制优化研究](results/proactive_relay_diagnostic_20261014/README.md)已按用户要求暂停：
 保留完整200任务，在240秒强DIRECT checkpoint上做短预算机制诊断。
 固定站的成批、途中交换、局部重构及分散捎取均未改善；移动同步会合扩展仅获
 J约0.04136%的微弱改善，准时数持平。这不是同预算胜出，更未达到大幅优势目标，
-未改变生产默认；源码、全部不利结果和独立同步审计均保留，研究继续进行。
+未改变生产默认；源码、全部不利结果和独立同步审计均保留，未宣称目标达成。
 
 新[中继同预算消融 HTML 报告](results/weighted_relay_ablation_20261014/index.html)
 以当前加权算法做2×2起点／中继对照，三个新种子、四方案各240秒，共12次。

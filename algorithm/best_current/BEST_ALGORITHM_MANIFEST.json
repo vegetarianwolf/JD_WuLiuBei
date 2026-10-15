@@ -1,0 +1,548 @@
+{
+  "label": "当前最好：加权总分最佳算法与纯直送结果",
+  "as_of_date": "2026-10-15",
+  "selection_scope": "Current checked incumbent through batch040 in this session: official full 200-task, four fixed-station predeployment, C2/final K25 research. Lowest adopted complete weighted-J final solution; not a global optimum or a fresh equal-total-budget claim.",
+  "goal_status": "paused; packaging existing artifacts only; no optimizer resumed",
+  "best_result": {
+    "path": "BEST_RESULT.json",
+    "sha256": "375bc53417519389fe39036510a197ec71dbfdc326248b804cc7ae1c83bee831",
+    "source_path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/phase_solutions/multi_native_direct__seed_2026101527__final.json",
+    "run_id": "multi_native_direct__seed_2026101527",
+    "metrics": {
+      "on_time_count": 140,
+      "late_count": 60,
+      "total_lateness_min": 1716.285265309008,
+      "distance_km": 573.9963252959166,
+      "weighted_J": 0.4310897412533569,
+      "relay_task_count": 0
+    }
+  },
+  "best_algorithm": {
+    "path": "BEST_ALGORITHM.py",
+    "sha256": "e5fe6b22ebb57471274066d5f26ac10970e28c25e408bae5763ae6365c124611",
+    "frozen_source_path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/multi_relay_direct_control_v1.py",
+    "module": "multi_relay_direct_control_v1",
+    "method": "Independent-Weighted-DIRECT-ALNS-And-Complete-Exchange-V1",
+    "description": "Weighted ALNS with lazy repair, terminal and periodic whole-task exchange, followed by complete native-task repair and a strict complete DIRECT incumbent guard. This is the exact core module used by the best saved run; full worker/runtime/dependencies are bound below.",
+    "standalone_executable": false,
+    "seed": 2026101527,
+    "parameters": {
+      "alns_fraction": 0.65,
+      "critical_limit": 6,
+      "donor_limit": 3,
+      "position_limit": 12,
+      "option_count": 3,
+      "beam_width": 4,
+      "max_steps": 3,
+      "snapshot_limit": 6
+    }
+  },
+  "objective": {
+    "formula": "J = 0.5*late_count/200 + 0.25*total_lateness_min/L0 + 0.25*distance_km/D0",
+    "weights": [
+      0.5,
+      0.25,
+      0.25
+    ],
+    "scales": [
+      200,
+      4464.183540734935,
+      775.7731679286865
+    ],
+    "official_scalar_score": false,
+    "direction": "minimize"
+  },
+  "initial_checkpoint": {
+    "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch039/phase_solutions/multi_native_direct__seed_2026101526__final.json",
+    "sha256": "05cb94a4415556d2cb54e90386378b0732cb0278fb0eea6c7870fa3dcc3d7b62",
+    "boundary": "Historical solved checkpoint + extra research budget; not an equal-budget DIRECT comparison"
+  },
+  "budget": {
+    "additional_run_ceiling_seconds": 240.0,
+    "additional_run_actual_seconds": 195.68250929098576,
+    "historical_warm_start": true,
+    "fresh_equal_total_budget_evidence": false
+  },
+  "reference_with_more_on_time_deliveries": {
+    "path": "REFERENCE_141_ON_TIME.json",
+    "source_path": "algorithm/results/proactive_relay_diagnostic_20261014/batch025/phase_solutions/pair_pin_direct__seed_2026101511__final.json",
+    "sha256": "39cc86d144f498193a5f90bbee47f70a0380bb2c423731c653bed11548f3a746",
+    "metrics": {
+      "on_time_count": 141,
+      "late_count": 59,
+      "total_lateness_min": 1790.632128866067,
+      "distance_km": 578.5346848588046,
+      "weighted_J": 0.4342157887877544,
+      "relay_task_count": 0
+    },
+    "selection_reason": "Retained audited on-time reference; this is not the weighted-J best result or an all-metric winner."
+  },
+  "evidence": {
+    "manifest.json": {
+      "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/manifest.json",
+      "sha256": "26dcb014c8eb76c74e536d69dc3ad497665fe23ed524a961bd06cb3308e7c22a"
+    },
+    "audit.json": {
+      "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/audit.json",
+      "sha256": "2dbe3715191a4039bfdb6461ee2e22028036a504e9885b2b009788a97d070c50"
+    },
+    "runs.json": {
+      "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/runs.json",
+      "sha256": "f63ad0fe40caf2b01ea673a509b1c3fd216f1e7dc04fa304e45966f5d8cd66eb"
+    },
+    "receipts/multi_native_direct__seed_2026101527.json": {
+      "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/receipts/multi_native_direct__seed_2026101527.json",
+      "sha256": "aa5aef51b01405af84c9ab0fe600d1452083d68c78b43c6620d42b20a6086fb7"
+    }
+  },
+  "frozen_runtime": {
+    "source_directory": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources",
+    "source_archive": {
+      "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/weighted_solver.zip",
+      "sha256": "a26ed82a86bd0e2d95ce33ac1b8554d31e16a779d80377abb24152a05799fca5"
+    },
+    "execution_sources": {
+      "run_proactive_relay_research.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/run_proactive_relay_research.py",
+        "sha256": "7f007a913c0564fb9d8f51d49cd669c294dda2bbee210f62ac930deb7fc4bcb3"
+      },
+      "batch_relay_refinement.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/batch_relay_refinement.py",
+        "sha256": "a3e071fe1e6329dcdf0875a0bbea87187dffd3f414c6ace02147850d58d1988a"
+      },
+      "reciprocal_relay_refinement.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/reciprocal_relay_refinement.py",
+        "sha256": "de371012c2ddf762a3522d9b9373724df08cc6dba5c860c5c29b87bbb6ee3ba0"
+      },
+      "relay_tail_crossover.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/relay_tail_crossover.py",
+        "sha256": "753c87ae291d3a2d262e4be32def6230c5d85583d0d564a9d04d09e3fbf8dd6d"
+      },
+      "relay_first_constructor.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/relay_first_constructor.py",
+        "sha256": "fb6853bbc4af6d402d1bd4035a9696ec2a07d09d8e777d541d09d4d9f43e49b8"
+      },
+      "inflight_relay_swap.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/inflight_relay_swap.py",
+        "sha256": "0983cb2f5bc52148d7ad085ebeaed3e5c098882619111bd182562a5e19963c27"
+      },
+      "inflight_relay_bundle.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/inflight_relay_bundle.py",
+        "sha256": "0c99512790f68673bd140b25cb5b1a5fa8d0fb2d7063b80274dd7c6804632cf6"
+      },
+      "relay_cluster_beam.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/relay_cluster_beam.py",
+        "sha256": "b4a548d886b4576de96771588070ca3b241dea562deaa9248014a14195aaac20"
+      },
+      "mobile_relay_refinement.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/mobile_relay_refinement.py",
+        "sha256": "afd5bd58ec8ffc7141246dbb5c46034a82eee2e27b17de02399531dc041862c9"
+      },
+      "audit_mobile_relay.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_mobile_relay.py",
+        "sha256": "043c4b4f5e3923aefe5e4b30f2b24094ee0e88b34f9adc6cad1d7acb7ad0fd0f"
+      },
+      "mobile_relay_refinement_v2.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/mobile_relay_refinement_v2.py",
+        "sha256": "7707a9da395286a2831b0a5bd15dfba468d8b0c81350760314bbaf395a791487"
+      },
+      "mobile_relay_refinement_v3.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/mobile_relay_refinement_v3.py",
+        "sha256": "9f5ed95f04fa41db495fbfd271440664b5f394697f980b16590a7041cd57bfa6"
+      },
+      "mobile_geometry_bound.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/mobile_geometry_bound.py",
+        "sha256": "25878b40f9a4cc12d640b183678b6570c6cb5e8cc4ca113386908a421558226a"
+      },
+      "mobile_deadline_geometry.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/mobile_deadline_geometry.py",
+        "sha256": "9441807f6c612b634beceaa6fb71f6aea12084057812da0dfce1f7f48437611e"
+      },
+      "mobile_delivery_reconstruction.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/mobile_delivery_reconstruction.py",
+        "sha256": "2d9a1ec28c9c9748d4ebd86d78d7328826009e9b923b9a78be0adbc50ff0b850"
+      },
+      "anticipatory_mobile_handoff.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/anticipatory_mobile_handoff.py",
+        "sha256": "21730b2e5f0ad244f94061099ce244bdd3d5dcca333ddfd648a9a25614f8217a"
+      },
+      "audit_anticipatory_mobile.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_anticipatory_mobile.py",
+        "sha256": "84625bf7de017982ada7dc07bce13c1d504228bd29c99e2b14ef4268a5469678"
+      },
+      "quota_balanced_relay_exchange.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/quota_balanced_relay_exchange.py",
+        "sha256": "9f7648d318d631090d505790604945f8424e4ce627fa20f5feec8ad467dca5eb"
+      },
+      "relay_repooling_exchange.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/relay_repooling_exchange.py",
+        "sha256": "9df7fd182f416d444581260eaf4aec7cef2749e92f42316d6d1ea5f5a006d0d3"
+      },
+      "audit_repooling.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_repooling.py",
+        "sha256": "a8c218649da0ac07fc67df761d389b3d87a8ee7e3ed5e7346cbcece336b663d1"
+      },
+      "repooling_with_pinned_polish.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/repooling_with_pinned_polish.py",
+        "sha256": "da4fd7650c7a51f3364adbdf02f9fbb8e5e79eedcfd54a60d28d39307444517f"
+      },
+      "relay_preserving_polish.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/relay_preserving_polish.py",
+        "sha256": "93cf701efd7b1567a3de651037eca2276ab156117b954833fd56a112f771fa57"
+      },
+      "audit_pinned_repooling.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_pinned_repooling.py",
+        "sha256": "059ccb9f79677fecd067be4a212049f31568dc09d49ff8ffdcd201b346be0592"
+      },
+      "mobile_repooling_refinement.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/mobile_repooling_refinement.py",
+        "sha256": "2d79baa0b39ae7e24cd81ff60231424250990a283fced281002a09a37f0f5f75"
+      },
+      "mobile_repooling_geometry.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/mobile_repooling_geometry.py",
+        "sha256": "ad871ca00774ba915d846ecb0d81bedf7b9d44eb3ac674f1b9e2add0d1a102ac"
+      },
+      "audit_mobile_repooling.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_mobile_repooling.py",
+        "sha256": "46d50fefcee491e273c0f9bd70dc684b78d6fee567fe3b56947d9d3ef2b0603d"
+      },
+      "joint_mobile_layouts.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/joint_mobile_layouts.py",
+        "sha256": "5d1dc64aed35101ba91776cb650e996aa3e8d5189f9a212ffaee3d054dfaebc5"
+      },
+      "joint_mobile_repooling.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/joint_mobile_repooling.py",
+        "sha256": "e899ea9fbf9acf73fe95f1f03fe9c613ebfb3476ad862dabd56c5b84ae99854e"
+      },
+      "source_frontier_cache.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/source_frontier_cache.py",
+        "sha256": "2a83e5ce18188e51938b908221158c78350103f7548ba63e240f47ba143d5b7b"
+      },
+      "source_frontier_mobile_repooling.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/source_frontier_mobile_repooling.py",
+        "sha256": "50639dc155a8631d230770415a50864493357d27b7685d58fa9d1f1e36337af8"
+      },
+      "receiver_bundle_cache.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/receiver_bundle_cache.py",
+        "sha256": "fa094c296975f6294d69fae7306163350d766ef6492d03236ead38ad285d1fe1"
+      },
+      "receiver_bundle_cached_mobile.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/receiver_bundle_cached_mobile.py",
+        "sha256": "34a946a93636225a91708ade0e35941697622f994763505da6d3d23ab76184bc"
+      },
+      "full_score_repool_selector.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/full_score_repool_selector.py",
+        "sha256": "d85610483e823f174e251f20c6e2ebfbfc4027394324e3164ce02b7b73ce0180"
+      },
+      "full_score_selected_mobile.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/full_score_selected_mobile.py",
+        "sha256": "532ab346781602aba4543bd2bdbd5f38685477203e04489540e88c0cfbf325f1"
+      },
+      "full_credit_pinned_repooling.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/full_credit_pinned_repooling.py",
+        "sha256": "2bbfdef21c4d716369b454239abb2647c368a0bef64e9c2004f763e0dd2ff178"
+      },
+      "cold_weighted_pinned_repooling.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/cold_weighted_pinned_repooling.py",
+        "sha256": "1d1677101361f05934c8cbd23647f02ead4f9eba56c53bd3fa79916bd945d6e3"
+      },
+      "relay_pair_preserving_polish.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/relay_pair_preserving_polish.py",
+        "sha256": "4bd771cbb1f1d23362057a93093194e6cb9a272d9a714fbc5b991cfa4c417997"
+      },
+      "pair_pinned_repooling.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/pair_pinned_repooling.py",
+        "sha256": "b9892b80da69f95b52421a1872002f029b5fff9d0597f2096ce1e2b231b32951"
+      },
+      "audit_pair_pinned_repooling.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_pair_pinned_repooling.py",
+        "sha256": "9487081f80c655fba4efa2b35a287c685d2b2c25c312a86eda891ec7b7314cd6"
+      },
+      "six_task_route_costs.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/six_task_route_costs.py",
+        "sha256": "934a60cac5429469db7443b81e7e6d3a29f25e861c1de294251272a40ce13215"
+      },
+      "six_task_sorting.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/six_task_sorting.py",
+        "sha256": "0ffe41cb57b8d91e09260559c2303b195d852cd25f65d90547dd594855557a11"
+      },
+      "audit_six_task_sorting.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_six_task_sorting.py",
+        "sha256": "d40ba94e4fe255b9e60fc956067371d3d2fce29d44c422fe89b68f920ef344db"
+      },
+      "expanded_six_task_sorting.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/expanded_six_task_sorting.py",
+        "sha256": "938aee3f808e35bfdbb444b00b6e08102eefc573799e8847128e1aa2b3ad69b6"
+      },
+      "six_task_preserving_polish.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/six_task_preserving_polish.py",
+        "sha256": "60f040c479729b953eebd1414f475630ab56b802dd4dd1eaf7aed58a19a12b20"
+      },
+      "six_task_with_pinned_polish.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/six_task_with_pinned_polish.py",
+        "sha256": "35ef02981ca07aa66b432f1e9a990d529b267f4f6f85ddcf89e2aedab8fffaff"
+      },
+      "audit_six_task_pinned_polish.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_six_task_pinned_polish.py",
+        "sha256": "170591cee9ff91c2c03ecf24b792241d667c393bac3806eef7c28ad826920f30"
+      },
+      "deadline_window_costs.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/deadline_window_costs.py",
+        "sha256": "172050f5c6a5d7a33add2a3de18a097f42f0c31c15a242f5838c196275c82b7c"
+      },
+      "deadline_window_repooling.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/deadline_window_repooling.py",
+        "sha256": "3124808debc90a56bab8591a2d486534f8ace7a17c980918369fdbf0a9a07341"
+      },
+      "audit_deadline_window_repooling.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_deadline_window_repooling.py",
+        "sha256": "1b575f477e1b7f8925a47e5f832c6692434d6fc997bf87b85f2474540bd2b1e1"
+      },
+      "relay_damage_closure.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/relay_damage_closure.py",
+        "sha256": "ae1735d0ecc6d0cd7e5d8d7ec792418564ff0f4dbcfb613f2e166ec978f71334"
+      },
+      "damage_closure_repair.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/damage_closure_repair.py",
+        "sha256": "fc5be83acd6a552bdc9f81cbc2aa7ca3d1e5be9e97225f5898b31cbf7197189b"
+      },
+      "window_damage_repair.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/window_damage_repair.py",
+        "sha256": "551f5dc878a1885154f52887f2fe629cc77ff78bd0cd87be6b91a91f06054610"
+      },
+      "audit_window_damage_repair.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_window_damage_repair.py",
+        "sha256": "cec2d2ed9806000a5c1d0ec91dbb86f95d696c302d47b2a347174e94c7b9ce28"
+      },
+      "audit_window_damage_batch.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_window_damage_batch.py",
+        "sha256": "dd4f47950f8feadfb090841408987381ccc843d624f3b6a7a5adb90c3a645920"
+      },
+      "split_feeder_catalogue.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/split_feeder_catalogue.py",
+        "sha256": "42e98949051fdc82da4734a405157e66aa67ac7f018e6e68401b183a0f8d5288"
+      },
+      "split_feeder_refinement.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/split_feeder_refinement.py",
+        "sha256": "7b595953e0dcd1bad50aaccbb61f5d14444159bcf5335ac638c20520f4ec87d0"
+      },
+      "audit_split_feeder.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_split_feeder.py",
+        "sha256": "5f459022e2cd61fe14a6b55dacdc8ee8bc3a2cb0a804d4f9b190c2430fd2e6a7"
+      },
+      "audit_split_feeder_batch.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_split_feeder_batch.py",
+        "sha256": "e81a1245c2952d72a6baacb19ac2b055a2b4c8036e144be7c4999dde9769872b"
+      },
+      "exact_suffix_delay.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/exact_suffix_delay.py",
+        "sha256": "e8245c311b6d796907b9c409b677709372cb54421b9fab3343b4331a036df9c5"
+      },
+      "split_feeder_catalogue_v2.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/split_feeder_catalogue_v2.py",
+        "sha256": "69ac363ccae4bcc2d1af03cecec20e5bf601048b91d32ce9d21397d4e5f381c6"
+      },
+      "split_feeder_refinement_v2.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/split_feeder_refinement_v2.py",
+        "sha256": "d4e2e29ec2fba1a6a91604fc692a70b364f3456abbb654874a2d0416a3c93e3c"
+      },
+      "audit_split_feeder_v2.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_split_feeder_v2.py",
+        "sha256": "67d815fd9678a5a5fa310a01b671f05d3c5cfbfb14afc105b7c3c4115f5c03db"
+      },
+      "audit_split_feeder_batch_v2.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_split_feeder_batch_v2.py",
+        "sha256": "bf9d7b2acd74a676df213baa3ade01988b5c0faae6bf19666576022c5fd3da77"
+      },
+      "split_feeder_catalogue_v3.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/split_feeder_catalogue_v3.py",
+        "sha256": "308d78c750b6a9ef3dfc93db0c5eac49c0d2a19fc5aca380892e1f6269f998c8"
+      },
+      "split_feeder_refinement_v3.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/split_feeder_refinement_v3.py",
+        "sha256": "567b665b84bab23012c0feafa2af23fd5c6f757878d10c2625b7b439d5051c20"
+      },
+      "audit_split_feeder_v3.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_split_feeder_v3.py",
+        "sha256": "4fb542c9b86c263a3728e3c9eab2f3c6886c6a611589939638e5e9e0814d8a4d"
+      },
+      "audit_split_feeder_batch_v3.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_split_feeder_batch_v3.py",
+        "sha256": "26867029fb825a49aa006ed971e1defe103947e147782189104a29dc43024c4e"
+      },
+      "split_feeder_catalogue_v4.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/split_feeder_catalogue_v4.py",
+        "sha256": "371c23a34dd362ddb82d7d06e05553a0fe1df26e9d7fcb7dac1c3eb14354433b"
+      },
+      "split_feeder_refinement_v4.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/split_feeder_refinement_v4.py",
+        "sha256": "0fe665c207e663d59818e93618d3afa01e9c92a785232c73006b5a8ed90551c8"
+      },
+      "direct_flexible_pair_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/direct_flexible_pair_v1.py",
+        "sha256": "84d1331a4274e3bade232510dee5a1d3a86d3cc580459433e6f55c795ba8157c"
+      },
+      "audit_split_feeder_v4.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_split_feeder_v4.py",
+        "sha256": "11700f0bdd8c2f8b95776ae498e484036960b98f9fac981b51e7228026620cc9"
+      },
+      "audit_split_feeder_batch_v4.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_split_feeder_batch_v4.py",
+        "sha256": "2127da95eff883c0fb08c2fe6a7085950330dcea15f2b16dc552927122f32521"
+      },
+      "critical_prefix_closure_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/critical_prefix_closure_v1.py",
+        "sha256": "a63c7aa9435bf9bb4f60ba5a8683279250227a688293bb765f06033fce235de0"
+      },
+      "critical_prefix_joint_repair_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/critical_prefix_joint_repair_v1.py",
+        "sha256": "b22f2ba7f97c056c7cfcbfb7bd5c679e53f7e3379859fd23574ca0e34b1c4497"
+      },
+      "critical_prefix_refinement_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/critical_prefix_refinement_v1.py",
+        "sha256": "fcf17f3eae1829bb1b9cf8df705d58948a7bed5a32fb1d5b710887581b5c4ea4"
+      },
+      "audit_critical_prefix_joint_repair_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_critical_prefix_joint_repair_v1.py",
+        "sha256": "07129fe685de9313139e2e3d7b36ea6566c79f0cad66f94b615b4826bda1785c"
+      },
+      "audit_critical_prefix_batch_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_critical_prefix_batch_v1.py",
+        "sha256": "5b41d0d8bdabee3e41f258680cadc9eb52b5fc1adc3dd435402e4a9060781021"
+      },
+      "conditional_donor_catalogue_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/conditional_donor_catalogue_v1.py",
+        "sha256": "5fcc6f4b1a0f8eb6caf539c88e2f1dd275dc39e34166d6f3ef79a131d59d86f7"
+      },
+      "conditional_donor_repair_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/conditional_donor_repair_v1.py",
+        "sha256": "a1041abe7cbfa51bef84ac7577450fc168635d5b9022f2e3637305c0ec2c37c7"
+      },
+      "conditional_donor_refinement_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/conditional_donor_refinement_v1.py",
+        "sha256": "6693b6a3e89a5afa00792fdb8878d69895572668b04e0ffafbb3fbb191c320b0"
+      },
+      "audit_conditional_donor_repair_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_conditional_donor_repair_v1.py",
+        "sha256": "e9b214526321515815b2dd2d15721c2b5749e1653f32411de0707984fb03a970"
+      },
+      "audit_conditional_donor_batch_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_conditional_donor_batch_v1.py",
+        "sha256": "7571ad6a32e3a5b13bd9d672ce679999006e7971f14ca6e1599880b5966d4c5b"
+      },
+      "multi_relay_structure_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/multi_relay_structure_v1.py",
+        "sha256": "f5aa63c2fc70081fae77049143c084d4b9f9a92d5405c15960b3364628b3074b"
+      },
+      "multi_relay_accumulation_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/multi_relay_accumulation_v1.py",
+        "sha256": "c7ff504ed8c823f834817cb740dbfc2cd156287af6edfec1faf1ec24235c7971"
+      },
+      "multi_relay_direct_control_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/multi_relay_direct_control_v1.py",
+        "sha256": "e5fe6b22ebb57471274066d5f26ac10970e28c25e408bae5763ae6365c124611"
+      },
+      "audit_multi_relay_accumulation_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_multi_relay_accumulation_v1.py",
+        "sha256": "af8f77aac5562d51f61f6a1aa3779bcb20eb7d2660ae53f6cbe94de11fd50bb1"
+      },
+      "audit_conditional_donor_metadata_v2.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_conditional_donor_metadata_v2.py",
+        "sha256": "2045341eeccb7aabfe24003c7c8cac2611a9d0cc19ec6233f0409bbbdcbf7591"
+      },
+      "audit_multi_relay_direct_control_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_multi_relay_direct_control_v1.py",
+        "sha256": "80fbc97a66c8b272723f4e7a863c2b98a1a4e6c100b98d04d7b8d842c6d86b81"
+      },
+      "audit_multi_relay_batch_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_multi_relay_batch_v1.py",
+        "sha256": "1f008546eb020e1233e1773c3156f6da4614c0e69593025ef1fb1c4be523f74f"
+      },
+      "multi_relay_native_polish_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/multi_relay_native_polish_v1.py",
+        "sha256": "4dae7710024e94851f58c5e7fdb1cd8d87a11d2c832a2ae02026e3efb8ceb846"
+      },
+      "multi_relay_native_refinement_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/multi_relay_native_refinement_v1.py",
+        "sha256": "f1138e65e081b02d032237c7f0bea5f155dfcada0f8c4680da9c72fb6ad30242"
+      },
+      "audit_multi_relay_native_polish_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_multi_relay_native_polish_v1.py",
+        "sha256": "adfc3319bc979107d5c1e2671c80b154dd3d12fe48b05f00f5a940fba3f3c968"
+      },
+      "audit_multi_relay_native_batch_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_multi_relay_native_batch_v1.py",
+        "sha256": "8a6b9c383136cde74f6246313823aaff41867fe4684d82129e103662b4b5e8a2"
+      },
+      "joint_source_relay_structure_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/joint_source_relay_structure_v1.py",
+        "sha256": "20a8623751448ae735638a63e9a0324c41ff9859509821428694e8a2f0978ef0"
+      },
+      "joint_source_native_refinement_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/joint_source_native_refinement_v1.py",
+        "sha256": "81da613a426a302125105bc33affb7b42b665bfbeff7d96f7251459355ef9cef"
+      },
+      "audit_joint_source_native_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_joint_source_native_v1.py",
+        "sha256": "ca7e936bf9ed82760f3a7fa874ca747efb0e8a62ad3d01432ec702c35a4208fe"
+      },
+      "new_late_set_repair_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/new_late_set_repair_v1.py",
+        "sha256": "d60e7f7a185aa53a29267642eece3e15b1e8182a97644d63b36de08a0e90a68d"
+      },
+      "new_late_set_native_refinement_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/new_late_set_native_refinement_v1.py",
+        "sha256": "18a2a825ce90fb54f614692f5cbef66389bc72165fb133c6b03ffbd5169aa780"
+      },
+      "audit_new_late_set_native_v1.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_new_late_set_native_v1.py",
+        "sha256": "251ba917bb2d4fe73e37b41dec9dd2adb3dd6b41111029445585ca4af91689df"
+      },
+      "directed_bundle_insertion.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/directed_bundle_insertion.py",
+        "sha256": "4facf4498171dd22613841a26350bb172dd69aea47c7d398ceb3f06eb32e7d65"
+      },
+      "run_weighted_relay_ablation.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/run_weighted_relay_ablation.py",
+        "sha256": "f79c5d75680860085cb866af2e88b2cb830259d00edd0b690f9c31d481941bb2"
+      },
+      "run_weighted_direct_pair.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/run_weighted_direct_pair.py",
+        "sha256": "ea8a7319b37424e5234d6d17c4030b2177a9494ca27c0367afebfa592063bece"
+      },
+      "weighted_direct_objective.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/weighted_direct_objective.py",
+        "sha256": "84960d3d80bff683d2c9cbca355d43c9552664088b319b5f26e2f398245c5c66"
+      },
+      "weighted_relay_objective.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/weighted_relay_objective.py",
+        "sha256": "1e84c9f8e5429a4ae7fd35d993abd561524aa79771b3a8fc43bf96994421c7fa"
+      },
+      "weighted_periodic_exchange.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/weighted_periodic_exchange.py",
+        "sha256": "75ddfa0dfb62ac6e458850d9b0ec5522ee9516d79eab9651b61d2d6cc3c82e39"
+      },
+      "run_scenario_comparison.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/run_scenario_comparison.py",
+        "sha256": "5566709d474ac03e9e3a6118a0b947098d785281f65f2c8bcc0074b8eb34ca1c"
+      },
+      "audit_weighted_relay_ablation.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_weighted_relay_ablation.py",
+        "sha256": "4e630eea78c837ce79d8937e25966ee758d4a6d6baff6c9167a402b73f6db88c"
+      },
+      "audit_weighted_direct_pair.py": {
+        "path": "algorithm/results/proactive_relay_diagnostic_20261014/batch040/sources/audit_weighted_direct_pair.py",
+        "sha256": "55e3c04be415bde40b312461f481391a63f119f5d9875f2f551e1cdeef94f6a7"
+      }
+    }
+  },
+  "input": {
+    "path": "algorithm/命题1-低空经济场景下的物流无人机调度算法数据.csv",
+    "sha256": "386d3fbaa9009aeed947493782d657ed0b30b25d369c8187bfc9619fc7e31d25"
+  },
+  "evidence_limits": [
+    "Historical strong checkpoint followed by paid additional search; do not describe as a new solve from scratch within 240 seconds.",
+    "The winning saved solution has no relay deliveries and does not establish relay superiority.",
+    "Reference with 141 on-time deliveries is retained because the weighted best has 140; neither dominates the other in every metric."
+  ]
+}
