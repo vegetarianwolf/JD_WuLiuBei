@@ -5,6 +5,8 @@ Only the metadata callback is isolated: its real raw/post proof has its own
 synthetic integration suite. Canonical routes, receipts and CF checks are real.
 """
 from copy import deepcopy
+import sys
+from types import ModuleType
 
 import pytest
 
@@ -145,6 +147,8 @@ def test_protocol_values_and_schedule_bind_before_prepare(tmp_path):
         topology=historical['topology'], artifact_json_indent=0,
         accumulation_fixed_catalogue_parameters=FIXED_CATALOGUE, periodic_parameters=PERIODIC,
         schedule=[dict(arm=a, seed=23, run_id=a+'__seed_23') for a in ledger.MULTI_NATIVE_PAIR])
+    manifest['execution_sources'] = {name+'.py': {} for name in
+        ('multi_relay_direct_control_v1', 'multi_relay_native_refinement_v1', 'audit_multi_relay_native_batch_v1')}
     protocol = dict(kind='predeclared_independent_arm_multi_group_native_historical_checkpoint_diagnostic',
         batch=tmp_path.name, arms=list(ledger.MULTI_NATIVE_PAIR), seed=23, budget_seconds_per_arm=120.,
         homes='stations', checkpoint_path=str(CHECKPOINT), checkpoint_sha256=ledger.sha(CHECKPOINT),
@@ -154,9 +158,40 @@ def test_protocol_values_and_schedule_bind_before_prepare(tmp_path):
     file = tmp_path/'protocol.json';ledger.write(file, protocol)
     manifest['multi_relay_native_protocol'] = dict(path=str(file), sha256=ledger.sha(file))
     ledger._verify_multi_native_protocol(tmp_path, manifest)
+    changed = deepcopy(manifest);changed['execution_sources'].pop('audit_multi_relay_native_batch_v1.py')
+    with pytest.raises(AssertionError): ledger._verify_multi_native_protocol(tmp_path, changed)
     changed = deepcopy(manifest);changed['method_parameters']['multi_native_relay']['raw_fraction'] = .5
     with pytest.raises(ValueError): ledger._verify_multi_native_protocol(tmp_path, changed)
     changed = deepcopy(manifest);changed['schedule'][0]['seed'] += 1
     with pytest.raises(AssertionError): ledger._verify_multi_native_protocol(tmp_path, changed)
     protocol['seed'] += 1;ledger.write(file, protocol)
     with pytest.raises(AssertionError): ledger._verify_multi_native_protocol(tmp_path, manifest)
+
+
+def test_native_protocol_cannot_pair_transport_with_another_auditor_or_missing_source():
+    baseline, auditor = ledger._native_implementation({})
+    assert baseline == {arm: ledger.METHODS[arm] for arm in ledger.MULTI_NATIVE_PAIR}
+    assert auditor == 'audit_multi_relay_native_batch_v1'
+    joint = dict(method_modules=dict(multi_native_direct='multi_relay_direct_control_v1',
+        multi_native_relay='joint_source_native_refinement_v1'), metadata_auditor='audit_joint_source_native_v1')
+    assert ledger._native_implementation(joint)[1] == joint['metadata_auditor']
+    for changed in (dict(joint, metadata_auditor=auditor),
+                    dict(joint, method_modules={**joint['method_modules'], 'multi_native_direct': 'joint_source_native_refinement_v1'}),
+                    dict(joint, method_modules={**joint['method_modules'], 'multi_native_relay': 'unregistered_module'})):
+        with pytest.raises(AssertionError): ledger._native_implementation(changed)
+
+
+def test_same_saved_ledger_selects_declared_typed_auditor(tmp_path, monkeypatch):
+    rows, manifest, calls = make_saved_pair(tmp_path, monkeypatch)
+    manifest.update(method_modules=dict(multi_native_direct='multi_relay_direct_control_v1',
+        multi_native_relay='joint_source_native_refinement_v1'), metadata_auditor='audit_joint_source_native_v1')
+    ledger.write(tmp_path/'manifest.json', manifest, indent=0);refresh(tmp_path, rows)
+    selected = []
+    module = ModuleType('algorithm.experiments.audit_joint_source_native_v1')
+    old = callback._audit_metadata
+    def typed(*args, **kwargs):
+        selected.append(kwargs['relay']);return old(*args, **kwargs)
+    module._audit_metadata = typed
+    monkeypatch.setitem(sys.modules, module.__name__, module)
+    ledger.audit(tmp_path)
+    assert selected == [False, True] and len(calls) == 2

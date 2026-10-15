@@ -80,6 +80,10 @@ ACCUMULATION_PAIR = ("accumulation_direct", "accumulation_relay")
 DIRECT_ARMS = (*DIRECT_ARMS, "accumulation_direct")
 MULTI_NATIVE_PAIR = ("multi_native_direct", "multi_native_relay")
 DIRECT_ARMS = (*DIRECT_ARMS, "multi_native_direct")
+NATIVE_IMPLEMENTATIONS = {
+    "multi_relay_native_refinement_v1": "audit_multi_relay_native_batch_v1",
+    "joint_source_native_refinement_v1": "audit_joint_source_native_v1",
+}
 CRITICAL_PREFIX_PAIR = ("critical_prefix_direct", "critical_prefix_relay")
 DIRECT_ARMS = (*DIRECT_ARMS, "critical_prefix_direct")
 SIX_SORT_PAIR = ("six_sort_direct", "six_sort_relay")
@@ -151,6 +155,7 @@ EXECUTION = (
     "audit_multi_relay_direct_control_v1.py", "audit_multi_relay_batch_v1.py",
     "multi_relay_native_polish_v1.py", "multi_relay_native_refinement_v1.py",
     "audit_multi_relay_native_polish_v1.py", "audit_multi_relay_native_batch_v1.py",
+    "joint_source_relay_structure_v1.py", "joint_source_native_refinement_v1.py", "audit_joint_source_native_v1.py",
     "directed_bundle_insertion.py",
     "run_weighted_relay_ablation.py", "run_weighted_direct_pair.py", "weighted_direct_objective.py",
     "weighted_relay_objective.py", "weighted_periodic_exchange.py", "run_scenario_comparison.py",
@@ -181,6 +186,18 @@ def digest(value):
 def key(score, manifest):
     values = [getattr(score, field) for field in FIELDS]
     return (sum(w * v / s for w, v, s in zip(manifest["weights"], values, manifest["scales"])), *values)
+
+
+def _native_implementation(config):
+    """A protocol selects implemented modules, using the same arms and ledger."""
+    modules = config.get("method_modules", {arm: METHODS[arm] for arm in MULTI_NATIVE_PAIR})
+    assert set(modules) == set(MULTI_NATIVE_PAIR)
+    assert modules[MULTI_NATIVE_PAIR[0]] == "multi_relay_direct_control_v1"
+    relay_module = modules[MULTI_NATIVE_PAIR[1]]
+    assert relay_module in NATIVE_IMPLEMENTATIONS, "Unknown native transport implementation"
+    auditor = config.get("metadata_auditor", "audit_multi_relay_native_batch_v1")
+    assert auditor == NATIVE_IMPLEMENTATIONS[relay_module], "Transport implementation and independent auditor differ"
+    return modules, auditor
 
 
 def model_topology(problem, template):
@@ -277,13 +294,21 @@ def prepare(args):
         execution[name] = dict(path=str(copy.relative_to(output)), sha256=sha(copy))
     arms = args.arms.split(",")
     assert len(set(arms)) == len(arms) and set(arms) <= {"direct", *METHODS, "combined"}
+    native_protocol_path = native_protocol = None
+    method_modules = {}
+    if set(arms) & set(MULTI_NATIVE_PAIR):
+        native_protocol_path = (args.protocol or ROOT / "papers/notes/proactive_relay_20261014/multi_relay_native_protocol_v1.json").resolve()
+        native_protocol = read(native_protocol_path)
+        method_modules, metadata_auditor = _native_implementation(native_protocol)
+    else:
+        assert args.protocol is None, "An explicit protocol selector is supported only for the native pair"
     parameters = args.method_parameters
     assert isinstance(parameters, dict) and set(parameters) <= set(arms)
     import inspect
     reserved = {"problem", "routes", "deadline", "weights", "scales", "seed", "enable_transfers", "relay_enabled", "alns_module"}
     for method, values in parameters.items():
         assert method in METHODS and isinstance(values, dict) and not (set(values) & reserved)
-        signature = inspect.signature(importlib.import_module(METHODS[method]).refine)
+        signature = inspect.signature(importlib.import_module(method_modules.get(method, METHODS[method])).refine)
         assert set(values) <= set(signature.parameters), "Unknown frozen method parameter"
     assert args.budget_seconds > 1 and 0 < args.warmup_fraction < 1
     schedule = [dict(arm=arm, seed=args.seed, run_id=f"{arm}__seed_{args.seed}") for arm in arms]
@@ -764,9 +789,11 @@ def prepare(args):
             "multi-seed performance evidence or proof of far relay superiority. No resource/model/weight "
             "changes, free historical R seed, result-conditioned retries, or post-result pool adjustment.")
     if set(arms) & set(MULTI_NATIVE_PAIR):
-        protocol_path = ROOT / "papers/notes/proactive_relay_20261014/multi_relay_native_protocol_v1.json"
-        protocol = read(protocol_path)
-        note = ROOT / "papers/notes/proactive_relay_20261014/multi_relay_native_polish_design_v1.md"
+        protocol_path, protocol = native_protocol_path, native_protocol
+        note = ROOT / protocol.get("design_path", "papers/notes/proactive_relay_20261014/multi_relay_native_polish_design_v1.md")
+        if "method_modules" in protocol:
+            manifest["method_modules"] = method_modules
+            manifest["metadata_auditor"] = metadata_auditor
         manifest["multi_relay_native_design"] = dict(path=str(note.relative_to(ROOT)), sha256=sha(note))
         manifest["multi_relay_native_protocol"] = dict(path=str(protocol_path.relative_to(ROOT)), sha256=sha(protocol_path))
         manifest["accumulation_fixed_catalogue_parameters"] = protocol["fixed_catalogue_parameters"]
@@ -801,6 +828,14 @@ def _verify_multi_native_protocol(output, manifest):
     assert manifest["purpose"] == "checkpoint_mechanism_diagnostic" and manifest["checkpoint"]
     assert protocol["batch"] == output.name
     _bind(protocol["arms"], list(MULTI_NATIVE_PAIR), "predeclared native pair")
+    modules, auditor = _native_implementation(manifest)
+    declared_modules, declared_auditor = _native_implementation(protocol)
+    _bind(modules, declared_modules, "predeclared native method modules")
+    _bind(auditor, declared_auditor, "predeclared native metadata auditor")
+    if "design_path" in protocol:
+        _bind(manifest["multi_relay_native_design"]["path"], protocol["design_path"], "predeclared transport design")
+    for name in (*modules.values(), auditor):
+        assert name + ".py" in manifest["execution_sources"], "Declared implementation is not frozen"
     for field, value in (("budget_seconds_per_arm", manifest["budget_seconds"]), ("homes", manifest["homes"]),
         ("checkpoint_path", manifest["checkpoint"]["path"]), ("checkpoint_sha256", manifest["checkpoint"]["sha256"]),
         ("input_sha256", manifest["input_sha256"]), ("weights", manifest["weights"]), ("scales", manifest["scales"]),
@@ -871,6 +906,9 @@ def worker(request):
     import weighted_periodic_exchange as periodic
     import run_scenario_comparison  # Load frozen scenario-helper imports before the measured interval.
     modules = {name: importlib.import_module(module) for name, module in METHODS.items()}
+    if "method_modules" in manifest:
+        selected_modules, _ = _native_implementation(manifest)
+        modules.update({arm: importlib.import_module(name) for arm, name in selected_modules.items()})
     started = perf_counter()
     full, plain, topology = build_case(load_tasks_csv(ROOT / manifest["input_path"]), manifest["homes"])
     assert digest(topology) == manifest["topology_sha256"]
@@ -1081,7 +1119,8 @@ def audit(output):
     if multi_native:
         assert not (output / "audit.json").exists(), "Never overwrite a completed native-pair audit"
         verify(output, manifest, current_execution=True)
-        from algorithm.experiments.audit_multi_relay_native_batch_v1 import _audit_metadata as audit_native_metadata
+        _, auditor = _native_implementation(manifest)
+        audit_native_metadata = importlib.import_module("algorithm.experiments." + auditor)._audit_metadata
     # The independent geometry/DAG auditors are immutable across research
     # iterations; newer orchestration does not change historical evidence.
     for name in ("audit_weighted_relay_ablation.py", "audit_weighted_direct_pair.py"):
@@ -1604,6 +1643,7 @@ if __name__ == "__main__":
     parser.add_argument("--arms", default="direct,batch,reciprocal")
     parser.add_argument("--checkpoint", type=Path)
     parser.add_argument("--method-parameters", type=json.loads, default={})
+    parser.add_argument("--protocol", type=Path, help="Predeclared implementation protocol for the existing native pair")
     args = parser.parse_args()
     if args.command == "prepare": prepare(args)
     elif args.command == "run": run(args.output_dir.resolve())
