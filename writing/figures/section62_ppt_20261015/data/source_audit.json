@@ -1,0 +1,1187 @@
+{
+  "audit_kind": "Read-only provenance / saved-score audit. No solver or new experiments executed; no manuscript or existing data modified.",
+  "audit_date": "2026-10-15",
+  "manuscript_path": "writing/manuscript/低空物流协同调度_示意数据修订版.docx",
+  "manuscript_sha256": "bc0db107f91b5e345053042142626a245c2b43a48ffd40ded5818076cdffcd28",
+  "target_manuscript_commit": "3bc5467850c3ea680a927c7223f31403e2d89b3b",
+  "actual_section_structure": {
+    "start_body_index": 348,
+    "end_body_index": 363,
+    "sensitivity_table": 10,
+    "sensitivity_figures": [
+      10,
+      11,
+      12
+    ],
+    "axes": [
+      "drone_count",
+      "deadline_multiplier",
+      "station_count"
+    ],
+    "strategies": [
+      "direct_relay_stations"
+    ]
+  },
+  "exact_data_source": {
+    "historical_commit": "303e711ec9287c11e8f544bae850a95cab0dc8d4",
+    "runs_csv_path": "algorithm/results/final_sensitivity/runs.csv",
+    "runs_csv_sha256": "77f7682911d71495b966f427479a1bf112ba3a81226e4076ac1a5906c0d1e3cc",
+    "runs_csv_git_url": "https://github.com/vegetarianwolf/JD_WuLiuBei/blob/303e711ec9287c11e8f544bae850a95cab0dc8d4/algorithm/results/final_sensitivity/runs.csv",
+    "manifest_path": "algorithm/results/final_sensitivity/manifest.json",
+    "manifest_sha256": "3da4af028c893668ec2a9f2732b4786aa6dee2f26ef88fbc839e4a0bb4093721",
+    "report_path": "algorithm/results/final_sensitivity/REPORT.md",
+    "figure_generator_path": "algorithm/experiments/render_final_figures.py",
+    "figure_generator_function": "plot_sensitivity (historical lines 984–1021)",
+    "experiment_generator_path": "algorithm/experiments/run_sensitivity_analysis.py",
+    "records": 15,
+    "unique_seeds": [
+      2026081701
+    ],
+    "n_per_level": 1,
+    "tasks": 200,
+    "strategy": "Direct + Relay + Station",
+    "effective_seconds_per_run": 300,
+    "base_seconds": 240,
+    "bonus_seconds": 60,
+    "objective_order": [
+      "late_count",
+      "total_lateness_min",
+      "distance_km"
+    ],
+    "manifest_recorded_git_commit": "136e329f107156593ff5edc3a4196cc8cc413904",
+    "manifest_recorded_git_dirty": true,
+    "source_file_hash_checks": [
+      {
+        "path": "algorithm/experiments/run_sensitivity_analysis.py",
+        "actual_sha256": "5f7b6ab48e9f9e4409823d6e6a2c4043d994e876a8cd8f508a20a2fce349d08d",
+        "manifest_sha256": "5f7b6ab48e9f9e4409823d6e6a2c4043d994e876a8cd8f508a20a2fce349d08d",
+        "matches": true
+      },
+      {
+        "path": "algorithm/experiments/run_scenario_comparison.py",
+        "actual_sha256": "066175bcc817ce85aeb1b11358c5fdca0d015d4890334c45a276c57e49533731",
+        "manifest_sha256": "066175bcc817ce85aeb1b11358c5fdca0d015d4890334c45a276c57e49533731",
+        "matches": true
+      }
+    ]
+  },
+  "checks": {
+    "all_15_solution_hashes_match_csv": true,
+    "all_15_saved_scores_match_csv": true,
+    "all_15_saved_valid_true_and_no_violations": true,
+    "scope_note": "Saved validity flags and saved scores checked; this audit does not claim fresh full route feasibility evaluation."
+  },
+  "body_numeric_matches": [
+    {
+      "body_index": 353,
+      "assertion": "Drone W at 8,9,10,12,16 = 60,46,33,13,0",
+      "matches": true
+    },
+    {
+      "body_index": 359,
+      "assertion": "Deadline 0.8→1.2: W81→39, T2797.67→1161.89, L range 605.66–627.44",
+      "matches": true,
+      "W_drop_pct": 51.85185185185185,
+      "T_drop_pct": 58.46918659625494
+    },
+    {
+      "body_index": 361,
+      "assertion": "Station W range58–61; R6=(58,1800.98,609.49)",
+      "matches": true
+    }
+  ],
+  "historical_axis_baselines": [
+    {
+      "parameter": "drone_count",
+      "level": 8.0,
+      "seed": 2026081701,
+      "late_count": 60,
+      "total_lateness_min": 1906.865312563578,
+      "distance_km": 609.8763326252944,
+      "relay_task_count": 3,
+      "effective_time_limit_seconds": 300.0,
+      "wall_seconds": 299.97085275000427,
+      "solution_git_path": "algorithm/results/final_sensitivity/drone_count__8/run_solutions/direct_relay_stations__seed_2026081701.json",
+      "solution_sha256_expected": "2aff1d564cb49215ca5eb86efb22b56033f565189efbbdcee9f6f011a2de5306",
+      "solution_sha256_actual": "2aff1d564cb49215ca5eb86efb22b56033f565189efbbdcee9f6f011a2de5306",
+      "solution_sha256_matches": true,
+      "saved_score_matches_csv": true,
+      "saved_valid": true,
+      "saved_violations": [],
+      "relay_coordinates": [
+        [
+          1,
+          3.925,
+          5.775
+        ],
+        [
+          2,
+          4.605,
+          3.215
+        ],
+        [
+          3,
+          5.890000000000001,
+          5.029999999999999
+        ],
+        [
+          4,
+          2.975,
+          4.154999999999999
+        ]
+      ]
+    },
+    {
+      "parameter": "deadline_multiplier",
+      "level": 1.0,
+      "seed": 2026081701,
+      "late_count": 60,
+      "total_lateness_min": 1941.4151593395857,
+      "distance_km": 627.4418545200368,
+      "relay_task_count": 3,
+      "effective_time_limit_seconds": 300.0,
+      "wall_seconds": 299.97075037495233,
+      "solution_git_path": "algorithm/results/final_sensitivity/deadline_multiplier__1.0/run_solutions/direct_relay_stations__seed_2026081701.json",
+      "solution_sha256_expected": "0dff4b6978ab073f9da2f87da508926463d897e6482af73ee09de351ad6112c7",
+      "solution_sha256_actual": "0dff4b6978ab073f9da2f87da508926463d897e6482af73ee09de351ad6112c7",
+      "solution_sha256_matches": true,
+      "saved_score_matches_csv": true,
+      "saved_valid": true,
+      "saved_violations": [],
+      "relay_coordinates": [
+        [
+          1,
+          3.925,
+          5.775
+        ],
+        [
+          2,
+          4.605,
+          3.215
+        ],
+        [
+          3,
+          5.890000000000001,
+          5.029999999999999
+        ],
+        [
+          4,
+          2.975,
+          4.154999999999999
+        ]
+      ]
+    },
+    {
+      "parameter": "station_count",
+      "level": 4.0,
+      "seed": 2026081701,
+      "late_count": 60,
+      "total_lateness_min": 1939.999882723483,
+      "distance_km": 623.7541350103868,
+      "relay_task_count": 5,
+      "effective_time_limit_seconds": 300.0,
+      "wall_seconds": 299.97092091699596,
+      "solution_git_path": "algorithm/results/final_sensitivity/station_count__4/run_solutions/direct_relay_stations__seed_2026081701.json",
+      "solution_sha256_expected": "a6b3f1004aad0a46379ce164022a09a30ee11612a835af247804d22366982cf7",
+      "solution_sha256_actual": "a6b3f1004aad0a46379ce164022a09a30ee11612a835af247804d22366982cf7",
+      "solution_sha256_matches": true,
+      "saved_score_matches_csv": true,
+      "saved_valid": true,
+      "saved_violations": [],
+      "relay_coordinates": [
+        [
+          1,
+          3.925,
+          5.775
+        ],
+        [
+          2,
+          4.605,
+          3.215
+        ],
+        [
+          3,
+          5.890000000000001,
+          5.029999999999999
+        ],
+        [
+          4,
+          2.975,
+          4.154999999999999
+        ]
+      ]
+    }
+  ],
+  "baseline_warning": "Three axes each solved the nominal configuration (M=8,deadline=1,R=4) separately. W=60 for all but T/L differ; retain each axis own baseline. Do not replace with common baseline or interpret those three observations as n=3 replicates for uncertainty.",
+  "station_topology_warning": "Historical station-count runs regenerate weighted k-medoids for each R (location_seed=42). Sets are not nested; station quantity and corresponding site locations change jointly. Drone/deadline axes preserve the same four coordinates. Cannot attribute station-axis changes solely to count or relay mechanism.",
+  "uncertainty_warning": "One saved run per level with seed2026081701. No SD/SE/CI or robustness frequency can be estimated from this batch. No error bars should be fabricated. Report observations within these tested levels; do not claim statistical significance or universal monotonicity.",
+  "manuscript_media": [
+    {
+      "figure_number": 10,
+      "docx_member": "word/media/image10.png",
+      "docx_image_sha256": "4551127eee7818f2e48bbfc81ab69ab757f9ff7e88ec6928ecb4e730a2f89147",
+      "historical_figure_path": "writing/figures/final/fig6_3_drone_count_sensitivity.png",
+      "historical_figure_sha256": "28bedb5f518fba732e16df6020bf1c5636d63bb59295c9bb1f0a9811f79ab29d",
+      "byte_identical": false,
+      "visual_inspection": "Current manuscript image is a Chinese restyled raster chart; historical figure is an English Matplotlib chart. Numeric interpretation must use CSV, not raster digitization."
+    },
+    {
+      "figure_number": 11,
+      "docx_member": "word/media/image11.png",
+      "docx_image_sha256": "278e7f5a2daa575cdccaefcd84903ff27a0cc8a9594e9ae90dca26f5fad0d34c",
+      "historical_figure_path": "writing/figures/final/fig6_3_deadline_multiplier_sensitivity.png",
+      "historical_figure_sha256": "6ac043c72da112619a76138bdc25002cc549cc13ab494e27f514eb2d91b50ffe",
+      "byte_identical": false,
+      "visual_inspection": "Current manuscript image is a Chinese restyled raster chart; historical figure is an English Matplotlib chart. Numeric interpretation must use CSV, not raster digitization."
+    },
+    {
+      "figure_number": 12,
+      "docx_member": "word/media/image12.png",
+      "docx_image_sha256": "6f924c081d3bf2ae6a06917495282f0baae416a824e328365681cafe25913405",
+      "historical_figure_path": "writing/figures/final/fig6_3_station_count_sensitivity.png",
+      "historical_figure_sha256": "1413f7b7c3592b1d96eee4f5a8b8d697d2ae3f83df7b14d43585699df7e5eb1b",
+      "byte_identical": false,
+      "visual_inspection": "Current manuscript image is a Chinese restyled raster chart; historical figure is an English Matplotlib chart. Numeric interpretation must use CSV, not raster digitization."
+    }
+  ],
+  "media_limitations": [
+    "Embedded PNGs are not byte-identical to historical source PNGs and there is no traced source code for the Chinese restyling.",
+    "Visual inspection finds approximate/misaligned positions in embedded graphics (e.g. deadline1.1 L appears around609.4 while exact CSV=607.409718849; station6 W appears above58 while exact CSV/body=58). These visual estimates are qualitative, not replacement values.",
+    "Use exact historical CSV values that match manuscript text and archived solution scores; never infer decimals from pixels."
+  ],
+  "manuscript_reference_issues": [
+    "6.2.2 body_index359 says 如图10 but appears beneath caption图11.",
+    "6.2.3 body_index361 says 如图10 though its own chart is图12.",
+    "Only sensitivity settings table10 exists in this specified manuscript. Later five-seed tables11–13 are from a different manuscript version."
+  ],
+  "other_batches": {
+    "working_tree_final_sensitivity": {
+      "n_per_level": 5,
+      "strategies": 4,
+      "configuration_rows": 55,
+      "display_records": 275,
+      "unique_solves": 240,
+      "effective_seconds_per_run": 300,
+      "seed_range": "2026081701–2026081705",
+      "baseline_combined_mean": [
+        61.4,
+        1927.2440186240142,
+        617.4273358738488
+      ],
+      "not_used_reason": "Later 4-strategy five-seed batch does not reproduce specified manuscript single-run numbers; current README refers to that later version."
+    },
+    "section62_shared_20261015T025130Z": {
+      "n_per_level": 3,
+      "strategies": 1,
+      "unique_solves": 39,
+      "display_records": 45,
+      "seeds": [
+        2026081701,
+        2026081702,
+        2026081703
+      ],
+      "effective_seconds_per_run": 240,
+      "method": "frozen integrated C2-Lex-ALNS",
+      "git_base": "d0bdf6679cd8b2bafcc377454ad57225376ec199",
+      "source_aggregate_sha256": "14e3d31a5f7f56612fbd9bcef239042d1b14b948213277620355a48162abf481",
+      "baseline_mean": [
+        65.33333333333333,
+        2067.713905161901,
+        632.1387544488153
+      ],
+      "baseline_reuse": "3 newly solved compatible baselines reused across all 3 axes",
+      "station_rule": "Generate six fixed stations from unscaled tasks with seed42, then use first R (nested sets)",
+      "not_used_reason": "Different source version, 240s budget, 3-seed aggregation, station geometry, and reuse protocol. Not a drop-in replacement for the manuscript historical 300s n1 data."
+    }
+  },
+  "all_exact_historical_records": [
+    {
+      "parameter": "drone_count",
+      "level": 8.0,
+      "seed": 2026081701,
+      "late_count": 60,
+      "total_lateness_min": 1906.865312563578,
+      "distance_km": 609.8763326252944,
+      "relay_task_count": 3,
+      "effective_time_limit_seconds": 300.0,
+      "wall_seconds": 299.97085275000427,
+      "solution_git_path": "algorithm/results/final_sensitivity/drone_count__8/run_solutions/direct_relay_stations__seed_2026081701.json",
+      "solution_sha256_expected": "2aff1d564cb49215ca5eb86efb22b56033f565189efbbdcee9f6f011a2de5306",
+      "solution_sha256_actual": "2aff1d564cb49215ca5eb86efb22b56033f565189efbbdcee9f6f011a2de5306",
+      "solution_sha256_matches": true,
+      "saved_score_matches_csv": true,
+      "saved_valid": true,
+      "saved_violations": [],
+      "relay_coordinates": [
+        [
+          1,
+          3.925,
+          5.775
+        ],
+        [
+          2,
+          4.605,
+          3.215
+        ],
+        [
+          3,
+          5.890000000000001,
+          5.029999999999999
+        ],
+        [
+          4,
+          2.975,
+          4.154999999999999
+        ]
+      ]
+    },
+    {
+      "parameter": "drone_count",
+      "level": 9.0,
+      "seed": 2026081701,
+      "late_count": 46,
+      "total_lateness_min": 1344.190328744423,
+      "distance_km": 603.7894741359787,
+      "relay_task_count": 3,
+      "effective_time_limit_seconds": 300.0,
+      "wall_seconds": 299.97524487494957,
+      "solution_git_path": "algorithm/results/final_sensitivity/drone_count__9/run_solutions/direct_relay_stations__seed_2026081701.json",
+      "solution_sha256_expected": "303efa1fb8f93554f47dafe02ea8a25bc8a56efbe049b3918059bd626bf2f77b",
+      "solution_sha256_actual": "303efa1fb8f93554f47dafe02ea8a25bc8a56efbe049b3918059bd626bf2f77b",
+      "solution_sha256_matches": true,
+      "saved_score_matches_csv": true,
+      "saved_valid": true,
+      "saved_violations": [],
+      "relay_coordinates": [
+        [
+          1,
+          3.925,
+          5.775
+        ],
+        [
+          2,
+          4.605,
+          3.215
+        ],
+        [
+          3,
+          5.890000000000001,
+          5.029999999999999
+        ],
+        [
+          4,
+          2.975,
+          4.154999999999999
+        ]
+      ]
+    },
+    {
+      "parameter": "drone_count",
+      "level": 10.0,
+      "seed": 2026081701,
+      "late_count": 33,
+      "total_lateness_min": 728.9699294285788,
+      "distance_km": 606.8983438800072,
+      "relay_task_count": 2,
+      "effective_time_limit_seconds": 300.0,
+      "wall_seconds": 299.9773400829872,
+      "solution_git_path": "algorithm/results/final_sensitivity/drone_count__10/run_solutions/direct_relay_stations__seed_2026081701.json",
+      "solution_sha256_expected": "d9087f6a31cb9ce47784101cd03d6777c0be21cb32c50adcdc6abcdde41455f2",
+      "solution_sha256_actual": "d9087f6a31cb9ce47784101cd03d6777c0be21cb32c50adcdc6abcdde41455f2",
+      "solution_sha256_matches": true,
+      "saved_score_matches_csv": true,
+      "saved_valid": true,
+      "saved_violations": [],
+      "relay_coordinates": [
+        [
+          1,
+          3.925,
+          5.775
+        ],
+        [
+          2,
+          4.605,
+          3.215
+        ],
+        [
+          3,
+          5.890000000000001,
+          5.029999999999999
+        ],
+        [
+          4,
+          2.975,
+          4.154999999999999
+        ]
+      ]
+    },
+    {
+      "parameter": "drone_count",
+      "level": 12.0,
+      "seed": 2026081701,
+      "late_count": 13,
+      "total_lateness_min": 230.73192139876988,
+      "distance_km": 619.1587414462775,
+      "relay_task_count": 5,
+      "effective_time_limit_seconds": 300.0,
+      "wall_seconds": 299.9737462499179,
+      "solution_git_path": "algorithm/results/final_sensitivity/drone_count__12/run_solutions/direct_relay_stations__seed_2026081701.json",
+      "solution_sha256_expected": "b26be9052e8ec2b66c09d3be5f8bf76107ea039d9c5170997324f1605a661c09",
+      "solution_sha256_actual": "b26be9052e8ec2b66c09d3be5f8bf76107ea039d9c5170997324f1605a661c09",
+      "solution_sha256_matches": true,
+      "saved_score_matches_csv": true,
+      "saved_valid": true,
+      "saved_violations": [],
+      "relay_coordinates": [
+        [
+          1,
+          3.925,
+          5.775
+        ],
+        [
+          2,
+          4.605,
+          3.215
+        ],
+        [
+          3,
+          5.890000000000001,
+          5.029999999999999
+        ],
+        [
+          4,
+          2.975,
+          4.154999999999999
+        ]
+      ]
+    },
+    {
+      "parameter": "drone_count",
+      "level": 16.0,
+      "seed": 2026081701,
+      "late_count": 0,
+      "total_lateness_min": 0.0,
+      "distance_km": 564.7429967652731,
+      "relay_task_count": 6,
+      "effective_time_limit_seconds": 300.0,
+      "wall_seconds": 299.97403800010215,
+      "solution_git_path": "algorithm/results/final_sensitivity/drone_count__16/run_solutions/direct_relay_stations__seed_2026081701.json",
+      "solution_sha256_expected": "4ebddb30730fabfc406bd9e2f3a79ce1d00d950140c53109ab9d42ecd4977fe1",
+      "solution_sha256_actual": "4ebddb30730fabfc406bd9e2f3a79ce1d00d950140c53109ab9d42ecd4977fe1",
+      "solution_sha256_matches": true,
+      "saved_score_matches_csv": true,
+      "saved_valid": true,
+      "saved_violations": [],
+      "relay_coordinates": [
+        [
+          1,
+          3.925,
+          5.775
+        ],
+        [
+          2,
+          4.605,
+          3.215
+        ],
+        [
+          3,
+          5.890000000000001,
+          5.029999999999999
+        ],
+        [
+          4,
+          2.975,
+          4.154999999999999
+        ]
+      ]
+    },
+    {
+      "parameter": "deadline_multiplier",
+      "level": 0.8,
+      "seed": 2026081701,
+      "late_count": 81,
+      "total_lateness_min": 2797.665639998565,
+      "distance_km": 610.4329522659012,
+      "relay_task_count": 4,
+      "effective_time_limit_seconds": 300.0,
+      "wall_seconds": 299.9699512080988,
+      "solution_git_path": "algorithm/results/final_sensitivity/deadline_multiplier__0.8/run_solutions/direct_relay_stations__seed_2026081701.json",
+      "solution_sha256_expected": "5417f5044c7e38cfab6e61967aebd52731de06279a4a1d650275bfe375a2a0d4",
+      "solution_sha256_actual": "5417f5044c7e38cfab6e61967aebd52731de06279a4a1d650275bfe375a2a0d4",
+      "solution_sha256_matches": true,
+      "saved_score_matches_csv": true,
+      "saved_valid": true,
+      "saved_violations": [],
+      "relay_coordinates": [
+        [
+          1,
+          3.925,
+          5.775
+        ],
+        [
+          2,
+          4.605,
+          3.215
+        ],
+        [
+          3,
+          5.890000000000001,
+          5.029999999999999
+        ],
+        [
+          4,
+          2.975,
+          4.154999999999999
+        ]
+      ]
+    },
+    {
+      "parameter": "deadline_multiplier",
+      "level": 0.9,
+      "seed": 2026081701,
+      "late_count": 71,
+      "total_lateness_min": 2227.972529234189,
+      "distance_km": 605.6627195040369,
+      "relay_task_count": 2,
+      "effective_time_limit_seconds": 300.0,
+      "wall_seconds": 299.97323754103854,
+      "solution_git_path": "algorithm/results/final_sensitivity/deadline_multiplier__0.9/run_solutions/direct_relay_stations__seed_2026081701.json",
+      "solution_sha256_expected": "d05a136bc70bd420598c02e805b8f7172b46dfb55bb1bdaa76d2b1c39032f433",
+      "solution_sha256_actual": "d05a136bc70bd420598c02e805b8f7172b46dfb55bb1bdaa76d2b1c39032f433",
+      "solution_sha256_matches": true,
+      "saved_score_matches_csv": true,
+      "saved_valid": true,
+      "saved_violations": [],
+      "relay_coordinates": [
+        [
+          1,
+          3.925,
+          5.775
+        ],
+        [
+          2,
+          4.605,
+          3.215
+        ],
+        [
+          3,
+          5.890000000000001,
+          5.029999999999999
+        ],
+        [
+          4,
+          2.975,
+          4.154999999999999
+        ]
+      ]
+    },
+    {
+      "parameter": "deadline_multiplier",
+      "level": 1.0,
+      "seed": 2026081701,
+      "late_count": 60,
+      "total_lateness_min": 1941.4151593395857,
+      "distance_km": 627.4418545200368,
+      "relay_task_count": 3,
+      "effective_time_limit_seconds": 300.0,
+      "wall_seconds": 299.97075037495233,
+      "solution_git_path": "algorithm/results/final_sensitivity/deadline_multiplier__1.0/run_solutions/direct_relay_stations__seed_2026081701.json",
+      "solution_sha256_expected": "0dff4b6978ab073f9da2f87da508926463d897e6482af73ee09de351ad6112c7",
+      "solution_sha256_actual": "0dff4b6978ab073f9da2f87da508926463d897e6482af73ee09de351ad6112c7",
+      "solution_sha256_matches": true,
+      "saved_score_matches_csv": true,
+      "saved_valid": true,
+      "saved_violations": [],
+      "relay_coordinates": [
+        [
+          1,
+          3.925,
+          5.775
+        ],
+        [
+          2,
+          4.605,
+          3.215
+        ],
+        [
+          3,
+          5.890000000000001,
+          5.029999999999999
+        ],
+        [
+          4,
+          2.975,
+          4.154999999999999
+        ]
+      ]
+    },
+    {
+      "parameter": "deadline_multiplier",
+      "level": 1.1,
+      "seed": 2026081701,
+      "late_count": 49,
+      "total_lateness_min": 1480.805608959864,
+      "distance_km": 607.4097188492149,
+      "relay_task_count": 4,
+      "effective_time_limit_seconds": 300.0,
+      "wall_seconds": 299.9707575000357,
+      "solution_git_path": "algorithm/results/final_sensitivity/deadline_multiplier__1.1/run_solutions/direct_relay_stations__seed_2026081701.json",
+      "solution_sha256_expected": "2a782c24341bfaf5a1a0e904393f44cc55e35fb920df2da866eea7fff3bab368",
+      "solution_sha256_actual": "2a782c24341bfaf5a1a0e904393f44cc55e35fb920df2da866eea7fff3bab368",
+      "solution_sha256_matches": true,
+      "saved_score_matches_csv": true,
+      "saved_valid": true,
+      "saved_violations": [],
+      "relay_coordinates": [
+        [
+          1,
+          3.925,
+          5.775
+        ],
+        [
+          2,
+          4.605,
+          3.215
+        ],
+        [
+          3,
+          5.890000000000001,
+          5.029999999999999
+        ],
+        [
+          4,
+          2.975,
+          4.154999999999999
+        ]
+      ]
+    },
+    {
+      "parameter": "deadline_multiplier",
+      "level": 1.2,
+      "seed": 2026081701,
+      "late_count": 39,
+      "total_lateness_min": 1161.893296608494,
+      "distance_km": 618.9487219592494,
+      "relay_task_count": 2,
+      "effective_time_limit_seconds": 300.0,
+      "wall_seconds": 299.9746209169971,
+      "solution_git_path": "algorithm/results/final_sensitivity/deadline_multiplier__1.2/run_solutions/direct_relay_stations__seed_2026081701.json",
+      "solution_sha256_expected": "397c801fa2df049e18cf657f2f04da75d777f044c229dedc91663a68a59d028f",
+      "solution_sha256_actual": "397c801fa2df049e18cf657f2f04da75d777f044c229dedc91663a68a59d028f",
+      "solution_sha256_matches": true,
+      "saved_score_matches_csv": true,
+      "saved_valid": true,
+      "saved_violations": [],
+      "relay_coordinates": [
+        [
+          1,
+          3.925,
+          5.775
+        ],
+        [
+          2,
+          4.605,
+          3.215
+        ],
+        [
+          3,
+          5.890000000000001,
+          5.029999999999999
+        ],
+        [
+          4,
+          2.975,
+          4.154999999999999
+        ]
+      ]
+    },
+    {
+      "parameter": "station_count",
+      "level": 2.0,
+      "seed": 2026081701,
+      "late_count": 59,
+      "total_lateness_min": 1983.9941025902165,
+      "distance_km": 608.2263639929419,
+      "relay_task_count": 1,
+      "effective_time_limit_seconds": 300.0,
+      "wall_seconds": 299.97002312506083,
+      "solution_git_path": "algorithm/results/final_sensitivity/station_count__2/run_solutions/direct_relay_stations__seed_2026081701.json",
+      "solution_sha256_expected": "66915aeac8da529043f5b84a0383aadeee3f24f8636a215e9ccb67c23849d577",
+      "solution_sha256_actual": "66915aeac8da529043f5b84a0383aadeee3f24f8636a215e9ccb67c23849d577",
+      "solution_sha256_matches": true,
+      "saved_score_matches_csv": true,
+      "saved_valid": true,
+      "saved_violations": [],
+      "relay_coordinates": [
+        [
+          1,
+          4.175,
+          5.53
+        ],
+        [
+          2,
+          4.6850000000000005,
+          3.5549999999999997
+        ]
+      ]
+    },
+    {
+      "parameter": "station_count",
+      "level": 3.0,
+      "seed": 2026081701,
+      "late_count": 61,
+      "total_lateness_min": 2012.3091274999117,
+      "distance_km": 635.1163315610395,
+      "relay_task_count": 2,
+      "effective_time_limit_seconds": 300.0,
+      "wall_seconds": 299.9737710839836,
+      "solution_git_path": "algorithm/results/final_sensitivity/station_count__3/run_solutions/direct_relay_stations__seed_2026081701.json",
+      "solution_sha256_expected": "cfd7b7c507b6d3fab737d17484508cdb560d4e4d7c6e4bd630227442eed27a67",
+      "solution_sha256_actual": "cfd7b7c507b6d3fab737d17484508cdb560d4e4d7c6e4bd630227442eed27a67",
+      "solution_sha256_matches": true,
+      "saved_score_matches_csv": true,
+      "saved_valid": true,
+      "saved_violations": [],
+      "relay_coordinates": [
+        [
+          1,
+          3.61,
+          5.655
+        ],
+        [
+          2,
+          3.89,
+          3.4799999999999995
+        ],
+        [
+          3,
+          5.83,
+          4.785
+        ]
+      ]
+    },
+    {
+      "parameter": "station_count",
+      "level": 4.0,
+      "seed": 2026081701,
+      "late_count": 60,
+      "total_lateness_min": 1939.999882723483,
+      "distance_km": 623.7541350103868,
+      "relay_task_count": 5,
+      "effective_time_limit_seconds": 300.0,
+      "wall_seconds": 299.97092091699596,
+      "solution_git_path": "algorithm/results/final_sensitivity/station_count__4/run_solutions/direct_relay_stations__seed_2026081701.json",
+      "solution_sha256_expected": "a6b3f1004aad0a46379ce164022a09a30ee11612a835af247804d22366982cf7",
+      "solution_sha256_actual": "a6b3f1004aad0a46379ce164022a09a30ee11612a835af247804d22366982cf7",
+      "solution_sha256_matches": true,
+      "saved_score_matches_csv": true,
+      "saved_valid": true,
+      "saved_violations": [],
+      "relay_coordinates": [
+        [
+          1,
+          3.925,
+          5.775
+        ],
+        [
+          2,
+          4.605,
+          3.215
+        ],
+        [
+          3,
+          5.890000000000001,
+          5.029999999999999
+        ],
+        [
+          4,
+          2.975,
+          4.154999999999999
+        ]
+      ]
+    },
+    {
+      "parameter": "station_count",
+      "level": 5.0,
+      "seed": 2026081701,
+      "late_count": 61,
+      "total_lateness_min": 1823.9901281361417,
+      "distance_km": 607.9026042137199,
+      "relay_task_count": 2,
+      "effective_time_limit_seconds": 300.0,
+      "wall_seconds": 299.97054029104766,
+      "solution_git_path": "algorithm/results/final_sensitivity/station_count__5/run_solutions/direct_relay_stations__seed_2026081701.json",
+      "solution_sha256_expected": "3f422638d60c1aa47d80f5d53313b0d8022b1bb1f81eb495c9ca650770ca8f35",
+      "solution_sha256_actual": "3f422638d60c1aa47d80f5d53313b0d8022b1bb1f81eb495c9ca650770ca8f35",
+      "solution_sha256_matches": true,
+      "saved_score_matches_csv": true,
+      "saved_valid": true,
+      "saved_violations": [],
+      "relay_coordinates": [
+        [
+          1,
+          3.925,
+          5.775
+        ],
+        [
+          2,
+          4.6850000000000005,
+          3.5549999999999997
+        ],
+        [
+          3,
+          5.890000000000001,
+          5.029999999999999
+        ],
+        [
+          4,
+          2.975,
+          4.154999999999999
+        ],
+        [
+          5,
+          4.85,
+          2.07
+        ]
+      ]
+    },
+    {
+      "parameter": "station_count",
+      "level": 6.0,
+      "seed": 2026081701,
+      "late_count": 58,
+      "total_lateness_min": 1800.9753983027276,
+      "distance_km": 609.4937467989528,
+      "relay_task_count": 5,
+      "effective_time_limit_seconds": 300.0,
+      "wall_seconds": 299.9725498330081,
+      "solution_git_path": "algorithm/results/final_sensitivity/station_count__6/run_solutions/direct_relay_stations__seed_2026081701.json",
+      "solution_sha256_expected": "6a29192f228415bddeb310c0e2669453b7f640eb2d8c7aee92c7bfd5e69c0499",
+      "solution_sha256_actual": "6a29192f228415bddeb310c0e2669453b7f640eb2d8c7aee92c7bfd5e69c0499",
+      "solution_sha256_matches": true,
+      "saved_score_matches_csv": true,
+      "saved_valid": true,
+      "saved_violations": [],
+      "relay_coordinates": [
+        [
+          1,
+          4.175,
+          5.53
+        ],
+        [
+          2,
+          4.6850000000000005,
+          3.5549999999999997
+        ],
+        [
+          3,
+          5.890000000000001,
+          5.029999999999999
+        ],
+        [
+          4,
+          2.975,
+          4.154999999999999
+        ],
+        [
+          5,
+          4.85,
+          2.07
+        ],
+        [
+          6,
+          2.195,
+          6.805
+        ]
+      ]
+    }
+  ],
+  "all_axes_cross_batch_comparison": [
+    {
+      "parameter": "drone_count",
+      "level": 8.0,
+      "manuscript_historical_n1": {
+        "late_count": 60,
+        "total_lateness_min": 1906.865312563578,
+        "distance_km": 609.8763326252944
+      },
+      "working_tree_final_sensitivity_n5_mean": {
+        "late_count": 61.4,
+        "total_lateness_min": 1927.2440186240142,
+        "distance_km": 617.4273358738488
+      },
+      "section62_shared_20261015T025130Z_n3_mean": {
+        "late_count": 65.33333333333333,
+        "total_lateness_min": 2067.713905161901,
+        "distance_km": 632.1387544488153
+      }
+    },
+    {
+      "parameter": "drone_count",
+      "level": 9.0,
+      "manuscript_historical_n1": {
+        "late_count": 46,
+        "total_lateness_min": 1344.190328744423,
+        "distance_km": 603.7894741359787
+      },
+      "working_tree_final_sensitivity_n5_mean": {
+        "late_count": 50.0,
+        "total_lateness_min": 1336.4357310644755,
+        "distance_km": 613.70824000727
+      },
+      "section62_shared_20261015T025130Z_n3_mean": {
+        "late_count": 53.0,
+        "total_lateness_min": 1338.168535188507,
+        "distance_km": 608.780893352016
+      }
+    },
+    {
+      "parameter": "drone_count",
+      "level": 10.0,
+      "manuscript_historical_n1": {
+        "late_count": 33,
+        "total_lateness_min": 728.9699294285788,
+        "distance_km": 606.8983438800072
+      },
+      "working_tree_final_sensitivity_n5_mean": {
+        "late_count": 35.4,
+        "total_lateness_min": 806.7122594889728,
+        "distance_km": 608.7408372164091
+      },
+      "section62_shared_20261015T025130Z_n3_mean": {
+        "late_count": 39.333333333333336,
+        "total_lateness_min": 957.3071776715148,
+        "distance_km": 620.6857485569109
+      }
+    },
+    {
+      "parameter": "drone_count",
+      "level": 12.0,
+      "manuscript_historical_n1": {
+        "late_count": 13,
+        "total_lateness_min": 230.73192139876988,
+        "distance_km": 619.1587414462775
+      },
+      "working_tree_final_sensitivity_n5_mean": {
+        "late_count": 16.2,
+        "total_lateness_min": 312.55350694377614,
+        "distance_km": 625.2292887334158
+      },
+      "section62_shared_20261015T025130Z_n3_mean": {
+        "late_count": 19.0,
+        "total_lateness_min": 363.17484157249856,
+        "distance_km": 627.8673979568733
+      }
+    },
+    {
+      "parameter": "drone_count",
+      "level": 16.0,
+      "manuscript_historical_n1": {
+        "late_count": 0,
+        "total_lateness_min": 0.0,
+        "distance_km": 564.7429967652731
+      },
+      "working_tree_final_sensitivity_n5_mean": {
+        "late_count": 0.0,
+        "total_lateness_min": 0.0,
+        "distance_km": 574.7751047042849
+      },
+      "section62_shared_20261015T025130Z_n3_mean": {
+        "late_count": 0.0,
+        "total_lateness_min": 0.0,
+        "distance_km": 603.2246223777843
+      }
+    },
+    {
+      "parameter": "deadline_multiplier",
+      "level": 0.8,
+      "manuscript_historical_n1": {
+        "late_count": 81,
+        "total_lateness_min": 2797.665639998565,
+        "distance_km": 610.4329522659012
+      },
+      "working_tree_final_sensitivity_n5_mean": {
+        "late_count": 85.4,
+        "total_lateness_min": 2881.179335455382,
+        "distance_km": 614.0407211974891
+      },
+      "section62_shared_20261015T025130Z_n3_mean": {
+        "late_count": 87.66666666666667,
+        "total_lateness_min": 2861.504383283782,
+        "distance_km": 614.0462408208715
+      }
+    },
+    {
+      "parameter": "deadline_multiplier",
+      "level": 0.9,
+      "manuscript_historical_n1": {
+        "late_count": 71,
+        "total_lateness_min": 2227.972529234189,
+        "distance_km": 605.6627195040369
+      },
+      "working_tree_final_sensitivity_n5_mean": {
+        "late_count": 71.8,
+        "total_lateness_min": 2295.6909233567467,
+        "distance_km": 608.7767446276557
+      },
+      "section62_shared_20261015T025130Z_n3_mean": {
+        "late_count": 75.33333333333333,
+        "total_lateness_min": 2450.4247323739455,
+        "distance_km": 622.5170854067286
+      }
+    },
+    {
+      "parameter": "deadline_multiplier",
+      "level": 1.0,
+      "manuscript_historical_n1": {
+        "late_count": 60,
+        "total_lateness_min": 1941.4151593395857,
+        "distance_km": 627.4418545200368
+      },
+      "working_tree_final_sensitivity_n5_mean": {
+        "late_count": 61.4,
+        "total_lateness_min": 1927.2440186240142,
+        "distance_km": 617.4273358738488
+      },
+      "section62_shared_20261015T025130Z_n3_mean": {
+        "late_count": 65.33333333333333,
+        "total_lateness_min": 2067.713905161901,
+        "distance_km": 632.1387544488153
+      }
+    },
+    {
+      "parameter": "deadline_multiplier",
+      "level": 1.1,
+      "manuscript_historical_n1": {
+        "late_count": 49,
+        "total_lateness_min": 1480.805608959864,
+        "distance_km": 607.4097188492149
+      },
+      "working_tree_final_sensitivity_n5_mean": {
+        "late_count": 50.4,
+        "total_lateness_min": 1577.1398914261845,
+        "distance_km": 624.9329973202373
+      },
+      "section62_shared_20261015T025130Z_n3_mean": {
+        "late_count": 56.333333333333336,
+        "total_lateness_min": 1723.5805698152424,
+        "distance_km": 623.996153455465
+      }
+    },
+    {
+      "parameter": "deadline_multiplier",
+      "level": 1.2,
+      "manuscript_historical_n1": {
+        "late_count": 39,
+        "total_lateness_min": 1161.893296608494,
+        "distance_km": 618.9487219592494
+      },
+      "working_tree_final_sensitivity_n5_mean": {
+        "late_count": 39.8,
+        "total_lateness_min": 1219.9199741354316,
+        "distance_km": 624.4646548424537
+      },
+      "section62_shared_20261015T025130Z_n3_mean": {
+        "late_count": 43.0,
+        "total_lateness_min": 1274.8356352043504,
+        "distance_km": 627.3572092882995
+      }
+    },
+    {
+      "parameter": "station_count",
+      "level": 2.0,
+      "manuscript_historical_n1": {
+        "late_count": 59,
+        "total_lateness_min": 1983.9941025902165,
+        "distance_km": 608.2263639929419
+      },
+      "working_tree_final_sensitivity_n5_mean": {
+        "late_count": 61.8,
+        "total_lateness_min": 2028.876380323755,
+        "distance_km": 624.8539941707634
+      },
+      "section62_shared_20261015T025130Z_n3_mean": {
+        "late_count": 64.0,
+        "total_lateness_min": 2063.5969504927175,
+        "distance_km": 622.8940469340082
+      }
+    },
+    {
+      "parameter": "station_count",
+      "level": 3.0,
+      "manuscript_historical_n1": {
+        "late_count": 61,
+        "total_lateness_min": 2012.3091274999117,
+        "distance_km": 635.1163315610395
+      },
+      "working_tree_final_sensitivity_n5_mean": {
+        "late_count": 62.6,
+        "total_lateness_min": 2003.5596325409708,
+        "distance_km": 622.9264744181104
+      },
+      "section62_shared_20261015T025130Z_n3_mean": {
+        "late_count": 65.66666666666667,
+        "total_lateness_min": 2054.2870774851162,
+        "distance_km": 618.6971936575607
+      }
+    },
+    {
+      "parameter": "station_count",
+      "level": 4.0,
+      "manuscript_historical_n1": {
+        "late_count": 60,
+        "total_lateness_min": 1939.999882723483,
+        "distance_km": 623.7541350103868
+      },
+      "working_tree_final_sensitivity_n5_mean": {
+        "late_count": 61.4,
+        "total_lateness_min": 1927.2440186240142,
+        "distance_km": 617.4273358738488
+      },
+      "section62_shared_20261015T025130Z_n3_mean": {
+        "late_count": 65.33333333333333,
+        "total_lateness_min": 2067.713905161901,
+        "distance_km": 632.1387544488153
+      }
+    },
+    {
+      "parameter": "station_count",
+      "level": 5.0,
+      "manuscript_historical_n1": {
+        "late_count": 61,
+        "total_lateness_min": 1823.9901281361417,
+        "distance_km": 607.9026042137199
+      },
+      "working_tree_final_sensitivity_n5_mean": {
+        "late_count": 60.0,
+        "total_lateness_min": 1884.3298597940218,
+        "distance_km": 614.3900445966642
+      },
+      "section62_shared_20261015T025130Z_n3_mean": {
+        "late_count": 64.0,
+        "total_lateness_min": 2031.0698842399295,
+        "distance_km": 627.0815846937918
+      }
+    },
+    {
+      "parameter": "station_count",
+      "level": 6.0,
+      "manuscript_historical_n1": {
+        "late_count": 58,
+        "total_lateness_min": 1800.9753983027276,
+        "distance_km": 609.4937467989528
+      },
+      "working_tree_final_sensitivity_n5_mean": {
+        "late_count": 61.6,
+        "total_lateness_min": 1961.5479316142719,
+        "distance_km": 615.1296820308132
+      },
+      "section62_shared_20261015T025130Z_n3_mean": {
+        "late_count": 67.33333333333333,
+        "total_lateness_min": 2118.192008240361,
+        "distance_km": 627.6391043083073
+      }
+    }
+  ],
+  "deliverable_recommendation": "Use 3 themes × 3 variants from this historical CSV, with footnote 单次历史运行（seed=2026081701；每档300s；200单）; preserve all three separate baseline rows. Show full numeric tables in an interactive companion. Use narrow conclusion language. No remaining data-source blocker."
+}

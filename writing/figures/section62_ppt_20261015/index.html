@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="当前稿 6.2 敏感性分析的九张汇报图候选，含历史观测数据与使用说明。">
+  <title>6.2 敏感性分析 · PPT 图候选</title>
+  <style>
+    :root { color-scheme: light dark; --page: #ffffff; --ink: #192431; --muted: #52606d; --rule: #d7dee5; --selected: #253647; --on-selected: #ffffff; --soft: #f1f4f6; --link: #075c99; }
+    @media (prefers-color-scheme: dark) { :root { --page: #141b22; --ink: #edf1f5; --muted: #bac5d0; --rule: #455360; --selected: #dde6ee; --on-selected: #192431; --soft: #26313c; --link: #a4d4f5; } }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--page); color: var(--ink); font: 400 16px/1.65 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    main { width: min(1200px, 100%); margin: 0 auto; padding: 32px 28px 48px; }
+    h1, h2, h3, legend, th, strong { font-weight: 500; }
+    h1 { margin: 0 0 8px; font-size: clamp(25px, 3.2vw, 34px); line-height: 1.3; }
+    h2 { margin: 0; font-size: 23px; line-height: 1.4; }
+    h3 { margin: 0 0 8px; font-size: 18px; }
+    p { margin: 10px 0; }
+    a { color: var(--link); text-underline-offset: .18em; overflow-wrap: anywhere; }
+    button, select { font: inherit; max-width: 100%; }
+    select { display: block; width: 100%; min-height: 44px; padding: 7px 10px; color: var(--ink); background: var(--page); border: 1px solid var(--rule); border-radius: 4px; }
+    button { color: var(--ink); }
+    .muted { color: var(--muted); }
+    .intro { margin-bottom: 26px; }
+    .selection { display: grid; grid-template-columns: minmax(210px, 320px) minmax(0, 1fr); gap: 20px 36px; align-items: end; margin-bottom: 22px; }
+    .field-label { display: block; margin-bottom: 5px; }
+    .context p { margin: 0; }
+    fieldset { padding: 0; margin: 0; border: 0; min-width: 0; }
+    legend { margin-bottom: 10px; padding: 0; }
+    .variants { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+    .variant { display: block; width: 100%; padding: 0; overflow: hidden; text-align: left; border: 1px solid var(--rule); border-radius: 4px; background: var(--page); }
+    .variant img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: contain; }
+    .variant span { display: block; padding: 10px 12px; min-height: 44px; }
+    .variant[aria-pressed="true"] span { background: var(--selected); color: var(--on-selected); }
+    .variant[aria-pressed="true"] { border-color: var(--selected); }
+    .selected-mark { font-style: normal; }
+    .preview { margin: 30px 0 26px; }
+    .preview-header { display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .downloads { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+    .downloads a { display: inline-flex; min-height: 44px; align-items: center; }
+    .main-image { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: contain; }
+    figcaption { margin-top: 10px; }
+    .caption-title { display: block; }
+    .section { border-top: 1px solid var(--rule); padding-top: 22px; margin-top: 26px; }
+    .table-scroll { width: 100%; overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; min-width: 555px; font-variant-numeric: tabular-nums; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--rule); text-align: right; white-space: nowrap; }
+    th:first-child { text-align: left; }
+    thead th { white-space: normal; vertical-align: bottom; }
+    .boundaries { padding-left: 22px; }
+    .boundaries li { margin: 7px 0; }
+    .source-links { display: flex; flex-wrap: wrap; gap: 10px 24px; }
+    .source-links a { display: inline-flex; align-items: center; min-height: 44px; }
+    .source-path { overflow-wrap: anywhere; font-family: ui-monospace, monospace; }
+    [hidden] { display: none !important; }
+    @media (max-width: 700px) { main { padding: 22px 16px 34px; } .selection { grid-template-columns: 1fr; gap: 12px; } .variants { grid-template-columns: 1fr; gap: 12px; } .variant { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: stretch; } .variant span { display: flex; flex-direction: column; justify-content: center; padding: 10px; } .variant img { align-self: center; } .preview-header { display: block; } .downloads { margin-top: 8px; } h2 { font-size: 21px; } }
+  </style>
+</head>
+<body>
+<main id="section62-gallery">
+  <header class="intro">
+    <h1>6.2 敏感性分析 · PPT 图候选</h1>
+    <p class="muted">3 个主题 × 3 种呈现，共 9 张 16:9 图。选择缩略图，查看完整候选与对应观测数据。</p>
+  </header>
+
+  <section aria-label="候选选择">
+    <div class="selection">
+      <label for="theme-select"><span class="field-label">敏感性主题</span><select id="theme-select"><option value="drone_count">无人机数量</option><option value="deadline_multiplier">截止时间倍率</option><option value="station_count">候选站点配置</option></select></label>
+      <div class="context"><p id="fixed-context">固定截止时间倍率 1.0、候选站点数 4。</p><p id="baseline-context" class="muted">本轴基准：8 架；三个参数轴的基准分别求解。</p></div>
+    </div>
+    <fieldset>
+      <legend>候选版本 · 点击缩略图切换</legend>
+      <div class="variants"><button class="variant" type="button" data-variant="a_facets" aria-pressed="true" aria-label="无人机数量，A · 三指标分面，已选"><img src="svg/drone_count_a_facets.svg" width="1600" height="900" alt=""><span>A · 三指标分面<em class="selected-mark">（已选）</em></span></button>
+<button class="variant" type="button" data-variant="b_service" aria-pressed="false" aria-label="无人机数量，B · 逾期任务数聚焦"><img src="svg/drone_count_b_service.svg" width="1600" height="900" alt=""><span>B · 逾期任务数聚焦<em class="selected-mark"></em></span></button>
+<button class="variant" type="button" data-variant="c_matrix" aria-pressed="false" aria-label="无人机数量，C · 基准变化矩阵"><img src="svg/drone_count_c_matrix.svg" width="1600" height="900" alt=""><span>C · 基准变化矩阵<em class="selected-mark"></em></span></button></div>
+    </fieldset>
+  </section>
+
+  <figure class="preview" aria-labelledby="preview-heading">
+    <div class="preview-header">
+      <h2 id="preview-heading">无人机数量 · 三指标分面</h2>
+      <nav class="downloads" aria-label="所选图下载">
+        <a id="download-png" href="png/drone_count_a_facets.png" download>下载高清 PNG</a>
+        <a id="download-svg" href="svg/drone_count_a_facets.svg" download>下载 SVG</a>
+        <a id="open-full" href="svg/drone_count_a_facets.svg" target="_blank" rel="noopener">原尺寸查看</a>
+      </nav>
+    </div>
+    <img class="main-image" id="main-image" src="svg/drone_count_a_facets.svg" width="1600" height="900" alt="无人机数量敏感性：三指标分面。完整观测值列于下方数据表。" aria-describedby="version-advice observation-note">
+    <p id="image-error" role="status" hidden>图像未能加载。请保留下载目录结构，并确认 svg 与 png 子目录和本页放在一起。</p>
+    <figcaption><strong class="caption-title">选用建议</strong><span id="version-advice">适合论文汇报与答辩：并列查看逾期任务数、总逾期时间、总飞行距离，保留三项指标各自的单位与完整水平。</span></figcaption>
+  </figure>
+  <p id="selection-status" class="muted" aria-live="polite" aria-atomic="true">当前候选：无人机数量 · A · 三指标分面</p>
+
+  <section class="section" aria-labelledby="data-heading">
+    <h2 id="data-heading">本主题观测数据</h2>
+    <p id="observation-note">本次观测中，8–16 架对应的逾期任务数为 60、46、33、13、0。单次求解结果不代表重复实验均值或最优性保证。</p>
+    <div class="table-scroll">
+      <table aria-describedby="table-note">
+        <caption class="muted" id="table-caption">无人机数量：五个参数水平</caption>
+        <thead><tr><th scope="col" id="parameter-heading">无人机数量（架）</th><th scope="col">逾期任务数<br>（项）</th><th scope="col">总逾期时间<br>（分钟）</th><th scope="col">总飞行距离<br>（km）</th></tr></thead>
+        <tbody id="data-rows"><tr><th scope="row">8（基准）</th><td>60</td><td>1,906.87</td><td>609.88</td></tr>
+<tr><th scope="row">9</th><td>46</td><td>1,344.19</td><td>603.79</td></tr>
+<tr><th scope="row">10</th><td>33</td><td>728.97</td><td>606.90</td></tr>
+<tr><th scope="row">12</th><td>13</td><td>230.73</td><td>619.16</td></tr>
+<tr><th scope="row">16</th><td>0</td><td>0.00</td><td>564.74</td></tr></tbody>
+      </table>
+    </div>
+    <p class="muted" id="table-note">时间与距离在表中显示两位小数，计算使用原始精度；窄屏可横向滚动数据表。图中相对变化 =（观测值 − 本轴基准值）/ 本轴基准值 × 100%。</p>
+  </section>
+
+  <section class="section" aria-labelledby="source-heading">
+    <h2 id="source-heading">数据范围与来源</h2>
+    <ul class="boundaries">
+      <li>当前稿 6.2 所对应的历史记录；使用“直送 + 预部署 + 中继”策略，200 项任务，随机种子 2026081701，每次求解名义时限 300 秒。</li>
+      <li>单种子单次观测；无标准差或置信区间。不添加误差条，不据此宣称统计显著性或参数变化的普遍因果效果。</li>
+      <li>三个参数轴的基准配置分别求解；不可合并为同一次共享基准。 因此三个主题中相同名义配置的数值可能略有差异，不能混用基准。</li>
+      <li>候选站点主题同时改变站点数量和相应选址，五档配置不是嵌套集合。</li>
+      <li>不使用 6.1.2 策略比较的示意数值，也不混入新一轮 6.2 实验。论文正文与历史实验文件保持原样。</li>
+      <li>原稿 6.2 后两处“图10”引用应分别对应图11、图12；此处仅说明，未改动原稿。</li>
+    </ul>
+    <p class="muted">固定来源提交：<span class="source-path">303e711ec9287c11e8f544bae850a95cab0dc8d4</span><br>历史汇总路径：<span class="source-path">algorithm/results/final_sensitivity/runs.csv</span></p>
+    <nav class="source-links" aria-label="来源文件">
+      <a href="data/plot_data.json" download>下载绘图数据 JSON</a>
+      <a href="data/historical_runs.csv" download>下载历史汇总 CSV</a>
+      <a href="https://github.com/vegetarianwolf/JD_WuLiuBei/blob/303e711ec9287c11e8f544bae850a95cab0dc8d4/algorithm/results/final_sensitivity/runs.csv" target="_blank" rel="noopener">查看固定提交中的来源</a>
+    </nav>
+  </section>
+  <noscript><p>当前显示无人机数量的 A 版与完整数据。启用浏览器脚本可在全部九个候选之间切换；所有图片也可直接从 svg 和 png 子目录打开。</p></noscript>
+</main>
+<script id="gallery-data" type="application/json">{"data":{"source_commit":"303e711ec9287c11e8f544bae850a95cab0dc8d4","source_csv":"algorithm/results/final_sensitivity/runs.csv","scenario":"直送 + 预部署 + 中继","seed":2026081701,"tasks":200,"nominal_seconds":300,"statistic":"单种子单次观测；无标准差或置信区间","baseline_note":"三个参数轴的基准配置分别求解；不可合并为同一次共享基准。","records":[{"parameter":"drone_count","level":8.0,"late_count":60.0,"total_lateness_min":1906.865312563578,"distance_km":609.8763326252944,"relay_task_count":3.0,"cross_uav_handoff_count":2.0,"total_relay_waiting_min":0.06370320998257739,"drone_count":8.0,"deadline_multiplier":1.0,"requested_station_count":4.0,"seed":2026081701.0,"effective_time_limit_seconds":300.0,"solution_sha256":"2aff1d564cb49215ca5eb86efb22b56033f565189efbbdcee9f6f011a2de5306","source_path":"algorithm/results/final_sensitivity/drone_count__8/run_solutions/direct_relay_stations__seed_2026081701.json"},{"parameter":"drone_count","level":9.0,"late_count":46.0,"total_lateness_min":1344.190328744423,"distance_km":603.7894741359787,"relay_task_count":3.0,"cross_uav_handoff_count":2.0,"total_relay_waiting_min":0.0,"drone_count":9.0,"deadline_multiplier":1.0,"requested_station_count":4.0,"seed":2026081701.0,"effective_time_limit_seconds":300.0,"solution_sha256":"303efa1fb8f93554f47dafe02ea8a25bc8a56efbe049b3918059bd626bf2f77b","source_path":"algorithm/results/final_sensitivity/drone_count__9/run_solutions/direct_relay_stations__seed_2026081701.json"},{"parameter":"drone_count","level":10.0,"late_count":33.0,"total_lateness_min":728.9699294285788,"distance_km":606.8983438800072,"relay_task_count":2.0,"cross_uav_handoff_count":2.0,"total_relay_waiting_min":0.0,"drone_count":10.0,"deadline_multiplier":1.0,"requested_station_count":4.0,"seed":2026081701.0,"effective_time_limit_seconds":300.0,"solution_sha256":"d9087f6a31cb9ce47784101cd03d6777c0be21cb32c50adcdc6abcdde41455f2","source_path":"algorithm/results/final_sensitivity/drone_count__10/run_solutions/direct_relay_stations__seed_2026081701.json"},{"parameter":"drone_count","level":12.0,"late_count":13.0,"total_lateness_min":230.73192139876988,"distance_km":619.1587414462775,"relay_task_count":5.0,"cross_uav_handoff_count":4.0,"total_relay_waiting_min":0.0,"drone_count":12.0,"deadline_multiplier":1.0,"requested_station_count":4.0,"seed":2026081701.0,"effective_time_limit_seconds":300.0,"solution_sha256":"b26be9052e8ec2b66c09d3be5f8bf76107ea039d9c5170997324f1605a661c09","source_path":"algorithm/results/final_sensitivity/drone_count__12/run_solutions/direct_relay_stations__seed_2026081701.json"},{"parameter":"drone_count","level":16.0,"late_count":0.0,"total_lateness_min":0.0,"distance_km":564.7429967652731,"relay_task_count":6.0,"cross_uav_handoff_count":5.0,"total_relay_waiting_min":5.7186296729009225,"drone_count":16.0,"deadline_multiplier":1.0,"requested_station_count":4.0,"seed":2026081701.0,"effective_time_limit_seconds":300.0,"solution_sha256":"4ebddb30730fabfc406bd9e2f3a79ce1d00d950140c53109ab9d42ecd4977fe1","source_path":"algorithm/results/final_sensitivity/drone_count__16/run_solutions/direct_relay_stations__seed_2026081701.json"},{"parameter":"deadline_multiplier","level":0.8,"late_count":81.0,"total_lateness_min":2797.665639998565,"distance_km":610.4329522659012,"relay_task_count":4.0,"cross_uav_handoff_count":4.0,"total_relay_waiting_min":0.19826832772797331,"drone_count":8.0,"deadline_multiplier":0.8,"requested_station_count":4.0,"seed":2026081701.0,"effective_time_limit_seconds":300.0,"solution_sha256":"5417f5044c7e38cfab6e61967aebd52731de06279a4a1d650275bfe375a2a0d4","source_path":"algorithm/results/final_sensitivity/deadline_multiplier__0.8/run_solutions/direct_relay_stations__seed_2026081701.json"},{"parameter":"deadline_multiplier","level":0.9,"late_count":71.0,"total_lateness_min":2227.972529234189,"distance_km":605.6627195040369,"relay_task_count":2.0,"cross_uav_handoff_count":2.0,"total_relay_waiting_min":2.1253673918716487,"drone_count":8.0,"deadline_multiplier":0.9,"requested_station_count":4.0,"seed":2026081701.0,"effective_time_limit_seconds":300.0,"solution_sha256":"d05a136bc70bd420598c02e805b8f7172b46dfb55bb1bdaa76d2b1c39032f433","source_path":"algorithm/results/final_sensitivity/deadline_multiplier__0.9/run_solutions/direct_relay_stations__seed_2026081701.json"},{"parameter":"deadline_multiplier","level":1.0,"late_count":60.0,"total_lateness_min":1941.4151593395857,"distance_km":627.4418545200368,"relay_task_count":3.0,"cross_uav_handoff_count":3.0,"total_relay_waiting_min":0.0,"drone_count":8.0,"deadline_multiplier":1.0,"requested_station_count":4.0,"seed":2026081701.0,"effective_time_limit_seconds":300.0,"solution_sha256":"0dff4b6978ab073f9da2f87da508926463d897e6482af73ee09de351ad6112c7","source_path":"algorithm/results/final_sensitivity/deadline_multiplier__1.0/run_solutions/direct_relay_stations__seed_2026081701.json"},{"parameter":"deadline_multiplier","level":1.1,"late_count":49.0,"total_lateness_min":1480.805608959864,"distance_km":607.4097188492149,"relay_task_count":4.0,"cross_uav_handoff_count":4.0,"total_relay_waiting_min":2.619610696372689,"drone_count":8.0,"deadline_multiplier":1.1,"requested_station_count":4.0,"seed":2026081701.0,"effective_time_limit_seconds":300.0,"solution_sha256":"2a782c24341bfaf5a1a0e904393f44cc55e35fb920df2da866eea7fff3bab368","source_path":"algorithm/results/final_sensitivity/deadline_multiplier__1.1/run_solutions/direct_relay_stations__seed_2026081701.json"},{"parameter":"deadline_multiplier","level":1.2,"late_count":39.0,"total_lateness_min":1161.893296608494,"distance_km":618.9487219592494,"relay_task_count":2.0,"cross_uav_handoff_count":2.0,"total_relay_waiting_min":0.027477203232152192,"drone_count":8.0,"deadline_multiplier":1.2,"requested_station_count":4.0,"seed":2026081701.0,"effective_time_limit_seconds":300.0,"solution_sha256":"397c801fa2df049e18cf657f2f04da75d777f044c229dedc91663a68a59d028f","source_path":"algorithm/results/final_sensitivity/deadline_multiplier__1.2/run_solutions/direct_relay_stations__seed_2026081701.json"},{"parameter":"station_count","level":2.0,"late_count":59.0,"total_lateness_min":1983.9941025902165,"distance_km":608.2263639929419,"relay_task_count":1.0,"cross_uav_handoff_count":1.0,"total_relay_waiting_min":0.0,"drone_count":8.0,"deadline_multiplier":1.0,"requested_station_count":2.0,"seed":2026081701.0,"effective_time_limit_seconds":300.0,"solution_sha256":"66915aeac8da529043f5b84a0383aadeee3f24f8636a215e9ccb67c23849d577","source_path":"algorithm/results/final_sensitivity/station_count__2/run_solutions/direct_relay_stations__seed_2026081701.json"},{"parameter":"station_count","level":3.0,"late_count":61.0,"total_lateness_min":2012.3091274999117,"distance_km":635.1163315610395,"relay_task_count":2.0,"cross_uav_handoff_count":2.0,"total_relay_waiting_min":0.0,"drone_count":8.0,"deadline_multiplier":1.0,"requested_station_count":3.0,"seed":2026081701.0,"effective_time_limit_seconds":300.0,"solution_sha256":"cfd7b7c507b6d3fab737d17484508cdb560d4e4d7c6e4bd630227442eed27a67","source_path":"algorithm/results/final_sensitivity/station_count__3/run_solutions/direct_relay_stations__seed_2026081701.json"},{"parameter":"station_count","level":4.0,"late_count":60.0,"total_lateness_min":1939.999882723483,"distance_km":623.7541350103868,"relay_task_count":5.0,"cross_uav_handoff_count":5.0,"total_relay_waiting_min":9.62429198369054,"drone_count":8.0,"deadline_multiplier":1.0,"requested_station_count":4.0,"seed":2026081701.0,"effective_time_limit_seconds":300.0,"solution_sha256":"a6b3f1004aad0a46379ce164022a09a30ee11612a835af247804d22366982cf7","source_path":"algorithm/results/final_sensitivity/station_count__4/run_solutions/direct_relay_stations__seed_2026081701.json"},{"parameter":"station_count","level":5.0,"late_count":61.0,"total_lateness_min":1823.9901281361417,"distance_km":607.9026042137199,"relay_task_count":2.0,"cross_uav_handoff_count":2.0,"total_relay_waiting_min":0.0,"drone_count":8.0,"deadline_multiplier":1.0,"requested_station_count":5.0,"seed":2026081701.0,"effective_time_limit_seconds":300.0,"solution_sha256":"3f422638d60c1aa47d80f5d53313b0d8022b1bb1f81eb495c9ca650770ca8f35","source_path":"algorithm/results/final_sensitivity/station_count__5/run_solutions/direct_relay_stations__seed_2026081701.json"},{"parameter":"station_count","level":6.0,"late_count":58.0,"total_lateness_min":1800.9753983027276,"distance_km":609.4937467989528,"relay_task_count":5.0,"cross_uav_handoff_count":5.0,"total_relay_waiting_min":3.2988472333790924,"drone_count":8.0,"deadline_multiplier":1.0,"requested_station_count":6.0,"seed":2026081701.0,"effective_time_limit_seconds":300.0,"solution_sha256":"6a29192f228415bddeb310c0e2669453b7f640eb2d8c7aee92c7bfd5e69c0499","source_path":"algorithm/results/final_sensitivity/station_count__6/run_solutions/direct_relay_stations__seed_2026081701.json"}]},"themes":{"drone_count":{"label":"无人机数量","axis_label":"无人机数量（架）","baseline":8,"fixed":"固定截止时间倍率 1.0、候选站点数 4。","note":"本次观测中，8–16 架对应的逾期任务数为 60、46、33、13、0。单次求解结果不代表重复实验均值或最优性保证。"},"deadline_multiplier":{"label":"截止时间倍率","axis_label":"截止时间倍率（倍）","baseline":1.0,"fixed":"固定无人机数 8、候选站点数 4。","note":"本次观测中，截止时间倍率 0.8–1.2 对应的逾期任务数为 81、71、60、49、39。连线仅帮助比较观测点，不表示拟合或额外实验。"},"station_count":{"label":"候选站点配置","axis_label":"候选站点数（个）及对应选址","baseline":4,"fixed":"固定无人机数 8、截止时间倍率 1.0；各站点数量分别重新选址。","note":"2、3、4、5、6 个站点各自采用加权 k-medoids 选址，配置并非逐点扩展的嵌套集合。结果同时反映站点数量与选址变化，不能仅归因于数量；逾期任务数为 59、61、60、61、58，未呈单调变化。"}},"variants":{"a_facets":{"label":"A · 三指标分面","short":"三指标分面","advice":"适合论文汇报与答辩：并列查看逾期任务数、总逾期时间、总飞行距离，保留三项指标各自的单位与完整水平。"},"b_service":{"label":"B · 逾期任务数聚焦","short":"逾期任务数聚焦","advice":"适合主线汇报：放大展示五个水平的逾期任务数，纵轴从零开始。讨论时间与距离时，配合 A 版或下方数据表。"},"c_matrix":{"label":"C · 基准变化矩阵","short":"基准变化矩阵","advice":"适合大屏概览：同屏比较三项指标的绝对值与相对本轴基准的变化。正负号只表示增减；各参数轴的基准分别求解。"}}}</script>
+<script>
+(() => {
+  'use strict';
+  const root = document.getElementById('section62-gallery');
+  const source = JSON.parse(document.getElementById('gallery-data').textContent);
+  const themes = source.themes;
+  const variants = source.variants;
+  const rows = source.data.records;
+  const select = root.querySelector('#theme-select');
+  const mainImage = root.querySelector('#main-image');
+  const imageError = root.querySelector('#image-error');
+  let selectedVariant = 'a_facets';
+  const formatNumber = (value, digits = 2) => Number(value).toLocaleString('zh-CN', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  const formatLevel = (key, value) => key === 'deadline_multiplier' ? Number(value).toFixed(1) : String(Number(value));
+  const imagePath = (key, variant, ext) => `${ext}/${key}_${variant}.${ext}`;
+  const setText = (id, value) => { root.querySelector(`#${id}`).textContent = value; };
+
+  function updateGallery() {
+    const key = select.value;
+    const theme = themes[key];
+    const variant = variants[selectedVariant];
+    const units = key === 'drone_count' ? ' 架' : key === 'station_count' ? ' 个站点及对应选址' : ' 倍';
+    setText('fixed-context', theme.fixed);
+    setText('baseline-context', `本轴基准：${formatLevel(key, theme.baseline)}${units}；三个参数轴的基准分别求解。`);
+    setText('preview-heading', `${theme.label} · ${variant.short}`);
+    setText('version-advice', variant.advice);
+    setText('observation-note', theme.note);
+    setText('parameter-heading', theme.axis_label);
+    setText('table-caption', `${theme.label}：五个参数水平`);
+    setText('selection-status', `当前候选：${theme.label} · ${variant.label}`);
+    for (const button of root.querySelectorAll('button[data-variant]')) {
+      const code = button.dataset.variant;
+      const selected = code === selectedVariant;
+      button.setAttribute('aria-pressed', String(selected));
+      button.setAttribute('aria-label', `${themes[key].label}，${variants[code].label}${selected ? '，已选' : ''}`);
+      button.querySelector('img').src = imagePath(key, code, 'svg');
+      button.querySelector('.selected-mark').textContent = selected ? '（已选）' : '';
+    }
+    imageError.hidden = true;
+    mainImage.src = imagePath(key, selectedVariant, 'svg');
+    mainImage.alt = `${theme.label}敏感性：${variant.short}。完整观测值列于下方数据表。`;
+    for (const ext of ['png', 'svg']) {
+      root.querySelector(`#download-${ext}`).href = imagePath(key, selectedVariant, ext);
+    }
+    root.querySelector('#open-full').href = imagePath(key, selectedVariant, 'svg');
+    const tbody = root.querySelector('#data-rows');
+    tbody.replaceChildren();
+    const chosenRows = rows.filter(row => row.parameter === key).sort((a, b) => a.level - b.level);
+    for (const row of chosenRows) {
+      const tr = document.createElement('tr');
+      const label = document.createElement('th');
+      label.scope = 'row';
+      label.textContent = formatLevel(key, row.level) + (row.level === theme.baseline ? '（基准）' : '');
+      tr.append(label);
+      for (const metric of ['late_count', 'total_lateness_min', 'distance_km']) {
+        const td = document.createElement('td');
+        td.textContent = formatNumber(row[metric], metric === 'late_count' ? 0 : 2);
+        tr.append(td);
+      }
+      tbody.append(tr);
+    }
+  }
+  mainImage.addEventListener('error', () => { imageError.hidden = false; });
+  mainImage.addEventListener('load', () => { imageError.hidden = true; });
+  if (mainImage.complete && mainImage.naturalWidth === 0) imageError.hidden = false;
+  select.addEventListener('change', updateGallery);
+  for (const button of root.querySelectorAll('button[data-variant]')) {
+    button.addEventListener('click', () => { selectedVariant = button.dataset.variant; updateGallery(); });
+  }
+})();
+</script>
+</body>
+</html>
